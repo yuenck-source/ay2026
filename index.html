@@ -613,71 +613,93 @@
       document.getElementById('sowProgressBar').style.width = `${percent}%`;
     }
 
-    /* 班主任事務 - 班別選單建立 */
-    function setupFTClassFilter() {
-      const classSet = new Set();
-      ftRows.forEach(row => {
-        const c = row.Class || row['班別'];
-        if (c) classSet.add(c.trim());
-      });
-      const select = document.getElementById('ftClassSelect');
-      select.innerHTML = '<option value="ALL">所有班別</option>';
-      Array.from(classSet).sort().forEach(cls => {
-        const opt = document.createElement('option'); opt.value = cls; opt.textContent = `班別: ${cls}`; select.appendChild(opt);
-      });
+   /* 班主任事務 - 自動讀取與建立班別選單 */
+function setupFTClassFilter() {
+  const classSet = new Set();
+  ftRows.forEach(row => {
+    // 尋找符合 Class / 班別 的欄位內容
+    const c = getRowValue(row, ['Class', 'class', '班別']);
+    if (c) classSet.add(c.trim());
+  });
+
+  const select = document.getElementById('ftClassSelect');
+  select.innerHTML = '<option value="ALL">所有班別</option>';
+  Array.from(classSet).sort().forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls;
+    opt.textContent = `班別: ${cls}`;
+    select.appendChild(opt);
+  });
+}
+
+/* 班主任事務 - 渲染卡片畫面 */
+function renderFTLogs() {
+  const container = document.getElementById('ftGrid'); 
+  container.innerHTML = '';
+
+  const filterClass = document.getElementById('ftClassSelect').value;
+  const filterStatus = document.getElementById('ftStatusSelect').value;
+
+  const filtered = ftRows.filter(r => {
+    const cls = getRowValue(r, ['Class', 'class', '班別']);
+    const status = getRowValue(r, ['Status', 'status', '狀態']) || '未完成';
+
+    const matchClass = (filterClass === 'ALL' || cls === filterClass);
+    let matchStatus = true;
+    if (filterStatus === '未完成') matchStatus = (status !== '已完成');
+    else if (filterStatus === '已完成') matchStatus = (status === '已完成');
+
+    return matchClass && matchStatus;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟進事項。</div>';
+    return;
+  }
+
+  [...filtered].reverse().forEach(row => {
+    // 彈性取得各欄位數值（自動無視空格與大小寫差異）
+    const date = getRowValue(row, ['Date', 'date', '日期']);
+    const className = getRowValue(row, ['Class', 'class', '班別']);
+    const category = getRowValue(row, ['Category', 'category', '類別']);
+    const task = getRowValue(row, ['Item/task', 'item/task', 'Item', 'task', '跟進事項/提醒', '項目']);
+    const targetStudent = getRowValue(row, ['Target student', 'target student', 'Target Student', 'Student', '目標學生']);
+    const status = getRowValue(row, ['Status', 'status', '狀態']) || '未完成';
+    const remarks = getRowValue(row, ['Remarks', 'remarks', '備註']);
+
+    let badgeClass = status === '已完成' ? 'badge-status-done' : 'badge-status-todo';
+
+    const card = document.createElement('div'); 
+    card.className = 'data-card ft-card';
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:0.85rem; color:#64748b;">📅 ${date}</span>
+        <div style="display:flex; gap:4px; align-items:center;">
+          ${className ? `<span style="background:#ea580c; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:bold;">${className}</span>` : ''}
+          <span class="${badgeClass}">${status}</span>
+        </div>
+      </div>
+      ${category ? `<div><span class="badge-category">${category}</span></div>` : ''}
+      <div style="font-weight:bold; color:#9a3412; font-size:1rem;">📌 ${task}</div>
+      ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c;">👤 <strong>目標學生：</strong> ${targetStudent}</div>` : ''}
+      ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
+    `;
+    container.appendChild(card);
+  });
+}
+
+/* 輔助工具：忽略鍵名首尾空格與大小寫，精準讀取 Google Sheet 欄位 */
+function getRowValue(row, possibleKeys) {
+  if (!row) return '';
+  const rowKeys = Object.keys(row);
+  for (let key of possibleKeys) {
+    const foundKey = rowKeys.find(k => k.trim().toLowerCase() === key.trim().toLowerCase());
+    if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+      return String(row[foundKey]).trim();
     }
-
-    /* 班主任事務 - 依 Date | Class | Category | Item/task | Target student | Status | Remarks 渲染 */
-    function renderFTLogs() {
-      const container = document.getElementById('ftGrid'); container.innerHTML = '';
-      const filterClass = document.getElementById('ftClassSelect').value;
-      const filterStatus = document.getElementById('ftStatusSelect').value;
-
-      const filtered = ftRows.filter(r => {
-        const cls = (r.Class || r['班別'] || '').trim();
-        const status = (r.Status || r['狀態'] || '未完成').trim();
-
-        const matchClass = (filterClass === 'ALL' || cls === filterClass);
-        let matchStatus = true;
-        if (filterStatus === '未完成') matchStatus = (status !== '已完成');
-        else if (filterStatus === '已完成') matchStatus = (status === '已完成');
-
-        return matchClass && matchStatus;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟進事項。</div>';
-        return;
-      }
-
-      [...filtered].reverse().forEach(row => {
-        const date = row.Date || row['日期'] || '';
-        const className = row.Class || row['班別'] || '';
-        const category = row.Category || row['類別'] || '';
-        const task = row['Item/task'] || row.Item || row['跟進事項/提醒'] || row['項目'] || '';
-        const targetStudent = row['Target student'] || row.Student || row['目標學生/全班'] || '';
-        const status = row.Status || row['狀態'] || '未完成';
-        const remarks = row.Remarks || row['備註'] || '';
-
-        let badgeClass = status === '已完成' ? 'badge-status-done' : 'badge-status-todo';
-
-        const card = document.createElement('div'); card.className = 'data-card ft-card';
-        card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.85rem; color:#64748b;">📅 ${date}</span>
-            <div style="display:flex; gap:4px; align-items:center;">
-              ${className ? `<span style="background:#ea580c; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:bold;">${className}</span>` : ''}
-              <span class="${badgeClass}">${status}</span>
-            </div>
-          </div>
-          ${category ? `<div><span class="badge-category">${category}</span></div>` : ''}
-          <div style="font-weight:bold; color:#9a3412; font-size:1rem;">📌 ${task}</div>
-          ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c;">👤 <strong>目標學生/全班：</strong> ${targetStudent}</div>` : ''}
-          ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
-        `;
-        container.appendChild(card);
-      });
-    }
+  }
+  return '';
+}
 
     /* 校曆與按 Week 分組邏輯 */
     function processData(rows) {
