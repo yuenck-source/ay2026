@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026-2027 School Calendar - Grid & Cycle View</title>
+  <title>2026-2027 School Calendar & Google Calendar</title>
 
   <!-- PapaParse 用於高效率解析 CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -24,7 +24,7 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1150px;
       margin: 0 auto;
       background: #ffffff;
       padding: 20px;
@@ -32,7 +32,7 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    /* 標題與控制項 */
+    /* 頂部標題 */
     .header {
       display: flex;
       flex-wrap: wrap;
@@ -50,10 +50,43 @@
       color: #1e3a8a;
     }
 
+    /* 新增：分頁標籤頁 (Tabs) */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: #f1f5f9;
+      color: #475569;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      border-color: var(--primary-color);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background-color: #e2e8f0;
+    }
+
+    /* 控制項 */
     .controls {
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-bottom: 15px;
     }
 
     select, button {
@@ -65,36 +98,31 @@
       cursor: pointer;
     }
 
-    button {
+    .btn-primary {
       background-color: var(--primary-color);
       color: white;
       border: none;
       font-weight: bold;
     }
 
-    button:hover {
+    .btn-primary:hover {
       background-color: #1d4ed8;
     }
 
-    /* ========================================== */
-    /* 新增：下一個 Cycle 卡片區樣式 */
-    /* ========================================== */
+    /* 下一個 Cycle 卡片區樣式 */
     .cycle-section {
       background-color: #eff6ff;
       border: 1px solid #bfdbfe;
       border-radius: 8px;
       padding: 15px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
 
     .cycle-section-title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: bold;
       color: #1e40af;
       margin: 0 0 12px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
     .cycle-cards-grid {
@@ -133,14 +161,12 @@
       color: #64748b;
     }
 
-    /* ========================================== */
     /* 月曆表格樣式 */
-    /* ========================================== */
     .legend {
       display: flex;
       gap: 12px;
       font-size: 0.85rem;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
@@ -213,6 +239,21 @@
       line-height: 1.2;
     }
 
+    /* Google Calendar 容器 */
+    .gcal-container {
+      width: 100%;
+      height: 700px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .gcal-container iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
     #loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #64748b; }
   </style>
 </head>
@@ -221,36 +262,54 @@
   <div class="container">
     <div class="header">
       <h1>校曆月曆表 (2026-2027)</h1>
+    </div>
+
+    <!-- 切換 Tab 選單 -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆網格與 Cycle 視圖</button>
+      <button class="tab-btn" onclick="switchTab('gcal')">📅 Google Calendar 檢視</button>
+    </div>
+
+    <!-- TAB 1: CSV 校曆網格區塊 -->
+    <div id="tab-sch-grid">
       <div class="controls">
-        <button onclick="changeMonth(-1)">◀ 上一個月</button>
+        <button class="btn-primary" onclick="changeMonth(-1)">◀ 上一個月</button>
         <select id="monthSelect" onchange="renderCalendar()"></select>
-        <button onclick="changeMonth(1)">下一個月 ▶</button>
+        <button class="btn-primary" onclick="changeMonth(1)">下一個月 ▶</button>
+      </div>
+
+      <!-- 下一個 Cycle 預覽卡片區 -->
+      <div id="cycleSection" class="cycle-section" style="display: none;">
+        <div class="cycle-section-title">
+          🔄 當前/即將到來的完整 Cycle (Day A - Day F)
+        </div>
+        <div id="cycleCards" class="cycle-cards-grid"></div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日 Cycle Day</div>
+        <div class="legend-item"><span class="badge-holiday">假期/特別日</span> School Holiday</div>
+        <div class="legend-item"><span class="badge-activity">學校活動</span> Special Activity</div>
+      </div>
+
+      <div id="loading">載入 CSV 資料中，請稍候...</div>
+      <div id="calendar" class="calendar-grid" style="display: none;"></div>
+    </div>
+
+    <!-- TAB 2: Google Calendar 區塊 -->
+    <div id="tab-gcal" style="display: none;">
+      <div class="gcal-container">
+        <iframe src="https://calendar.google.com/calendar/embed?src=yuenck%40web.wfjlps.edu.hk&ctz=Asia%2FHong_Kong" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
       </div>
     </div>
 
-    <!-- 新增：下一個 Cycle 預覽卡片區 -->
-    <div id="cycleSection" class="cycle-section" style="display: none;">
-      <div class="cycle-section-title">
-        <span>🔄 當前/即將到來的完整 Cycle (Day A - Day F)</span>
-      </div>
-      <div id="cycleCards" class="cycle-cards-grid"></div>
-    </div>
-
-    <div class="legend">
-      <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日 Cycle Day</div>
-      <div class="legend-item"><span class="badge-holiday">假期/特別日</span> School Holiday</div>
-      <div class="legend-item"><span class="badge-activity">學校活動</span> Special Activity</div>
-    </div>
-
-    <div id="loading">載入 CSV 資料中，請稍候...</div>
-    <div id="calendar" class="calendar-grid" style="display: none;"></div>
   </div>
 
   <script>
     const CSV_URL = 'Sch Calendar-Grid view.csv';
 
     let calendarData = {}; 
-    let availableDatesSorted = []; // 排序好的所有日期物件列表
+    let availableDatesSorted = [];
     let availableMonths = [];
     let currentMonthIndex = 0;
 
@@ -270,6 +329,25 @@
         }
       });
     });
+
+    // 分頁切換邏輯
+    function switchTab(tabName) {
+      const gridTab = document.getElementById('tab-sch-grid');
+      const gcalTab = document.getElementById('tab-gcal');
+      const buttons = document.querySelectorAll('.tab-btn');
+
+      if (tabName === 'sch-grid') {
+        gridTab.style.display = 'block';
+        gcalTab.style.display = 'none';
+        buttons[0].classList.add('active');
+        buttons[1].classList.remove('active');
+      } else {
+        gridTab.style.display = 'none';
+        gcalTab.style.display = 'block';
+        buttons[0].classList.remove('active');
+        buttons[1].classList.add('active');
+      }
+    }
 
     function processData(rows) {
       const monthSet = new Set();
@@ -296,11 +374,9 @@
         }
       });
 
-      // 日期排序
       dateList.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
       availableDatesSorted = dateList;
 
-      // 月份選單
       availableMonths = Array.from(monthSet).sort();
       const select = document.getElementById('monthSelect');
       availableMonths.forEach((ym, idx) => {
@@ -322,10 +398,8 @@
 
       const [year, month] = targetYearMonth.split('-').map(Number);
 
-      // 渲染頂部的 Cycle Cards (自動尋找當月第一個 Day A 開始的 Cycle)
       renderCycleCards(targetYearMonth);
 
-      // 渲染月曆網格
       const calendarEl = document.getElementById('calendar');
       calendarEl.innerHTML = '';
 
@@ -379,17 +453,14 @@
       }
     }
 
-    // 渲染下一個完整 Cycle 卡片 (A-F)
     function renderCycleCards(targetYearMonth) {
       const container = document.getElementById('cycleCards');
       container.innerHTML = '';
 
-      // 從當月第一天開始，往後搜尋第一個 Cycle Day 為 'A' 的日子
       let startIndex = availableDatesSorted.findIndex(item => 
         item.dateStr.startsWith(targetYearMonth) && item.rawRow['Cycle Day'] === 'A'
       );
 
-      // 如果當月前半段沒有 A，就搜尋當月任何有 Cycle 的日子之前的最後一個 A，或者第一個出現的 A
       if (startIndex === -1) {
         startIndex = availableDatesSorted.findIndex(item => 
           item.dateStr >= `${targetYearMonth}-01` && item.rawRow['Cycle Day'] === 'A'
@@ -401,7 +472,6 @@
         return;
       }
 
-      // 收集連續的 A -> B -> C -> D -> E -> F 6 個教學日
       const requiredCycle = ['A', 'B', 'C', 'D', 'E', 'F'];
       let currentCycleIdx = 0;
       const cycleDaysFound = [];
@@ -413,11 +483,10 @@
         if (cycle === requiredCycle[currentCycleIdx]) {
           cycleDaysFound.push(item);
           currentCycleIdx++;
-          if (currentCycleIdx === 6) break; // 集齊 A-F 6 天
+          if (currentCycleIdx === 6) break;
         }
       }
 
-      // 產生 6 張卡片
       cycleDaysFound.forEach(item => {
         const row = item.rawRow;
         const [y, m, d] = item.dateStr.split('-');
