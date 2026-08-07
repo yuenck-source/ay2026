@@ -632,7 +632,7 @@ function setupFTClassFilter() {
   });
 }
 
-/* 班主任事務 - 渲染卡片畫面 */
+/* 班主任事務 - 100% 相容欄位顯示 */
 function renderFTLogs() {
   const container = document.getElementById('ftGrid'); 
   container.innerHTML = '';
@@ -641,8 +641,8 @@ function renderFTLogs() {
   const filterStatus = document.getElementById('ftStatusSelect').value;
 
   const filtered = ftRows.filter(r => {
-    const cls = getRowValue(r, ['Class', 'class', '班別']);
-    const status = getRowValue(r, ['Status', 'status', '狀態']) || '未完成';
+    const cls = getColumnValue(r, 'Class', 1);
+    const status = getColumnValue(r, 'Status', 5) || '未完成';
 
     const matchClass = (filterClass === 'ALL' || cls === filterClass);
     let matchStatus = true;
@@ -653,19 +653,19 @@ function renderFTLogs() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟進事項。</div>';
+    container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟进事項。</div>';
     return;
   }
 
   [...filtered].reverse().forEach(row => {
-    // 彈性取得各欄位數值（自動無視空格與大小寫差異）
-    const date = getRowValue(row, ['Date', 'date', '日期']);
-    const className = getRowValue(row, ['Class', 'class', '班別']);
-    const category = getRowValue(row, ['Category', 'category', '類別']);
-    const task = getRowValue(row, ['Item/task', 'item/task', 'Item', 'task', '跟進事項/提醒', '項目']);
-    const targetStudent = getRowValue(row, ['Target student', 'target student', 'Target Student', 'Student', '目標學生']);
-    const status = getRowValue(row, ['Status', 'status', '狀態']) || '未完成';
-    const remarks = getRowValue(row, ['Remarks', 'remarks', '備註']);
+    // 按 A~G 欄位順序對應 (A=0, B=1, C=2, D=3, E=4, F=5, G=6)
+    const date = getColumnValue(row, 'Date', 0);
+    const className = getColumnValue(row, 'Class', 1);
+    const category = getColumnValue(row, 'Category', 2);
+    const task = getColumnValue(row, 'Item/task', 3);
+    const targetStudent = getColumnValue(row, 'Target student', 4);
+    const status = getColumnValue(row, 'Status', 5) || '未完成';
+    const remarks = getColumnValue(row, 'Remarks', 6);
 
     let badgeClass = status === '已完成' ? 'badge-status-done' : 'badge-status-todo';
 
@@ -679,25 +679,36 @@ function renderFTLogs() {
           <span class="${badgeClass}">${status}</span>
         </div>
       </div>
-      ${category ? `<div><span class="badge-category">${category}</span></div>` : ''}
-      <div style="font-weight:bold; color:#9a3412; font-size:1rem;">📌 ${task}</div>
-      ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c;">👤 <strong>目標學生：</strong> ${targetStudent}</div>` : ''}
-      ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
+      ${category ? `<div style="margin-top:4px;"><span class="badge-category">${category}</span></div>` : ''}
+      <div style="font-weight:bold; color:#9a3412; font-size:1rem; margin-top:6px;">📌 ${task}</div>
+      ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c; margin-top:4px;">👤 <strong>目標學生：</strong> ${targetStudent}</div>` : ''}
+      ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316; margin-top:6px;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
     `;
     container.appendChild(card);
   });
 }
 
-/* 輔助工具：忽略鍵名首尾空格與大小寫，精準讀取 Google Sheet 欄位 */
-function getRowValue(row, possibleKeys) {
-  if (!row) return '';
-  const rowKeys = Object.keys(row);
-  for (let key of possibleKeys) {
-    const foundKey = rowKeys.find(k => k.trim().toLowerCase() === key.trim().toLowerCase());
-    if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
-      return String(row[foundKey]).trim();
-    }
+/* 欄位數值讀取工具（優先嘗試 Key，失敗則讀取第 colIndex 欄位） */
+function getColumnValue(rowObj, keyName, colIndex) {
+  if (!rowObj) return '';
+  
+  // 1. 精準對應
+  if (rowObj[keyName] !== undefined && rowObj[keyName] !== '') {
+    return String(rowObj[keyName]).trim();
   }
+
+  // 2. 去除首尾空格對應
+  const keys = Object.keys(rowObj);
+  const matchedKey = keys.find(k => k.trim().toLowerCase() === keyName.trim().toLowerCase());
+  if (matchedKey && rowObj[matchedKey] !== undefined && rowObj[matchedKey] !== '') {
+    return String(rowObj[matchedKey]).trim();
+  }
+
+  // 3. 欄位順序保底 (Index)
+  if (colIndex !== undefined && keys[colIndex] !== undefined && rowObj[keys[colIndex]] !== undefined) {
+    return String(rowObj[keys[colIndex]]).trim();
+  }
+
   return '';
 }
 
