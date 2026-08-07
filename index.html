@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026-2027 School Calendar - Grid View</title>
+  <title>2026-2027 School Calendar - Grid & Cycle View</title>
 
   <!-- PapaParse 用於高效率解析 CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -32,7 +32,7 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    /* 控制面板與標題 */
+    /* 標題與控制項 */
     .header {
       display: flex;
       flex-wrap: wrap;
@@ -76,7 +76,66 @@
       background-color: #1d4ed8;
     }
 
-    /* 圖例說明 */
+    /* ========================================== */
+    /* 新增：下一個 Cycle 卡片區樣式 */
+    /* ========================================== */
+    .cycle-section {
+      background-color: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 25px;
+    }
+
+    .cycle-section-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #1e40af;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cycle-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .cycle-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cycle-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 4px;
+    }
+
+    .cycle-card-date {
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .cycle-card-weekday {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    /* ========================================== */
+    /* 月曆表格樣式 */
+    /* ========================================== */
     .legend {
       display: flex;
       gap: 12px;
@@ -85,17 +144,11 @@
       flex-wrap: wrap;
     }
 
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
+    .legend-item { display: flex; align-items: center; gap: 4px; }
     .badge-cycle { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
     .badge-holiday { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; border: 1px solid #fca5a5; font-size: 0.75rem; }
     .badge-activity { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; border: 1px solid #fcd34d; font-size: 0.75rem; }
 
-    /* 月曆表格 */
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -115,13 +168,11 @@
       font-size: 0.85rem;
     }
 
-    .weekday-header.weekend {
-      background-color: #334155;
-    }
+    .weekday-header.weekend { background-color: #334155; }
 
     .day-cell {
       background-color: #ffffff;
-      min-height: 100px;
+      min-height: 95px;
       padding: 6px;
       box-sizing: border-box;
       display: flex;
@@ -129,18 +180,9 @@
       gap: 4px;
     }
 
-    .day-cell.other-month {
-      background-color: #f1f5f9;
-      color: #cbd5e1;
-    }
-
-    .day-cell.weekend {
-      background-color: #f8fafc;
-    }
-
-    .day-cell.holiday-bg {
-      background-color: #fff1f2;
-    }
+    .day-cell.other-month { background-color: #f1f5f9; color: #cbd5e1; }
+    .day-cell.weekend { background-color: #f8fafc; }
+    .day-cell.holiday-bg { background-color: #fff1f2; }
 
     .day-header {
       display: flex;
@@ -148,25 +190,17 @@
       align-items: center;
     }
 
-    .day-num {
-      font-weight: bold;
-      font-size: 1rem;
-      color: #0f172a;
-    }
-
-    .day-num.holiday-num {
-      color: #dc2626;
-    }
+    .day-num { font-weight: bold; font-size: 1rem; color: #0f172a; }
+    .day-num.holiday-num { color: #dc2626; }
 
     .holiday-tag {
       background-color: #fee2e2;
       color: #991b1b;
-      font-size: 0.75rem;
+      font-size: 0.73rem;
       padding: 3px 5px;
       border-radius: 4px;
       border-left: 3px solid #ef4444;
       line-height: 1.2;
-      font-weight: 500;
     }
 
     .activity-tag {
@@ -179,12 +213,7 @@
       line-height: 1.2;
     }
 
-    #loading {
-      text-align: center;
-      padding: 40px;
-      font-size: 1.1rem;
-      color: #64748b;
-    }
+    #loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #64748b; }
   </style>
 </head>
 <body>
@@ -199,6 +228,14 @@
       </div>
     </div>
 
+    <!-- 新增：下一個 Cycle 預覽卡片區 -->
+    <div id="cycleSection" class="cycle-section" style="display: none;">
+      <div class="cycle-section-title">
+        <span>🔄 當前/即將到來的完整 Cycle (Day A - Day F)</span>
+      </div>
+      <div id="cycleCards" class="cycle-cards-grid"></div>
+    </div>
+
     <div class="legend">
       <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日 Cycle Day</div>
       <div class="legend-item"><span class="badge-holiday">假期/特別日</span> School Holiday</div>
@@ -210,14 +247,13 @@
   </div>
 
   <script>
-    // ⚠️ 請修改此處為您 GitHub 上原始 CSV 的檔名或 Raw 網址
     const CSV_URL = 'Sch Calendar-Grid view.csv';
 
-    let calendarData = {}; // 以 'YYYY-MM-DD' 為 key 的資料字典
+    let calendarData = {}; 
+    let availableDatesSorted = []; // 排序好的所有日期物件列表
     let availableMonths = [];
     let currentMonthIndex = 0;
 
-    // 頁面載入後自動抓取 CSV
     window.addEventListener('DOMContentLoaded', () => {
       Papa.parse(CSV_URL, {
         download: true,
@@ -226,23 +262,22 @@
         complete: (results) => {
           processData(results.data);
           document.getElementById('loading').style.display = 'none';
+          document.getElementById('cycleSection').style.display = 'block';
           document.getElementById('calendar').style.display = 'grid';
         },
         error: (err) => {
-          document.getElementById('loading').innerHTML = '<span style="color:red;">載入失敗：請確認 CSV 檔案名稱與路徑正確。</span>';
-          console.error(err);
+          document.getElementById('loading').innerHTML = '<span style="color:red;">載入 CSV 失敗，請檢查檔名與路徑。</span>';
         }
       });
     });
 
-    // 解析 CSV 資料並建立索引
     function processData(rows) {
       const monthSet = new Set();
+      const dateList = [];
 
       rows.forEach(row => {
         if (!row.Date) return;
 
-        // 解析日格式 (D/M/YYYY -> YYYY-MM-DD)
         const parts = row.Date.split('/');
         if (parts.length === 3) {
           const day = parts[0].padStart(2, '0');
@@ -254,13 +289,19 @@
 
           calendarData[formattedDate] = row;
           monthSet.add(yearMonth);
+          dateList.push({
+            dateStr: formattedDate,
+            rawRow: row
+          });
         }
       });
 
-      // 排序所有月份（例如 2026-09 至 2027-08）
+      // 日期排序
+      dateList.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+      availableDatesSorted = dateList;
+
+      // 月份選單
       availableMonths = Array.from(monthSet).sort();
-      
-      // 填充下拉選單
       const select = document.getElementById('monthSelect');
       availableMonths.forEach((ym, idx) => {
         const option = document.createElement('option');
@@ -273,7 +314,6 @@
       renderCalendar();
     }
 
-    // 渲染月曆表格
     function renderCalendar() {
       const select = document.getElementById('monthSelect');
       currentMonthIndex = parseInt(select.value) || 0;
@@ -281,10 +321,14 @@
       if (!targetYearMonth) return;
 
       const [year, month] = targetYearMonth.split('-').map(Number);
+
+      // 渲染頂部的 Cycle Cards (自動尋找當月第一個 Day A 開始的 Cycle)
+      renderCycleCards(targetYearMonth);
+
+      // 渲染月曆網格
       const calendarEl = document.getElementById('calendar');
       calendarEl.innerHTML = '';
 
-      // 1. 產生星期表頭
       const weekdays = ['星期日 Sun', '星期一 Mon', '星期二 Tue', '星期三 Wed', '星期四 Thu', '星期五 Fri', '星期六 Sat'];
       weekdays.forEach((day, index) => {
         const header = document.createElement('div');
@@ -293,20 +337,17 @@
         calendarEl.appendChild(header);
       });
 
-      // 2. 計算月份日曆的起止
       const firstDay = new Date(year, month - 1, 1);
       const lastDay = new Date(year, month, 0);
-      const startDayOfWeek = firstDay.getDay(); // 0 = Sun
+      const startDayOfWeek = firstDay.getDay();
       const totalDays = lastDay.getDate();
 
-      // 前填滿 (非本月份的日格子)
       for (let i = 0; i < startDayOfWeek; i++) {
         const prevCell = document.createElement('div');
         prevCell.className = 'day-cell other-month';
         calendarEl.appendChild(prevCell);
       }
 
-      // 本月所有日格子
       for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
         const dayStr = String(dayNum).padStart(2, '0');
         const monthStr = String(month).padStart(2, '0');
@@ -324,33 +365,88 @@
         const cell = document.createElement('div');
         cell.className = `day-cell ${isWeekend ? 'weekend' : ''} ${holiday ? 'holiday-bg' : ''}`;
 
-        // 頂部日期與 Cycle Day 標籤
         let headerHtml = `<div class="day-header">
           <span class="day-num ${holiday || isWeekend ? 'holiday-num' : ''}">${dayNum}</span>`;
-        
-        if (cycle) {
-          headerHtml += `<span class="badge-cycle">${cycle}</span>`;
-        }
+        if (cycle) headerHtml += `<span class="badge-cycle">${cycle}</span>`;
         headerHtml += `</div>`;
 
         let contentHtml = headerHtml;
-
-        // 假期標籤
-        if (holiday) {
-          contentHtml += `<div class="holiday-tag">${holiday}</div>`;
-        }
-
-        // 活動標籤
-        if (activity) {
-          contentHtml += `<div class="activity-tag">${activity}</div>`;
-        }
+        if (holiday) contentHtml += `<div class="holiday-tag">${holiday}</div>`;
+        if (activity) contentHtml += `<div class="activity-tag">${activity}</div>`;
 
         cell.innerHTML = contentHtml;
         calendarEl.appendChild(cell);
       }
     }
 
-    // 切換月份
+    // 渲染下一個完整 Cycle 卡片 (A-F)
+    function renderCycleCards(targetYearMonth) {
+      const container = document.getElementById('cycleCards');
+      container.innerHTML = '';
+
+      // 從當月第一天開始，往後搜尋第一個 Cycle Day 為 'A' 的日子
+      let startIndex = availableDatesSorted.findIndex(item => 
+        item.dateStr.startsWith(targetYearMonth) && item.rawRow['Cycle Day'] === 'A'
+      );
+
+      // 如果當月前半段沒有 A，就搜尋當月任何有 Cycle 的日子之前的最後一個 A，或者第一個出現的 A
+      if (startIndex === -1) {
+        startIndex = availableDatesSorted.findIndex(item => 
+          item.dateStr >= `${targetYearMonth}-01` && item.rawRow['Cycle Day'] === 'A'
+        );
+      }
+
+      if (startIndex === -1) {
+        container.innerHTML = '<div style="color:#64748b;">當前或未來月份暫無完整的 Cycle 資料。</div>';
+        return;
+      }
+
+      // 收集連續的 A -> B -> C -> D -> E -> F 6 個教學日
+      const requiredCycle = ['A', 'B', 'C', 'D', 'E', 'F'];
+      let currentCycleIdx = 0;
+      const cycleDaysFound = [];
+
+      for (let i = startIndex; i < availableDatesSorted.length; i++) {
+        const item = availableDatesSorted[i];
+        const cycle = item.rawRow['Cycle Day'];
+
+        if (cycle === requiredCycle[currentCycleIdx]) {
+          cycleDaysFound.push(item);
+          currentCycleIdx++;
+          if (currentCycleIdx === 6) break; // 集齊 A-F 6 天
+        }
+      }
+
+      // 產生 6 張卡片
+      cycleDaysFound.forEach(item => {
+        const row = item.rawRow;
+        const [y, m, d] = item.dateStr.split('-');
+        
+        const card = document.createElement('div');
+        card.className = 'cycle-card';
+
+        let cardHtml = `
+          <div class="cycle-card-header">
+            <div>
+              <span class="cycle-card-date">${parseInt(m)}月${parseInt(d)}日</span>
+              <span class="cycle-card-weekday">(${row.Weekday || ''})</span>
+            </div>
+            <span class="badge-cycle">${row['Cycle Day']}</span>
+          </div>
+        `;
+
+        if (row['Sch Holiday/Special Sch Day']) {
+          cardHtml += `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>`;
+        }
+        if (row['Special Activity']) {
+          cardHtml += `<div class="activity-tag">${row['Special Activity']}</div>`;
+        }
+
+        card.innerHTML = cardHtml;
+        container.appendChild(card);
+      });
+    }
+
     function changeMonth(delta) {
       let newIndex = currentMonthIndex + delta;
       if (newIndex >= 0 && newIndex < availableMonths.length) {
