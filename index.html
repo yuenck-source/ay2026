@@ -14,137 +14,156 @@
       --timetable-color: #0284c7;
       --math-color: #0d9488;
       --sow-color: #7c3aed;
-      --ft-color: #e11d48;
-      --bg-slate: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #1e293b;
+      --ft-color: #ea580c;
+      --bg-color: #f8fafc;
       --border-color: #cbd5e1;
     }
 
-    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f1f5f9;
-      color: var(--text-main);
+      background-color: var(--bg-color);
+      color: #1e293b;
       margin: 0;
-      padding: 12px;
+      padding: 10px;
     }
 
-    .dashboard-container {
-      max-width: 1400px;
+    .container {
+      max-width: 1150px;
       margin: 0 auto;
-    }
-
-    /* 頂部標題與頁籤列 */
-    header {
       background: #ffffff;
-      padding: 12px 16px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 12px;
-    }
-    h1 {
-      font-size: 1.25rem;
-      margin: 0 0 12px 0;
-      color: #0f172a;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
-    .nav-tabs {
+    /* 頂部標題 */
+    .header {
       display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-    .tab-btn {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .tab-btn.active[data-tab="cal"] { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
-    .tab-btn.active[data-tab="tt"] { background: var(--timetable-color); color: #fff; border-color: var(--timetable-color); }
-    .tab-btn.active[data-tab="math"] { background: var(--math-color); color: #fff; border-color: var(--math-color); }
-    .tab-btn.active[data-tab="sow"] { background: var(--sow-color); color: #fff; border-color: var(--sow-color); }
-    .tab-btn.active[data-tab="ft"] { background: var(--ft-color); color: #fff; border-color: var(--ft-color); }
-    .tab-btn.active[data-tab="gcal"] { background: #475569; color: #fff; border-color: #475569; }
-
-    /* 視圖主要面板 */
-    .view-panel {
-      display: none;
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .view-panel.active { display: block; }
-
-    /* 控制列與篩選器 */
-    .control-bar {
-      display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 8px;
     }
-    .control-group {
+
+    h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #1e3a8a;
+    }
+
+    /* 分頁標籤頁 (Tabs) */
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: #f1f5f9;
+      color: #475569;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      flex: 1 1 auto;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      border-color: var(--primary-color);
+    }
+
+    .tab-btn.active.tt-tab { background-color: var(--timetable-color); border-color: var(--timetable-color); }
+    .tab-btn.active.math-tab { background-color: var(--math-color); border-color: var(--math-color); }
+    .tab-btn.active.sow-tab { background-color: var(--sow-color); border-color: var(--sow-color); }
+    .tab-btn.active.ft-tab { background-color: var(--ft-color); border-color: var(--ft-color); }
+
+    .tab-btn:hover:not(.active) { background-color: #e2e8f0; }
+
+    /* 控制項與按鈕 */
+    .controls {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
+      margin-bottom: 12px;
     }
+
     select, button {
-      padding: 6px 10px;
+      padding: 6px 12px;
+      font-size: 0.9rem;
       border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
       background-color: #fff;
+      cursor: pointer;
+    }
+
+    .btn-nav {
+      padding: 6px 12px;
+      font-weight: bold;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-primary { background-color: var(--primary-color); color: white; border: none; }
+    .btn-secondary { background-color: #0284c7; color: white; border: none; }
+
+    @media (max-width: 600px) {
+      .btn-text { display: none; }
+      .btn-nav { padding: 6px 10px; font-size: 1rem; }
+      select { padding: 6px 4px; font-size: 0.85rem; max-width: 160px; }
     }
 
     /* Week 卡片區樣式 */
     .week-section {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 15px;
     }
+
     .week-section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
+      gap: 8px;
     }
+
     .week-section-title { font-size: 0.95rem; font-weight: bold; color: #0369a1; margin: 0; }
     .week-controls { display: flex; align-items: center; gap: 6px; }
 
     .week-cards-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 8px;
-    }
-    @media (max-width: 1024px) {
-      .week-cards-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-    @media (max-width: 640px) {
-      .week-cards-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     .week-card {
       background: #ffffff;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 8px;
-      font-size: 0.8rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-height: 90px;
     }
+
     .week-card.is-weekend {
       background-color: #fafafa;
       border-color: #e2e8f0;
@@ -162,585 +181,657 @@
     .week-card-weekday { font-size: 0.75rem; color: #64748b; }
     .week-card-weekday.weekend-text { color: #e11d48; font-weight: bold; }
 
-    /* 月曆區 Grid 樣式 */
+    /* 月曆圖例與滑動容器 */
+    .legend { display: flex; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .badge-cycle { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
+    .badge-holiday { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; border: 1px solid #fca5a5; font-size: 0.75rem; }
+    .badge-activity { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; border: 1px solid #fcd34d; font-size: 0.75rem; }
+
+    .scroll-hint { display: none; font-size: 0.78rem; color: #64748b; margin-bottom: 6px; text-align: right; }
+    @media (max-width: 768px) { .scroll-hint { display: block; } }
+
+    .calendar-scroll-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: var(--border-color);
+    }
+
     .calendar-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(7, minmax(95px, 1fr));
       gap: 1px;
-      background-color: #cbd5e1;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      overflow: hidden;
+      min-width: 680px;
     }
-    .weekday-header {
-      background-color: #1e293b;
-      color: #ffffff;
-      text-align: center;
-      padding: 6px;
-      font-size: 0.8rem;
-      font-weight: bold;
-    }
+
+    .weekday-header { background-color: #1e293b; color: #ffffff; text-align: center; padding: 8px 0; font-weight: bold; font-size: 0.85rem; }
     .weekday-header.weekend { background-color: #334155; }
 
     .day-cell {
       background-color: #ffffff;
-      min-height: 85px;
-      padding: 4px;
+      min-height: 90px;
+      padding: 5px;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      font-size: 0.75rem;
+      gap: 4px;
     }
-    .day-cell.other-month { background-color: #f8fafc; opacity: 0.5; }
+
+    .day-cell.other-month { background-color: #f1f5f9; color: #cbd5e1; }
     .day-cell.weekend { background-color: #f8fafc; }
     .day-cell.holiday-bg { background-color: #fff1f2; }
 
-    .day-header {
+    .day-header { display: flex; justify-content: space-between; align-items: center; }
+    .day-num { font-weight: bold; font-size: 0.95rem; color: #0f172a; }
+
+    .holiday-tag { background-color: #fee2e2; color: #991b1b; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; border-left: 3px solid #ef4444; line-height: 1.2; }
+    .activity-tag { background-color: #fef3c7; color: #78350f; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; border-left: 3px solid #f59e0b; line-height: 1.2; }
+
+    /* Google Calendar 容器 */
+    .gcal-container { width: 100%; height: 650px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+    .gcal-container iframe { width: 100%; height: 100%; border: 0; }
+
+    /* 卡片通用樣式 */
+    .section-header-box {
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .day-num { font-weight: bold; font-size: 0.8rem; color: #334155; }
 
-    /* 標籤元件 */
-    .badge-cycle { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
-    .holiday-tag { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; padding: 2px 4px; border-radius: 3px; font-weight: bold; }
-    .activity-tag { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 4px; border-radius: 3px; }
+    .tt-header-box { background: #e0f2fe; border: 1px solid #bae6fd; }
+    .math-header-box { background: #ccfbf1; border: 1px solid #99f6e4; }
+    .sow-header-box { background: #f3e8ff; border: 1px solid #d8b4fe; }
+    .ft-header-box { background: #ffedd5; border: 1px solid #fed7aa; }
 
-    /* 表格共用樣式 */
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 8px;
-    }
-    .data-table th, .data-table td {
-      border: 1px solid #cbd5e1;
-      padding: 8px 10px;
-      text-align: left;
-    }
-    .data-table th {
-      background-color: #f1f5f9;
-      font-weight: bold;
-      color: #334155;
-    }
-    .data-table tr:nth-child(even) { background-color: #f8fafc; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 
-    .badge-class { background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-    .legend-bar { display: flex; gap: 12px; font-size: 0.8rem; margin-bottom: 8px; align-items: center; }
-    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .data-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .tt-card { border-top: 4px solid var(--timetable-color); }
+    .math-card { border-top: 4px solid var(--math-color); }
+    .sow-card { border-top: 4px solid var(--sow-color); }
+    .ft-card { border-top: 4px solid var(--ft-color); }
+
+    .badge-status-done { background-color: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; }
+    .badge-status-doing { background-color: #fef9c3; color: #854d0e; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; }
+    .badge-status-todo { background-color: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; }
+    .badge-category { background-color: #ffedd5; color: #c2410c; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+
+    /* 進度條 */
+    .progress-bar-container { background-color: #e2e8f0; border-radius: 8px; height: 12px; width: 100%; overflow: hidden; margin-top: 6px; }
+    .progress-bar-fill { background-color: var(--sow-color); height: 100%; width: 0%; transition: width 0.3s; }
+
+    /* 表格通用 */
+    .data-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background-color: #f1f5f9; color: #334155; font-weight: bold; }
+    tr:hover { background-color: #f8fafc; }
+
+    #loading { text-align: center; padding: 30px; font-size: 1rem; color: #64748b; }
   </style>
 </head>
 <body>
 
-<div class="dashboard-container">
-  <header>
-    <h1>校曆與班務教學綜合面板</h1>
+  <div class="container">
+    <div class="header">
+      <h1>校曆與班務教學綜合面板</h1>
+    </div>
+
+    <!-- 切換 Tab 選單 -->
     <div class="nav-tabs">
-      <button class="tab-btn active" data-tab="cal" onclick="switchTab('cal')">📊 校曆與 週檢視</button>
-      <button class="tab-btn" data-tab="tt" onclick="switchTab('tt')">📅 課堂時間表</button>
-      <button class="tab-btn" data-tab="math" onclick="switchTab('math')">📐 數學日誌</button>
-      <button class="tab-btn" data-tab="sow" onclick="switchTab('sow')">📖 教學計劃 SOW</button>
-      <button class="tab-btn" data-tab="ft" onclick="switchTab('ft')">🏫 班主任事務</button>
-      <button class="tab-btn" data-tab="gcal" onclick="switchTab('gcal')">📅 Google Cal</button>
-    </div>
-  </header>
-
-  <!-- 1. 校曆與週檢視面板 -->
-  <div id="panel-cal" class="view-panel active">
-    <!-- 週檢視卡片區 -->
-    <div id="weekSection" class="week-section" style="display: none;">
-      <div class="week-section-header">
-        <div class="week-section-title">🗓️ 週安排檢視 (Mon - Sun)</div>
-        <div class="week-controls">
-          <button onclick="changeWeek(-1)">◀上一週</button>
-          <select id="weekSelect" onchange="onWeekSelectChange()"></select>
-          <button onclick="changeWeek(1)">下一週▶</button>
-        </div>
-      </div>
-      <div id="weekCards" class="week-cards-grid"></div>
+      <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆與 週檢視</button>
+      <button class="tab-btn tt-tab" onclick="switchTab('timetable-log')">📅 課堂時間表</button>
+      <button class="tab-btn math-tab" onclick="switchTab('math-log')">📐 數學日誌</button>
+      <button class="tab-btn sow-tab" onclick="switchTab('sow-log')">📘 教學計劃 SOW</button>
+      <button class="tab-btn ft-tab" onclick="switchTab('ft-log')">🏫 班主任事務</button>
+      <button class="tab-btn" onclick="switchTab('gcal')">📅 Google Cal</button>
     </div>
 
-    <!-- 月曆區 -->
-    <div class="control-bar">
-      <div class="control-group">
-        <button onclick="changeMonth(-1)">◀上一個月</button>
-        <select id="monthSelect" onchange="renderCalendar()"></select>
-        <button onclick="changeMonth(1)">下一個月▶</button>
-      </div>
-    </div>
-
-    <div class="legend-bar">
-      <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日</div>
-      <div class="legend-item"><span class="holiday-tag">假期</span> 學校假期</div>
-      <div class="legend-item"><span class="activity-tag">活動</span> 特別活動</div>
-    </div>
-
-    <div id="calendar" class="calendar-grid"></div>
-  </div>
-
-  <!-- 2. 課堂時間表面板 -->
-  <div id="panel-tt" class="view-panel">
-    <div class="control-bar">
-      <div class="control-group">
-        <label><b>篩選循環日：</b></label>
-        <select id="ttCycleSelect" onchange="renderTimetable()">
-          <option value="ALL">所有循環日 (All Cycle Days)</option>
-        </select>
-      </div>
-    </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Cycle Day</th>
-          <th>節次 / 時間</th>
-          <th>科目</th>
-          <th>班別</th>
-          <th>課室</th>
-        </tr>
-      </thead>
-      <tbody id="timetableBody"></tbody>
-    </table>
-  </div>
-
-  <!-- 3. 數學日誌面板 -->
-  <div id="panel-math" class="view-panel">
-    <div class="control-bar">
-      <div class="control-group">
-        <label><b>班別：</b></label>
-        <select id="mathClassSelect" onchange="renderMathLogs()">
-          <option value="ALL">所有班別</option>
-        </select>
-      </div>
-    </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>日期</th>
-          <th>班別</th>
-          <th>單元 / 課題</th>
-          <th>教學內容 / 進度</th>
-          <th>功課備忘</th>
-        </tr>
-      </thead>
-      <tbody id="mathLogBody"></tbody>
-    </table>
-  </div>
-
-  <!-- 4. 教學計劃 SOW 面板 -->
-  <div id="panel-sow" class="view-panel">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>周次 / 循環日</th>
-          <th>單元標題</th>
-          <th>核心學習重點</th>
-          <th>建議節數</th>
-          <th>評估方式</th>
-        </tr>
-      </thead>
-      <tbody id="sowBody"></tbody>
-    </table>
-  </div>
-
-  <!-- 5. 班主任事務面板 -->
-  <div id="panel-ft" class="view-panel">
-    <div class="control-bar">
-      <div class="control-group">
-        <label><b>狀態：</b></label>
-        <select id="ftStatusSelect" onchange="renderFTLogs()">
-          <option value="ALL">所有狀態</option>
-          <option value="Pending">待處理 (Pending)</option>
-          <option value="Completed">已完成 (Completed)</option>
-        </select>
-      </div>
-    </div>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>日期</th>
-          <th>事務類別</th>
-          <th>項目 / 說明</th>
-          <th>負責人 / 學生</th>
-          <th>狀態</th>
-        </tr>
-      </thead>
-      <tbody id="ftLogBody"></tbody>
-    </table>
-  </div>
-
-  <!-- 6. Google Calendar 面板 -->
-  <div id="panel-gcal" class="view-panel">
-    <p style="color: #64748b; font-size: 0.9rem;">嵌入學校 Google Calendar 檢視：</p>
-    <div style="width: 100%; height: 600px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;">
-      <iframe src="https://calendar.google.com/calendar/embed?src=zh-tw.hong_kong%23holiday%40group.v.calendar.google.com&ctz=Asia%2FHong_Kong" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
-    </div>
-  </div>
-</div>
-
-<script>
-  let calendarData = {};
-  let availableMonths = [];
-  let currentMonthIndex = 0;
-
-  let allWeeks = [];
-  let currentWeekIndex = 0;
-
-  let timetableData = [];
-  let mathLogData = [];
-  let sowData = [];
-  let ftLogData = [];
-
-  function switchTab(tabName) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
-
-    const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-    const activePanel = document.getElementById(`panel-${tabName}`);
-
-    if (activeBtn) activeBtn.classList.add('active');
-    if (activePanel) activePanel.classList.add('active');
-  }
-
-  // 自動載入 CSV 資料 (包含同步載入 GitHub CSV / 本地 CSV)
-  window.addEventListener('DOMContentLoaded', () => {
-    Papa.parse('Sch Calendar-Grid view.csv', {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        processData(results.data);
-      },
-      error: function() {
-        console.warn('本地 CSV 讀取失敗，使用預設測試資料或等待用戶上傳。');
-      }
-    });
-
-    loadGoogleSheets();
-  });
-
-  function loadGoogleSheets() {
-    setupTimetableCycleFilter(); renderTimetable();
-    setupMathClassFilter(); renderMathLogs();
-    renderSOWLogs();
-    renderFTLogs();
-  }
-
-  /* 校曆與按 Week 分組邏輯 */
-  function processData(rows) {
-    calendarData = {};
-    const monthsSet = new Set();
-    const availableDatesSorted = [];
-
-    rows.forEach(row => {
-      if (!row.Date) return;
-      const parts = row.Date.split('/');
-      if (parts.length === 3) {
-        const d = parts[0].padStart(2, '0');
-        const m = parts[1].padStart(2, '0');
-        const y = parts[2];
-        const formattedDate = `${y}-${m}-${d}`;
-        
-        calendarData[formattedDate] = row;
-        monthsSet.add(`${y}-${m}`);
-        availableDatesSorted.push({
-          dateStr: formattedDate,
-          dt: new Date(y, parseInt(m) - 1, parseInt(d)),
-          rawRow: row
-        });
-      }
-    });
-
-    availableDatesSorted.sort((a, b) => a.dt - b.dt);
-
-    availableMonths = Array.from(monthsSet).sort();
-    const select = document.getElementById('monthSelect');
-    select.innerHTML = '';
-    availableMonths.forEach(ym => {
-      const option = document.createElement('option');
-      option.value = ym;
-      option.textContent = ym;
-      select.appendChild(option);
-    });
-
-    if (availableMonths.length > 0) {
-      currentMonthIndex = 0;
-      select.value = availableMonths[0];
-    }
-
-    parseAllWeeks(availableDatesSorted);
-    renderCalendar();
-  }
-
-  function parseAllWeeks(datesSorted) {
-    allWeeks = [];
-    if (datesSorted.length === 0) return;
-
-    let currentWeekDays = [];
-    let weekCounter = 1;
-
-    datesSorted.forEach((item, idx) => {
-      currentWeekDays.push(item);
-      const dayOfWeek = item.dt.getDay(); // 0 is Sun, 6 is Sat
-
-      if (dayOfWeek === 0 || idx === datesSorted.length - 1) {
-        const startDate = currentWeekDays[0].dateStr;
-        const endDate = currentWeekDays[currentWeekDays.length - 1].dateStr;
-        const [startY, startM, startD] = startDate.split('-');
-        const [endY, endM, endD] = endDate.split('-');
-
-        allWeeks.push({
-          label: `第 ${weekCounter} 週 (${parseInt(startM)}/${parseInt(startD)} - ${parseInt(endM)}/${parseInt(endD)})`,
-          startDate: startDate,
-          endDate: endDate,
-          days: currentWeekDays
-        });
-        weekCounter++;
-        currentWeekDays = [];
-      }
-    });
-
-    const select = document.getElementById('weekSelect');
-    select.innerHTML = '';
-    allWeeks.forEach((w, idx) => {
-      const option = document.createElement('option');
-      option.value = idx;
-      option.textContent = w.label;
-      select.appendChild(option);
-    });
-
-    if (allWeeks.length > 0) {
-      document.getElementById('weekSection').style.display = 'block';
-      currentWeekIndex = 0;
-      renderWeekCards(0);
-    }
-  }
-
-  function renderWeekCards(idx) {
-    const container = document.getElementById('weekCards'); 
-    container.innerHTML = '';
-    if (!allWeeks[idx]) return;
-    document.getElementById('weekSelect').value = idx;
-
-    allWeeks[idx].days.forEach(item => {
-      const row = item.rawRow;
-      const [y, m, d] = item.dateStr.split('-');
-      const dayOfWeek = item.dt.getDay();
-      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
-      const card = document.createElement('div');
-      card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
-      card.innerHTML = `
-        <div class="week-card-header">
-          <div>
-            <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
-            <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${row.Weekday || ''})</span>
+    <!-- TAB 1: CSV 校曆網格區塊 -->
+    <div id="tab-sch-grid">
+      <div id="weekSection" class="week-section" style="display: none;">
+        <div class="week-section-header">
+          <div class="week-section-title">🗓️ 週安排檢視 (Mon - Sun)</div>
+          <div class="week-controls">
+            <button class="btn-nav btn-secondary" onclick="changeWeek(-1)">◀<span class="btn-text"> 上一週</span></button>
+            <select id="weekSelect" onchange="onWeekSelectChange()"></select>
+            <button class="btn-nav btn-secondary" onclick="changeWeek(1)"><span class="btn-text">下一週 </span>▶</button>
           </div>
-          ${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}
         </div>
-        ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
-        ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
-      `;
-      container.appendChild(card);
+        <div id="weekCards" class="week-cards-grid"></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-nav btn-primary" onclick="changeMonth(-1)">◀<span class="btn-text"> 上一個月</span></button>
+        <select id="monthSelect" onchange="renderCalendar()"></select>
+        <button class="btn-nav btn-primary" onclick="changeMonth(1)"><span class="btn-text">下一個月 </span>▶</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日</div>
+        <div class="legend-item"><span class="badge-holiday">假期</span> 學校假期</div>
+        <div class="legend-item"><span class="badge-activity">活動</span> 特別活動</div>
+      </div>
+
+      <div class="scroll-hint">💡 手指左右滑動可檢視完整月曆 ➔</div>
+      <div id="loading">載入 CSV 資料中，請稍候...</div>
+      
+      <div class="calendar-scroll-wrapper">
+        <div id="calendar" class="calendar-grid" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: 課堂時間表 Timetable -->
+    <div id="tab-timetable-log" style="display: none;">
+      <div class="section-header-box tt-header-box">
+        <div style="font-weight: bold; color: #0369a1;">📅 課堂時間表 (Timetable)</div>
+        <div>
+          <select id="ttCycleSelect" onchange="renderTimetable()">
+            <option value="ALL">所有循環日 (All Cycle Days)</option>
+          </select>
+        </div>
+      </div>
+      <div id="ttLoading" style="text-align: center; padding: 20px; color: #64748b;">載入時間表資料中...</div>
+      <div id="ttContent" class="data-table-wrapper">
+        <table id="ttTable">
+          <thead>
+            <tr>
+              <th>循環日</th>
+              <th>課節/時間</th>
+              <th>班別</th>
+              <th>科目</th>
+              <th>地點/課室</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody id="ttBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: 數學科教學日誌 -->
+    <div id="tab-math-log" style="display: none;">
+      <div class="section-header-box math-header-box">
+        <div style="font-weight: bold; color: #115e59;">📐 數學科教學進度與提示</div>
+        <div>
+          <select id="mathClassSelect" onchange="renderMathLogs()">
+            <option value="ALL">所有班別 (All)</option>
+          </select>
+        </div>
+      </div>
+      <div id="mathLoading" style="text-align: center; padding: 20px; color: #64748b;">載入中...</div>
+      <div id="mathGrid" class="card-grid"></div>
+    </div>
+
+    <!-- TAB 4: 教學計劃 SOW -->
+    <div id="tab-sow-log" style="display: none;">
+      <div class="section-header-box sow-header-box">
+        <div style="font-weight: bold; color: #5b21b6;">📘 科組教學計劃 (Scheme of Work)</div>
+        <div id="sowProgressText" style="font-size: 0.88rem; font-weight: bold; color: #6b21a8;">完成度: 0%</div>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <div class="progress-bar-container">
+          <div id="sowProgressBar" class="progress-bar-fill"></div>
+        </div>
+      </div>
+      <div id="sowLoading" style="text-align: center; padding: 20px; color: #64748b;">載入 SOW 資料中...</div>
+      <div id="sowGrid" class="card-grid"></div>
+    </div>
+
+    <!-- TAB 5: 班主任事務 -->
+    <div id="tab-ft-log" style="display: none;">
+      <div class="section-header-box ft-header-box">
+        <div style="font-weight: bold; color: #9a3412;">🏫 班主任事務與學生跟進</div>
+        <div style="display:flex; gap:8px;">
+          <select id="ftClassSelect" onchange="renderFTLogs()">
+            <option value="ALL">所有班別</option>
+          </select>
+          <select id="ftStatusSelect" onchange="renderFTLogs()">
+            <option value="ALL">所有狀態</option>
+            <option value="未完成">未完成/跟進中</option>
+            <option value="已完成">已完成</option>
+          </select>
+        </div>
+      </div>
+      <div id="ftLoading" style="text-align: center; padding: 20px; color: #64748b;">載入班主任資料中...</div>
+      <div id="ftGrid" class="card-grid"></div>
+    </div>
+
+    <!-- TAB 6: Google Calendar -->
+    <div id="tab-gcal" style="display: none;">
+      <div class="gcal-container">
+        <iframe src="https://calendar.google.com/calendar/embed?src=yuenck%40web.wfjlps.edu.hk&ctz=Asia%2FHong_Kong" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const CSV_URL = 'Sch Calendar-Grid view.csv';
+    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
+    
+    const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable`;
+    const MATH_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
+    const SOW_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=SOW`;
+    const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=FormTeacher`;
+
+    let calendarData = {}; 
+    let availableDatesSorted = [];
+    let availableMonths = [];
+    let allWeeks = [];
+    let currentWeekIndex = 0;
+    let currentMonthIndex = 0;
+
+    let timetableRows = [], mathRows = [], sowRows = [], ftRows = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. 校曆
+      Papa.parse(CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: (results) => {
+          processData(results.data);
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('weekSection').style.display = 'block';
+          document.getElementById('calendar').style.display = 'grid';
+        }
+      });
+
+      // 2. Google Sheet 各頁面
+      loadGoogleSheets();
     });
-  }
 
-  function onWeekSelectChange() {
-    currentWeekIndex = parseInt(document.getElementById('weekSelect').value) || 0;
-    renderWeekCards(currentWeekIndex);
-    syncCalendarToWeek(currentWeekIndex);
-  }
+    function switchTab(tabName) {
+      const tabs = ['sch-grid', 'timetable-log', 'math-log', 'sow-log', 'ft-log', 'gcal'];
+      tabs.forEach(t => document.getElementById(`tab-${t}`).style.display = 'none');
 
-  function changeWeek(delta) {
-    let newIndex = currentWeekIndex + delta;
-    if (newIndex >= 0 && newIndex < allWeeks.length) {
-      currentWeekIndex = newIndex;
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      if (tabName === 'sch-grid') { document.getElementById('tab-sch-grid').style.display = 'block'; buttons[0].classList.add('active'); }
+      else if (tabName === 'timetable-log') { document.getElementById('tab-timetable-log').style.display = 'block'; buttons[1].classList.add('active'); }
+      else if (tabName === 'math-log') { document.getElementById('tab-math-log').style.display = 'block'; buttons[2].classList.add('active'); }
+      else if (tabName === 'sow-log') { document.getElementById('tab-sow-log').style.display = 'block'; buttons[3].classList.add('active'); }
+      else if (tabName === 'ft-log') { document.getElementById('tab-ft-log').style.display = 'block'; buttons[4].classList.add('active'); }
+      else if (tabName === 'gcal') { document.getElementById('tab-gcal').style.display = 'block'; buttons[5].classList.add('active'); }
+    }
+
+    /* 讀取 Google Sheet 所有資料 */
+    function loadGoogleSheets() {
+      // 時間表
+      Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
+        timetableRows = res.data; document.getElementById('ttLoading').style.display = 'none';
+        setupTimetableCycleFilter(); renderTimetable();
+      }, error: () => { document.getElementById('ttLoading').innerHTML = '請確認 Google Sheet 中有名為 <strong>timetable</strong> 的工作表。'; }});
+
+      // 數學日誌
+      Papa.parse(MATH_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
+        mathRows = res.data; document.getElementById('mathLoading').style.display = 'none';
+        setupMathClassFilter(); renderMathLogs();
+      }});
+
+      // SOW
+      Papa.parse(SOW_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
+        sowRows = res.data; document.getElementById('sowLoading').style.display = 'none';
+        renderSOWLogs();
+      }, error: () => { document.getElementById('sowLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>SOW</strong> 的分頁。'; }});
+
+      // 班主任事務
+      Papa.parse(FT_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
+        ftRows = res.data; document.getElementById('ftLoading').style.display = 'none';
+        setupFTClassFilter();
+        renderFTLogs();
+      }, error: () => { document.getElementById('ftLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>FormTeacher</strong> 的分頁。'; }});
+    }
+
+    function setupTimetableCycleFilter() {
+      const cycleSet = new Set();
+      timetableRows.forEach(row => {
+        const c = row.Cycle || row['循環日'] || row['Day'];
+        if (c) cycleSet.add(c.trim());
+      });
+      const select = document.getElementById('ttCycleSelect');
+      select.innerHTML = '<option value="ALL">所有循環日 (All Cycle Days)</option>';
+      Array.from(cycleSet).sort().forEach(cyc => {
+        const opt = document.createElement('option'); opt.value = cyc; opt.textContent = `循環日: ${cyc}`; select.appendChild(opt);
+      });
+    }
+
+    function renderTimetable() {
+      const tbody = document.getElementById('ttBody'); tbody.innerHTML = '';
+      const selectedCycle = document.getElementById('ttCycleSelect').value;
+
+      const filtered = timetableRows.filter(r => {
+        const c = (r.Cycle || r['循環日'] || r['Day'] || '').trim();
+        return selectedCycle === 'ALL' || c === selectedCycle;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">暫無時間表資料</td></tr>';
+        return;
+      }
+
+      filtered.forEach(row => {
+        const cycle = row.Cycle || row['循環日'] || row['Day'] || '-';
+        const period = row.Period || row['課節'] || row['時間'] || '-';
+        const className = row.Class || row['班別'] || '-';
+        const subject = row.Subject || row['科目'] || '-';
+        const room = row.Room || row['地點'] || row['課室'] || '-';
+        const remarks = row.Remarks || row['備註'] || '-';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="badge-cycle">${cycle}</span></td>
+          <td><strong>${period}</strong></td>
+          <td><span style="color:#0284c7; font-weight:bold;">${className}</span></td>
+          <td>${subject}</td>
+          <td>📍 ${room}</td>
+          <td style="color:#64748b;">${remarks}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function setupMathClassFilter() {
+      const classSet = new Set();
+      mathRows.forEach(row => { const c = row.Class || row['班別']; if (c) classSet.add(c.trim()); });
+      const select = document.getElementById('mathClassSelect');
+      select.innerHTML = '<option value="ALL">所有班別 (All)</option>';
+      Array.from(classSet).sort().forEach(cls => {
+        const opt = document.createElement('option'); opt.value = cls; opt.textContent = `班別: ${cls}`; select.appendChild(opt);
+      });
+    }
+
+    function renderMathLogs() {
+      const container = document.getElementById('mathGrid'); container.innerHTML = '';
+      const selectedClass = document.getElementById('mathClassSelect').value;
+      const filtered = mathRows.filter(r => selectedClass === 'ALL' || (r.Class || r['班別'] || '').trim() === selectedClass);
+
+      if (filtered.length === 0) { container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">暫無資料</div>'; return; }
+      [...filtered].reverse().forEach(row => {
+        const card = document.createElement('div'); card.className = 'data-card math-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>📅 ${row.Date || row['日期'] || ''}</strong>
+            <span style="background:#0d9488; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:bold;">${row.Class || row['班別'] || ''}</span>
+          </div>
+          <div><strong>📘 課題：</strong> ${row.Topic || row['章節/課題'] || ''}</div>
+          <div><strong>✏️ 進度：</strong> ${row.Progress || row['課堂進度'] || ''}</div>
+          <div><strong>📦 功課：</strong> ${row.Homework || row['功課收發'] || ''}</div>
+          ${row.Notice || row['特別提示'] ? `<div style="background:#fff7ed; border-left:3px solid #f97316; padding:6px; font-size:0.82rem; color:#9a3412;">🔔 ${row.Notice || row['特別提示']}</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderSOWLogs() {
+      const container = document.getElementById('sowGrid'); container.innerHTML = '';
+      if (sowRows.length === 0) { container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">請在 Google Sheet「SOW」工作表中填寫教學計劃。</div>'; return; }
+
+      let completedCount = 0;
+      sowRows.forEach(row => {
+        const status = row.Status || row['完成狀態'] || '未完成';
+        if (status === '已完成') completedCount++;
+
+        let badgeClass = 'badge-status-todo';
+        if (status === '已完成') badgeClass = 'badge-status-done';
+        else if (status === '進行中') badgeClass = 'badge-status-doing';
+
+        const card = document.createElement('div'); card.className = 'data-card sow-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>${row.Chapter || row['章節/單元'] || ''}</strong>
+            <span class="${badgeClass}">${status}</span>
+          </div>
+          <div style="font-size:1.05rem; font-weight:bold; color:#4c1d95;">${row.Topic || row['課題名稱'] || ''}</div>
+          <div style="font-size:0.85rem; color:#64748b;">預計完成：${row['Target Date'] || row['預計完成日期'] || '未設定'}</div>
+          ${row['Completion Date'] || row['實際完成日期'] ? `<div style="font-size:0.85rem; color:#166534;">實際完成：${row['Completion Date'] || row['實際完成日期']}</div>` : ''}
+          ${row.Reflection || row['單元檢討/備註'] ? `<div style="background:#f3e8ff; border-left:3px solid #7c3aed; padding:6px; font-size:0.82rem; color:#5b21b6; margin-top:4px;">💭 <strong>檢討：</strong> ${row.Reflection || row['單元檢討/備註']}</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+
+      const percent = Math.round((completedCount / sowRows.length) * 100) || 0;
+      document.getElementById('sowProgressText').textContent = `進度: ${completedCount}/${sowRows.length} (${percent}%)`;
+      document.getElementById('sowProgressBar').style.width = `${percent}%`;
+    }
+
+    /* 班主任事務 - 班別選單建立 */
+    function setupFTClassFilter() {
+      const classSet = new Set();
+      ftRows.forEach(row => {
+        const c = row.Class || row['班別'];
+        if (c) classSet.add(c.trim());
+      });
+      const select = document.getElementById('ftClassSelect');
+      select.innerHTML = '<option value="ALL">所有班別</option>';
+      Array.from(classSet).sort().forEach(cls => {
+        const opt = document.createElement('option'); opt.value = cls; opt.textContent = `班別: ${cls}`; select.appendChild(opt);
+      });
+    }
+
+    /* 班主任事務 - 依 Date | Class | Category | Item/task | Target student | Status | Remarks 渲染 */
+    function renderFTLogs() {
+      const container = document.getElementById('ftGrid'); container.innerHTML = '';
+      const filterClass = document.getElementById('ftClassSelect').value;
+      const filterStatus = document.getElementById('ftStatusSelect').value;
+
+      const filtered = ftRows.filter(r => {
+        const cls = (r.Class || r['班別'] || '').trim();
+        const status = (r.Status || r['狀態'] || '未完成').trim();
+
+        const matchClass = (filterClass === 'ALL' || cls === filterClass);
+        let matchStatus = true;
+        if (filterStatus === '未完成') matchStatus = (status !== '已完成');
+        else if (filterStatus === '已完成') matchStatus = (status === '已完成');
+
+        return matchClass && matchStatus;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟進事項。</div>';
+        return;
+      }
+
+      [...filtered].reverse().forEach(row => {
+        const date = row.Date || row['日期'] || '';
+        const className = row.Class || row['班別'] || '';
+        const category = row.Category || row['類別'] || '';
+        const task = row['Item/task'] || row.Item || row['跟進事項/提醒'] || row['項目'] || '';
+        const targetStudent = row['Target student'] || row.Student || row['目標學生/全班'] || '';
+        const status = row.Status || row['狀態'] || '未完成';
+        const remarks = row.Remarks || row['備註'] || '';
+
+        let badgeClass = status === '已完成' ? 'badge-status-done' : 'badge-status-todo';
+
+        const card = document.createElement('div'); card.className = 'data-card ft-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.85rem; color:#64748b;">📅 ${date}</span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              ${className ? `<span style="background:#ea580c; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:bold;">${className}</span>` : ''}
+              <span class="${badgeClass}">${status}</span>
+            </div>
+          </div>
+          ${category ? `<div><span class="badge-category">${category}</span></div>` : ''}
+          <div style="font-weight:bold; color:#9a3412; font-size:1rem;">📌 ${task}</div>
+          ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c;">👤 <strong>目標學生/全班：</strong> ${targetStudent}</div>` : ''}
+          ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* 校曆與按 Week 分組邏輯 */
+    function processData(rows) {
+      const monthSet = new Set(); const dateList = [];
+      rows.forEach(row => {
+        if (!row.Date) return;
+        const parts = row.Date.split('/');
+        if (parts.length === 3) {
+          const formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          calendarData[formattedDate] = row;
+          monthSet.add(`${parts[2]}-${parts[1].padStart(2, '0')}`);
+          dateList.push({ dateStr: formattedDate, rawRow: row, dt: new Date(formattedDate) });
+        }
+      });
+      dateList.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+      availableDatesSorted = dateList;
+      availableMonths = Array.from(monthSet).sort();
+
+      const select = document.getElementById('monthSelect'); select.innerHTML = '';
+      availableMonths.forEach((ym, idx) => {
+        const opt = document.createElement('option'); opt.value = idx;
+        const [y, m] = ym.split('-'); opt.textContent = `${y}年${parseInt(m)}月`;
+        select.appendChild(opt);
+      });
+
+      parseAllWeeks(); 
+      renderCalendar();
+    }
+
+    /* 將日期按「星期一～星期日」進行分週 */
+    function parseAllWeeks() {
+      allWeeks = [];
+      if (availableDatesSorted.length === 0) return;
+
+      let currentWeekDays = [];
+      let weekCounter = 1;
+
+      availableDatesSorted.forEach((item, idx) => {
+        currentWeekDays.push(item);
+        const dayOfWeek = item.dt.getDay(); // 0 is Sun, 6 is Sat
+
+        // 當遇到星期日 (0) 或已經是最後一筆資料時，結算為一週
+        if (dayOfWeek === 0 || idx === availableDatesSorted.length - 1) {
+          const startDate = currentWeekDays[0].dateStr;
+          const endDate = currentWeekDays[currentWeekDays.length - 1].dateStr;
+          
+          const startM = parseInt(startDate.split('-')[1]);
+          const startD = parseInt(startDate.split('-')[2]);
+          const endM = parseInt(endDate.split('-')[1]);
+          const endD = parseInt(endDate.split('-')[2]);
+
+          allWeeks.push({
+            label: `第 ${weekCounter} 週 (${startM}/${startD} - ${endM}/${endD})`,
+            startDate: startDate,
+            days: currentWeekDays
+          });
+          weekCounter++;
+          currentWeekDays = [];
+        }
+      });
+
+      const select = document.getElementById('weekSelect'); select.innerHTML = '';
+      allWeeks.forEach((w, idx) => {
+        const opt = document.createElement('option'); opt.value = idx; opt.textContent = w.label;
+        select.appendChild(opt);
+      });
+
+      if (allWeeks.length > 0) renderWeekCards(0);
+    }
+
+    /* 渲染整週卡片 (Mon - Sun) */
+    function renderWeekCards(idx) {
+      const container = document.getElementById('weekCards'); container.innerHTML = '';
+      if (!allWeeks[idx]) return;
+      document.getElementById('weekSelect').value = idx;
+
+      allWeeks[idx].days.forEach(item => {
+        const row = item.rawRow;
+        const [y, m, d] = item.dateStr.split('-');
+        const dayOfWeek = item.dt.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+        const card = document.createElement('div');
+        card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
+        card.innerHTML = `
+          <div class="week-card-header">
+            <div>
+              <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
+              <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${row.Weekday || ''})</span>
+            </div>
+            ${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}
+          </div>
+          ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
+          ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function onWeekSelectChange() {
+      currentWeekIndex = parseInt(document.getElementById('weekSelect').value) || 0;
       renderWeekCards(currentWeekIndex);
       syncCalendarToWeek(currentWeekIndex);
     }
-  }
 
-  function syncCalendarToWeek(idx) {
-    if (!allWeeks[idx]) return;
-    const targetYM = allWeeks[idx].startDate.substring(0, 7);
-    const monthIndex = availableMonths.indexOf(targetYM);
-    if (monthIndex !== -1 && monthIndex !== currentMonthIndex) {
-      currentMonthIndex = monthIndex;
-      document.getElementById('monthSelect').value = targetYM;
-      renderCalendar();
-    }
-  }
-
-  function renderCalendar() {
-    currentMonthIndex = availableMonths.indexOf(document.getElementById('monthSelect').value);
-    const targetYM = availableMonths[currentMonthIndex];
-    if (!targetYM) return;
-
-    const [year, month] = targetYM.split('-').map(Number);
-    const calendarEl = document.getElementById('calendar');
-    calendarEl.innerHTML = '';
-
-    ['日 Sun', '一 Mon', '二 Tue', '三 Wed', '四 Thu', '五 Fri', '六 Sat'].forEach((d, i) => {
-      const h = document.createElement('div');
-      h.className = `weekday-header ${i===0||i===6 ? 'weekend' : ''}`;
-      h.textContent = d;
-      calendarEl.appendChild(h);
-    });
-
-    const firstDay = new Date(year, month - 1, 1).getDay();
-    const totalDays = new Date(year, month, 0).getDate();
-
-    for (let i = 0; i < firstDay; i++) {
-      const c = document.createElement('div');
-      c.className = 'day-cell other-month';
-      calendarEl.appendChild(c);
+    function changeWeek(d) {
+      let n = currentWeekIndex + d;
+      if (n >= 0 && n < allWeeks.length) {
+        currentWeekIndex = n;
+        renderWeekCards(n);
+        syncCalendarToWeek(n);
+      }
     }
 
-    for (let d = 1; d <= totalDays; d++) {
-      const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const row = calendarData[dateKey] || {};
-      const cell = document.createElement('div');
-      cell.className = `day-cell ${row['Sch Holiday/Special Sch Day'] ? 'holiday-bg' : ''}`;
-
-      cell.innerHTML = `
-        <div class="day-header">
-          <span class="day-num">${d}</span>
-          ${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}
-        </div>
-        ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
-        ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
-      `;
-      calendarEl.appendChild(cell);
+    function syncCalendarToWeek(idx) {
+      if (!allWeeks[idx]) return;
+      const ym = allWeeks[idx].startDate.substring(0,7);
+      const mIdx = availableMonths.indexOf(ym);
+      if (mIdx !== -1 && mIdx !== currentMonthIndex) {
+        document.getElementById('monthSelect').value = mIdx;
+        renderCalendar();
+      }
     }
-  }
 
-  function changeMonth(delta) {
-    let newIndex = currentMonthIndex + delta;
-    if (newIndex >= 0 && newIndex < availableMonths.length) {
-      currentMonthIndex = newIndex;
-      document.getElementById('monthSelect').value = availableMonths[newIndex];
-      renderCalendar();
+    function renderCalendar() {
+      currentMonthIndex = parseInt(document.getElementById('monthSelect').value) || 0;
+      const targetYM = availableMonths[currentMonthIndex]; if (!targetYM) return;
+      const [year, month] = targetYM.split('-').map(Number);
+      const calendarEl = document.getElementById('calendar'); calendarEl.innerHTML = '';
+
+      ['日 Sun', '一 Mon', '二 Tue', '三 Wed', '四 Thu', '五 Fri', '六 Sat'].forEach((d, i) => {
+        const h = document.createElement('div'); h.className = `weekday-header ${i===0||i===6?'weekend':''}`; h.textContent = d; calendarEl.appendChild(h);
+      });
+
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const totalDays = new Date(year, month, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) { const c = document.createElement('div'); c.className = 'day-cell other-month'; calendarEl.appendChild(c); }
+
+      for (let d = 1; d <= totalDays; d++) {
+        const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const row = calendarData[dateKey] || {};
+        const cell = document.createElement('div'); cell.className = `day-cell ${row['Sch Holiday/Special Sch Day'] ? 'holiday-bg' : ''}`;
+        cell.innerHTML = `
+          <div class="day-header"><span class="day-num">${d}</span>${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}</div>
+          ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
+          ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+        `;
+        calendarEl.appendChild(cell);
+      }
     }
-  }
 
-  /* 課堂時間表與其餘視圖的渲染函數 */
-  function setupTimetableCycleFilter() {
-    const cycleSet = new Set();
-    timetableData.forEach(row => {
-      const c = row.Cycle || row['循環日'] || row['Day'];
-      if (c) cycleSet.add(c.trim());
-    });
-    const select = document.getElementById('ttCycleSelect');
-    select.innerHTML = '<option value="ALL">所有循環日 (All Cycle Days)</option>';
-    Array.from(cycleSet).sort().forEach(cyc => {
-      const opt = document.createElement('option');
-      opt.value = cyc; opt.textContent = `Cycle ${cyc}`;
-      select.appendChild(opt);
-    });
-  }
-
-  function renderTimetable() {
-    const tbody = document.getElementById('timetableBody');
-    tbody.innerHTML = '';
-    const selectedCycle = document.getElementById('ttCycleSelect').value;
-
-    const filtered = timetableData.filter(r => {
-      const c = (r.Cycle || r['循環日'] || r['Day'] || '').trim();
-      return selectedCycle === 'ALL' || c === selectedCycle;
-    });
-
-    filtered.forEach(row => {
-      const tr = document.createElement('tr');
-      const cycle = row.Cycle || row['循環日'] || row['Day'] || '-';
-      tr.innerHTML = `
-        <td><span class="badge-cycle">${cycle}</span></td>
-        <td>${row.Period || row['節次'] || '-'}</td>
-        <td><b>${row.Subject || row['科目'] || '-'}</b></td>
-        <td><span class="badge-class">${row.Class || row['班別'] || '-'}</span></td>
-        <td>${row.Room || row['課室'] || '-'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function setupMathClassFilter() {
-    const classSet = new Set();
-    mathLogData.forEach(row => {
-      const cl = row.Class || row['班別'];
-      if (cl) classSet.add(cl.trim());
-    });
-    const select = document.getElementById('mathClassSelect');
-    select.innerHTML = '<option value="ALL">所有班別</option>';
-    Array.from(classSet).sort().forEach(cl => {
-      const opt = document.createElement('option');
-      opt.value = cl; opt.textContent = cl;
-      select.appendChild(opt);
-    });
-  }
-
-  function renderMathLogs() {
-    const tbody = document.getElementById('mathLogBody');
-    tbody.innerHTML = '';
-    const selectedClass = document.getElementById('mathClassSelect').value;
-
-    const filtered = mathLogData.filter(r => {
-      const cl = (r.Class || r['班別'] || '').trim();
-      return selectedClass === 'ALL' || cl === selectedClass;
-    });
-
-    filtered.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${row.Date || row['日期'] || '-'}</td>
-        <td><span class="badge-class">${row.Class || row['班別'] || '-'}</span></td>
-        <td><b>${row.Topic || row['單元/課題'] || '-'}</b></td>
-        <td>${row.Content || row['教學進度'] || '-'}</td>
-        <td>${row.Homework || row['功課備忘'] || '-'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function renderSOWLogs() {
-    const tbody = document.getElementById('sowBody');
-    tbody.innerHTML = '';
-    sowData.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${row.Week || row['周次'] || '-'}</td>
-        <td><b>${row.Unit || row['單元標題'] || '-'}</b></td>
-        <td>${row.Focus || row['核心學習重點'] || '-'}</td>
-        <td>${row.Periods || row['建議節數'] || '-'}</td>
-        <td>${row.Assessment || row['評估方式'] || '-'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function renderFTLogs() {
-    const tbody = document.getElementById('ftLogBody');
-    tbody.innerHTML = '';
-    const selectedStatus = document.getElementById('ftStatusSelect').value;
-
-    const filtered = ftLogData.filter(r => {
-      const st = (r.Status || r['狀態'] || '').trim();
-      return selectedStatus === 'ALL' || st === selectedStatus;
-    });
-
-    filtered.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${row.Date || row['日期'] || '-'}</td>
-        <td>${row.Category || row['類別'] || '-'}</td>
-        <td><b>${row.Task || row['項目'] || '-'}</b></td>
-        <td>${row.Person || row['負責人'] || '-'}</td>
-        <td>${row.Status || row['狀態'] || '-'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-</script>
+    function changeMonth(d) { let n = currentMonthIndex + d; if (n>=0 && n<availableMonths.length) { document.getElementById('monthSelect').value=n; renderCalendar(); } }
+  </script>
 
 </body>
 </html>
