@@ -21,14 +21,14 @@
       background-color: var(--bg-color);
       color: #1e293b;
       margin: 0;
-      padding: 15px;
+      padding: 10px;
     }
 
     .container {
       max-width: 1150px;
       margin: 0 auto;
       background: #ffffff;
-      padding: 20px;
+      padding: 15px;
       border-radius: 10px;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
@@ -39,22 +39,22 @@
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       gap: 10px;
       border-bottom: 2px solid var(--primary-color);
-      padding-bottom: 10px;
+      padding-bottom: 8px;
     }
 
     h1 {
       margin: 0;
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       color: #1e3a8a;
     }
 
     /* 分頁標籤頁 (Tabs) */
     .nav-tabs {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 15px;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
@@ -62,8 +62,8 @@
     }
 
     .tab-btn {
-      padding: 8px 16px;
-      font-size: 0.95rem;
+      padding: 8px 12px;
+      font-size: 0.9rem;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       background-color: #f1f5f9;
@@ -71,6 +71,8 @@
       cursor: pointer;
       font-weight: 600;
       transition: all 0.2s;
+      flex: 1 1 auto;
+      text-align: center;
     }
 
     .tab-btn.active {
@@ -88,44 +90,63 @@
       background-color: #e2e8f0;
     }
 
-    /* 控制項 */
+    /* 控制項與響應式按鈕 */
     .controls {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
     }
 
     select, button {
       padding: 6px 12px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       background-color: #fff;
       cursor: pointer;
     }
 
+    .btn-nav {
+      padding: 6px 12px;
+      font-weight: bold;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .btn-primary {
       background-color: var(--primary-color);
       color: white;
       border: none;
-      font-weight: bold;
     }
 
-    .btn-primary:hover {
-      background-color: #1d4ed8;
-    }
+    .btn-primary:hover { background-color: #1d4ed8; }
 
     .btn-secondary {
       background-color: #0284c7;
       color: white;
       border: none;
-      font-weight: bold;
     }
 
-    .btn-secondary:hover {
-      background-color: #0369a1;
+    .btn-secondary:hover { background-color: #0369a1; }
+
+    /* 手機上自動隱藏按鈕文字，僅留箭咀 */
+    @media (max-width: 600px) {
+      .btn-text {
+        display: none;
+      }
+      .btn-nav {
+        padding: 6px 10px;
+        font-size: 1rem;
+      }
+      select {
+        padding: 6px 4px;
+        font-size: 0.85rem;
+        max-width: 180px;
+      }
     }
 
     /* Cycle 卡片區樣式 */
@@ -133,21 +154,20 @@
       background-color: #eff6ff;
       border: 1px solid #bfdbfe;
       border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 20px;
+      padding: 12px;
+      margin-bottom: 15px;
     }
 
     .cycle-section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      gap: 8px;
     }
 
     .cycle-section-title {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: bold;
       color: #1e40af;
       margin: 0;
@@ -156,24 +176,24 @@
     .cycle-controls {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .cycle-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
     }
 
     .cycle-card {
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     .cycle-card-header {
@@ -186,7 +206,7 @@
 
     .cycle-card-date {
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #334155;
     }
 
@@ -195,12 +215,12 @@
       color: #64748b;
     }
 
-    /* 月曆表格樣式 */
+    /* 月曆圖例與滑動容器 */
     .legend {
       display: flex;
-      gap: 12px;
-      font-size: 0.85rem;
-      margin-bottom: 12px;
+      gap: 8px;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
       flex-wrap: wrap;
     }
 
@@ -209,14 +229,34 @@
     .badge-holiday { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; border: 1px solid #fca5a5; font-size: 0.75rem; }
     .badge-activity { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; border: 1px solid #fcd34d; font-size: 0.75rem; }
 
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 1px;
-      background-color: var(--border-color);
+    /* 手機滑動提示 */
+    .scroll-hint {
+      display: none;
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 6px;
+      text-align: right;
+    }
+
+    @media (max-width: 768px) {
+      .scroll-hint { display: block; }
+    }
+
+    /* 月曆滾動包裝容器 (關鍵：允許手機橫向拖曳滑動) */
+    .calendar-scroll-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      overflow: hidden;
+      background-color: var(--border-color);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(95px, 1fr));
+      gap: 1px;
+      min-width: 680px; /* 確保在手機上維持 7 欄不變形 */
     }
 
     .weekday-header {
@@ -232,8 +272,8 @@
 
     .day-cell {
       background-color: #ffffff;
-      min-height: 95px;
-      padding: 6px;
+      min-height: 90px;
+      padding: 5px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
@@ -250,14 +290,14 @@
       align-items: center;
     }
 
-    .day-num { font-weight: bold; font-size: 1rem; color: #0f172a; }
+    .day-num { font-weight: bold; font-size: 0.95rem; color: #0f172a; }
     .day-num.holiday-num { color: #dc2626; }
 
     .holiday-tag {
       background-color: #fee2e2;
       color: #991b1b;
-      font-size: 0.73rem;
-      padding: 3px 5px;
+      font-size: 0.72rem;
+      padding: 2px 4px;
       border-radius: 4px;
       border-left: 3px solid #ef4444;
       line-height: 1.2;
@@ -267,7 +307,7 @@
       background-color: #fef3c7;
       color: #78350f;
       font-size: 0.72rem;
-      padding: 3px 5px;
+      padding: 2px 4px;
       border-radius: 4px;
       border-left: 3px solid #f59e0b;
       line-height: 1.2;
@@ -276,7 +316,7 @@
     /* Google Calendar 容器 */
     .gcal-container {
       width: 100%;
-      height: 700px;
+      height: 650px;
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid var(--border-color);
@@ -288,15 +328,13 @@
       border: 0;
     }
 
-    /* ========================================== */
-    /* 數學科教學日誌 (Math Tab) 專屬樣式 */
-    /* ========================================== */
+    /* 數學科教學日誌 (Math Tab) 樣式 */
     .math-header-box {
       background: #ccfbf1;
       border: 1px solid #99f6e4;
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -307,7 +345,7 @@
     .math-title {
       font-weight: bold;
       color: #115e59;
-      font-size: 1.1rem;
+      font-size: 1rem;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -315,20 +353,20 @@
 
     .math-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
     }
 
     .math-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 15px;
+      padding: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.04);
       border-top: 4px solid var(--math-color);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .math-card-header {
@@ -336,33 +374,33 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
 
     .math-date {
       font-weight: bold;
       color: #334155;
+      font-size: 0.9rem;
     }
 
     .math-badge-class {
       background-color: #0d9488;
       color: white;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       padding: 2px 8px;
       border-radius: 12px;
       font-weight: bold;
     }
 
     .math-item {
-      font-size: 0.9rem;
-      line-height: 1.4;
+      font-size: 0.88rem;
+      line-height: 1.35;
     }
 
     .math-label {
       font-weight: bold;
       color: #475569;
-      font-size: 0.82rem;
-      text-transform: uppercase;
+      font-size: 0.78rem;
       margin-bottom: 2px;
     }
 
@@ -373,27 +411,27 @@
     .math-notice-box {
       background-color: #fff7ed;
       border-left: 3px solid #f97316;
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: #9a3412;
     }
 
-    #loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #64748b; }
+    #loading { text-align: center; padding: 30px; font-size: 1rem; color: #64748b; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="header">
-      <h1>校曆月曆表 & 數學科教學管理 (2026-2027)</h1>
+      <h1>校曆月曆表 & 數學科教學管理</h1>
     </div>
 
     <!-- 切換 Tab 選單 -->
     <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆網格與 Cycle 視圖</button>
-      <button class="tab-btn" onclick="switchTab('gcal')">📅 Google Calendar 檢視</button>
-      <button class="tab-btn math-tab" onclick="switchTab('math-log')">📐 數學科教學日誌與進度</button>
+      <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆與 Cycle</button>
+      <button class="tab-btn" onclick="switchTab('gcal')">📅 Google Calendar</button>
+      <button class="tab-btn math-tab" onclick="switchTab('math-log')">📐 數學科日誌</button>
     </div>
 
     <!-- TAB 1: CSV 校曆網格區塊 -->
@@ -402,12 +440,12 @@
       <div id="cycleSection" class="cycle-section" style="display: none;">
         <div class="cycle-section-header">
           <div class="cycle-section-title">
-            🔄 循環日預覽 (Day A - Day F)
+            🔄 循環日預覽 (Day A - F)
           </div>
           <div class="cycle-controls">
-            <button class="btn-secondary" onclick="changeCycle(-1)">◀ 上一個 Cycle</button>
+            <button class="btn-nav btn-secondary" onclick="changeCycle(-1)">◀<span class="btn-text"> 上一個 Cycle</span></button>
             <select id="cycleSelect" onchange="onCycleSelectChange()"></select>
-            <button class="btn-secondary" onclick="changeCycle(1)">下一個 Cycle ▶</button>
+            <button class="btn-nav btn-secondary" onclick="changeCycle(1)"><span class="btn-text">下一個 Cycle </span>▶</button>
           </div>
         </div>
         <div id="cycleCards" class="cycle-cards-grid"></div>
@@ -415,19 +453,25 @@
 
       <!-- 月曆月份控制列 -->
       <div class="controls">
-        <button class="btn-primary" onclick="changeMonth(-1)">◀ 上一個月</button>
+        <button class="btn-nav btn-primary" onclick="changeMonth(-1)">◀<span class="btn-text"> 上一個月</span></button>
         <select id="monthSelect" onchange="renderCalendar()"></select>
-        <button class="btn-primary" onclick="changeMonth(1)">下一個月 ▶</button>
+        <button class="btn-nav btn-primary" onclick="changeMonth(1)"><span class="btn-text">下一個月 </span>▶</button>
       </div>
 
       <div class="legend">
-        <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日 Cycle Day</div>
-        <div class="legend-item"><span class="badge-holiday">假期/特別日</span> School Holiday</div>
-        <div class="legend-item"><span class="badge-activity">學校活動</span> Special Activity</div>
+        <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日</div>
+        <div class="legend-item"><span class="badge-holiday">假期</span> 學校假期</div>
+        <div class="legend-item"><span class="badge-activity">活動</span> 特別活動</div>
       </div>
 
+      <div class="scroll-hint">💡 手指左右滑動可檢視完整月曆 ➔</div>
+
       <div id="loading">載入 CSV 資料中，請稍候...</div>
-      <div id="calendar" class="calendar-grid" style="display: none;"></div>
+      
+      <!-- 滾動包裝容器 (支援手機拖曳) -->
+      <div class="calendar-scroll-wrapper">
+        <div id="calendar" class="calendar-grid" style="display: none;"></div>
+      </div>
     </div>
 
     <!-- TAB 2: Google Calendar 區塊 -->
@@ -441,17 +485,16 @@
     <div id="tab-math-log" style="display: none;">
       <div class="math-header-box">
         <div class="math-title">
-          📐 數學科教學進度、功課與特別提示
+          📐 數學科教學進度與提示
         </div>
         <div>
-          <label for="mathClassSelect" style="font-size: 0.9rem; font-weight: bold; color: #0f766e; margin-right: 5px;">篩選班別：</label>
           <select id="mathClassSelect" onchange="renderMathLogs()">
-            <option value="ALL">所有班別 (All Classes)</option>
+            <option value="ALL">所有班別 (All)</option>
           </select>
         </div>
       </div>
 
-      <div id="mathLoading" style="text-align: center; padding: 30px; color: #64748b;">正在載入 Google Sheet 數據...</div>
+      <div id="mathLoading" style="text-align: center; padding: 20px; color: #64748b;">正在載入 Google Sheet 數據...</div>
       <div id="mathGrid" class="math-grid"></div>
     </div>
 
@@ -459,8 +502,6 @@
 
   <script>
     const CSV_URL = 'Sch Calendar-Grid view.csv';
-    
-    // 您提供的 Google Sheet ID
     const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
     const GOOGLE_SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
 
@@ -542,13 +583,12 @@
     function setupMathClassFilter() {
       const classSet = new Set();
       mathSheetRows.forEach(row => {
-        // 自動尋找可能代表班別的欄位名稱 (Class, 班別)
         const className = row.Class || row['班別'] || row['班級'];
         if (className) classSet.add(className.trim());
       });
 
       const select = document.getElementById('mathClassSelect');
-      select.innerHTML = '<option value="ALL">所有班別 (All Classes)</option>';
+      select.innerHTML = '<option value="ALL">所有班別 (All)</option>';
       Array.from(classSet).sort().forEach(cls => {
         const opt = document.createElement('option');
         opt.value = cls;
@@ -563,18 +603,16 @@
 
       const selectedClass = document.getElementById('mathClassSelect').value;
 
-      // 篩選資料
       const filteredRows = mathSheetRows.filter(row => {
         const cls = row.Class || row['班別'] || row['班級'] || '';
         return selectedClass === 'ALL' || cls.trim() === selectedClass;
       });
 
       if (filteredRows.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1/-1; color:#64748b; padding:20px; text-align:center;">目前沒有找到相關的教學記錄。可以在 Google Sheet 新增資料。</div>';
+        container.innerHTML = '<div style="grid-column: 1/-1; color:#64748b; padding:20px; text-align:center;">目前沒有找到相關的教學記錄。</div>';
         return;
       }
 
-      // 按日期倒序排列 (最新顯示在最前)
       filteredRows.reverse();
 
       filteredRows.forEach(row => {
@@ -673,7 +711,7 @@
         const option = document.createElement('option');
         option.value = idx;
         const [y, m] = ym.split('-');
-        option.textContent = `${y}年 ${parseInt(m)}月`;
+        option.textContent = `${y}年${parseInt(m)}月`;
         select.appendChild(option);
       });
 
@@ -705,7 +743,7 @@
             const endD = parseInt(endDate.split('-')[2]);
 
             allCycles.push({
-              label: `Cycle ${cycleNum} (${startM}/${startD} - ${endM}/${endD})`,
+              label: `Cycle ${cycleNum} (${startM}/${startD}-${endM}/${endD})`,
               startDate: startDate,
               days: currentGroup
             });
@@ -811,7 +849,7 @@
       const calendarEl = document.getElementById('calendar');
       calendarEl.innerHTML = '';
 
-      const weekdays = ['星期日 Sun', '星期一 Mon', '星期二 Tue', '星期三 Wed', '星期四 Thu', '星期五 Fri', '星期六 Sat'];
+      const weekdays = ['日 Sun', '一 Mon', '二 Tue', '三 Wed', '四 Thu', '五 Fri', '六 Sat'];
       weekdays.forEach((day, index) => {
         const header = document.createElement('div');
         header.className = `weekday-header ${index === 0 || index === 6 ? 'weekend' : ''}`;
