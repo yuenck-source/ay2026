@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026-2027 School Calendar & Google Calendar</title>
+  <title>2026-2027 School Calendar & Math Teaching Log</title>
 
   <!-- PapaParse 用於高效率解析 CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -11,6 +11,7 @@
   <style>
     :root {
       --primary-color: #2563eb;
+      --math-color: #0d9488;
       --bg-color: #f8fafc;
       --border-color: #cbd5e1;
     }
@@ -57,6 +58,7 @@
       margin-bottom: 15px;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
+      flex-wrap: wrap;
     }
 
     .tab-btn {
@@ -75,6 +77,11 @@
       background-color: var(--primary-color);
       color: #ffffff;
       border-color: var(--primary-color);
+    }
+
+    .tab-btn.active.math-tab {
+      background-color: var(--math-color);
+      border-color: var(--math-color);
     }
 
     .tab-btn:hover:not(.active) {
@@ -281,6 +288,97 @@
       border: 0;
     }
 
+    /* ========================================== */
+    /* 數學科教學日誌 (Math Tab) 專屬樣式 */
+    /* ========================================== */
+    .math-header-box {
+      background: #ccfbf1;
+      border: 1px solid #99f6e4;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .math-title {
+      font-weight: bold;
+      color: #115e59;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .math-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 15px;
+    }
+
+    .math-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      border-top: 4px solid var(--math-color);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .math-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+
+    .math-date {
+      font-weight: bold;
+      color: #334155;
+    }
+
+    .math-badge-class {
+      background-color: #0d9488;
+      color: white;
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .math-item {
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .math-label {
+      font-weight: bold;
+      color: #475569;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .math-value {
+      color: #0f172a;
+    }
+
+    .math-notice-box {
+      background-color: #fff7ed;
+      border-left: 3px solid #f97316;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      color: #9a3412;
+    }
+
     #loading { text-align: center; padding: 40px; font-size: 1.1rem; color: #64748b; }
   </style>
 </head>
@@ -288,18 +386,19 @@
 
   <div class="container">
     <div class="header">
-      <h1>校曆月曆表 (2026-2027)</h1>
+      <h1>校曆月曆表 & 數學科教學管理 (2026-2027)</h1>
     </div>
 
     <!-- 切換 Tab 選單 -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆網格與 Cycle 視圖</button>
       <button class="tab-btn" onclick="switchTab('gcal')">📅 Google Calendar 檢視</button>
+      <button class="tab-btn math-tab" onclick="switchTab('math-log')">📐 數學科教學日誌與進度</button>
     </div>
 
     <!-- TAB 1: CSV 校曆網格區塊 -->
     <div id="tab-sch-grid">
-      <!-- Cycle 預覽卡片區（含 Cycle 切換按鈕） -->
+      <!-- Cycle 預覽卡片區 -->
       <div id="cycleSection" class="cycle-section" style="display: none;">
         <div class="cycle-section-header">
           <div class="cycle-section-title">
@@ -338,19 +437,44 @@
       </div>
     </div>
 
+    <!-- TAB 3: 數學科教學日誌與進度區塊 (連結 Google Sheet) -->
+    <div id="tab-math-log" style="display: none;">
+      <div class="math-header-box">
+        <div class="math-title">
+          📐 數學科教學進度、功課與特別提示
+        </div>
+        <div>
+          <label for="mathClassSelect" style="font-size: 0.9rem; font-weight: bold; color: #0f766e; margin-right: 5px;">篩選班別：</label>
+          <select id="mathClassSelect" onchange="renderMathLogs()">
+            <option value="ALL">所有班別 (All Classes)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="mathLoading" style="text-align: center; padding: 30px; color: #64748b;">正在載入 Google Sheet 數據...</div>
+      <div id="mathGrid" class="math-grid"></div>
+    </div>
+
   </div>
 
   <script>
     const CSV_URL = 'Sch Calendar-Grid view.csv';
+    
+    // 您提供的 Google Sheet ID
+    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
+    const GOOGLE_SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
 
     let calendarData = {}; 
     let availableDatesSorted = [];
     let availableMonths = [];
-    let allCycles = []; // 儲存所有切分好的 Cycle [{ label: 'Cycle 1', startDate: '...', days: [...] }]
+    let allCycles = [];
     let currentCycleIndex = 0;
     let currentMonthIndex = 0;
 
+    let mathSheetRows = [];
+
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. 解析校曆 CSV
       Papa.parse(CSV_URL, {
         download: true,
         header: true,
@@ -362,29 +486,158 @@
           document.getElementById('calendar').style.display = 'grid';
         },
         error: (err) => {
-          document.getElementById('loading').innerHTML = '<span style="color:red;">載入 CSV 失敗，請檢查檔名與路徑。</span>';
+          document.getElementById('loading').innerHTML = '<span style="color:red;">載入校曆 CSV 失敗，請檢查檔名與路徑。</span>';
         }
       });
+
+      // 2. 解析 Google Sheet 數學科日誌
+      loadMathGoogleSheet();
     });
 
     function switchTab(tabName) {
       const gridTab = document.getElementById('tab-sch-grid');
       const gcalTab = document.getElementById('tab-gcal');
+      const mathTab = document.getElementById('tab-math-log');
       const buttons = document.querySelectorAll('.tab-btn');
+
+      gridTab.style.display = 'none';
+      gcalTab.style.display = 'none';
+      mathTab.style.display = 'none';
+
+      buttons.forEach(btn => btn.classList.remove('active'));
 
       if (tabName === 'sch-grid') {
         gridTab.style.display = 'block';
-        gcalTab.style.display = 'none';
         buttons[0].classList.add('active');
-        buttons[1].classList.remove('active');
-      } else {
-        gridTab.style.display = 'none';
+      } else if (tabName === 'gcal') {
         gcalTab.style.display = 'block';
-        buttons[0].classList.remove('active');
         buttons[1].classList.add('active');
+      } else if (tabName === 'math-log') {
+        mathTab.style.display = 'block';
+        buttons[2].classList.add('active');
       }
     }
 
+    /* ========================================== */
+    /* 數學科 Google Sheet 資料讀取與呈現 logic */
+    /* ========================================== */
+    function loadMathGoogleSheet() {
+      Papa.parse(GOOGLE_SHEET_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          mathSheetRows = results.data;
+          document.getElementById('mathLoading').style.display = 'none';
+          setupMathClassFilter();
+          renderMathLogs();
+        },
+        error: (err) => {
+          document.getElementById('mathLoading').innerHTML = 
+            '<span style="color:red;">無法讀取 Google Sheet！請確認 Google Sheet 已設定為「知道連結的人即可查看」。</span>';
+        }
+      });
+    }
+
+    function setupMathClassFilter() {
+      const classSet = new Set();
+      mathSheetRows.forEach(row => {
+        // 自動尋找可能代表班別的欄位名稱 (Class, 班別)
+        const className = row.Class || row['班別'] || row['班級'];
+        if (className) classSet.add(className.trim());
+      });
+
+      const select = document.getElementById('mathClassSelect');
+      select.innerHTML = '<option value="ALL">所有班別 (All Classes)</option>';
+      Array.from(classSet).sort().forEach(cls => {
+        const opt = document.createElement('option');
+        opt.value = cls;
+        opt.textContent = `班別: ${cls}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderMathLogs() {
+      const container = document.getElementById('mathGrid');
+      container.innerHTML = '';
+
+      const selectedClass = document.getElementById('mathClassSelect').value;
+
+      // 篩選資料
+      const filteredRows = mathSheetRows.filter(row => {
+        const cls = row.Class || row['班別'] || row['班級'] || '';
+        return selectedClass === 'ALL' || cls.trim() === selectedClass;
+      });
+
+      if (filteredRows.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; color:#64748b; padding:20px; text-align:center;">目前沒有找到相關的教學記錄。可以在 Google Sheet 新增資料。</div>';
+        return;
+      }
+
+      // 按日期倒序排列 (最新顯示在最前)
+      filteredRows.reverse();
+
+      filteredRows.forEach(row => {
+        const date = row.Date || row['日期'] || '未設定日期';
+        const cls = row.Class || row['班別'] || row['班級'] || '數學科';
+        const topic = row.Topic || row.Chapter || row['章節/課題'] || row['課題'] || '';
+        const progress = row.Progress || row.Classwork || row['課堂進度'] || row['進度'] || '';
+        const homework = row.Homework || row['功課收發'] || row['功課'] || '';
+        const notice = row.Notice || row.Remarks || row['特別提示'] || row['備註'] || '';
+
+        const card = document.createElement('div');
+        card.className = 'math-card';
+
+        let html = `
+          <div class="math-card-header">
+            <span class="math-date">📅 ${date}</span>
+            <span class="math-badge-class">${cls}</span>
+          </div>
+        `;
+
+        if (topic) {
+          html += `
+            <div class="math-item">
+              <div class="math-label">📘 章節/課題</div>
+              <div class="math-value"><strong>${topic}</strong></div>
+            </div>
+          `;
+        }
+
+        if (progress) {
+          html += `
+            <div class="math-item">
+              <div class="math-label">✏️ 課堂進度</div>
+              <div class="math-value">${progress}</div>
+            </div>
+          `;
+        }
+
+        if (homework) {
+          html += `
+            <div class="math-item">
+              <div class="math-label">📦 功課收發狀態</div>
+              <div class="math-value">${homework}</div>
+            </div>
+          `;
+        }
+
+        if (notice) {
+          html += `
+            <div class="math-notice-box">
+              🔔 <strong>特別提示：</strong> ${notice}
+            </div>
+          `;
+        }
+
+        card.innerHTML = html;
+        container.appendChild(card);
+      });
+    }
+
+    /* ========================================== */
+    /* 校曆與 Cycle 處理 logic                    */
+    /* ========================================== */
     function processData(rows) {
       const monthSet = new Set();
       const dateList = [];
@@ -424,14 +677,10 @@
         select.appendChild(option);
       });
 
-      // 解析學年中所有的 Cycle
       parseAllCycles();
-
-      // 初始化渲染月曆
       renderCalendar();
     }
 
-    // 計算 CSV 中所有的 Cycle (Day A -> Day F)
     function parseAllCycles() {
       allCycles = [];
       const requiredCycle = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -447,7 +696,6 @@
           expectedCycleIdx++;
 
           if (expectedCycleIdx === 6) {
-            // 集齊 A-F 6 天，組成一個 Cycle
             const cycleNum = allCycles.length + 1;
             const startDate = currentGroup[0].dateStr;
             const endDate = currentGroup[5].dateStr;
@@ -468,7 +716,6 @@
         }
       }
 
-      // 填充 Cycle 下拉選單
       const cycleSelect = document.getElementById('cycleSelect');
       cycleSelect.innerHTML = '';
       allCycles.forEach((c, idx) => {
@@ -484,7 +731,6 @@
       }
     }
 
-    // 渲染指定 Index 的 Cycle 卡片
     function renderCycleCards(cycleIdx) {
       const container = document.getElementById('cycleCards');
       container.innerHTML = '';
@@ -526,17 +772,13 @@
       });
     }
 
-    // 當使用者手動切換 Cycle 選單時
     function onCycleSelectChange() {
       const select = document.getElementById('cycleSelect');
       currentCycleIndex = parseInt(select.value) || 0;
       renderCycleCards(currentCycleIndex);
-
-      // 自動將月曆跳轉到該 Cycle Day A 所在的月份
       syncCalendarToCycle(currentCycleIndex);
     }
 
-    // 按鈕切換 Cycle
     function changeCycle(delta) {
       let newIdx = currentCycleIndex + delta;
       if (newIdx >= 0 && newIdx < allCycles.length) {
@@ -546,11 +788,10 @@
       }
     }
 
-    // 自動同步月曆至當前 Cycle Day A 的月份
     function syncCalendarToCycle(cycleIdx) {
       if (!allCycles[cycleIdx]) return;
-      const startDate = allCycles[cycleIdx].startDate; // YYYY-MM-DD
-      const yearMonth = startDate.substring(0, 7); // YYYY-MM
+      const startDate = allCycles[cycleIdx].startDate;
+      const yearMonth = startDate.substring(0, 7);
 
       const mIdx = availableMonths.indexOf(yearMonth);
       if (mIdx !== -1 && mIdx !== currentMonthIndex) {
