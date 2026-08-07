@@ -1,9 +1,364 @@
-<iframe 
-  class="airtable-embed" 
-  src="https://airtable.com/embed/appGuYBAKCutSQu64/shrHApxkQ7dDDqbx8?backgroundColor=green&viewControls=on" 
-  frameborder="0" 
-  onmousewheel="" 
-  width="100%" 
-  height="533" 
-  style="background: transparent; border: 1px solid #ccc;">
-</iframe>
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026-2027 School Calendar - Grid View</title>
+
+  <!-- PapaParse 用於高效率解析 CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --border-color: #cbd5e1;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: #1e293b;
+      margin: 0;
+      padding: 15px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+
+    /* 控制面板與標題 */
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 10px;
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #1e3a8a;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select, button {
+      padding: 6px 12px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: #fff;
+      cursor: pointer;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* 圖例說明 */
+    .legend {
+      display: flex;
+      gap: 12px;
+      font-size: 0.85rem;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-cycle { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
+    .badge-holiday { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; border: 1px solid #fca5a5; font-size: 0.75rem; }
+    .badge-activity { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; border: 1px solid #fcd34d; font-size: 0.75rem; }
+
+    /* 月曆表格 */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background-color: var(--border-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .weekday-header {
+      background-color: #1e293b;
+      color: #ffffff;
+      text-align: center;
+      padding: 8px 0;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .weekday-header.weekend {
+      background-color: #334155;
+    }
+
+    .day-cell {
+      background-color: #ffffff;
+      min-height: 100px;
+      padding: 6px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .day-cell.other-month {
+      background-color: #f1f5f9;
+      color: #cbd5e1;
+    }
+
+    .day-cell.weekend {
+      background-color: #f8fafc;
+    }
+
+    .day-cell.holiday-bg {
+      background-color: #fff1f2;
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .day-num {
+      font-weight: bold;
+      font-size: 1rem;
+      color: #0f172a;
+    }
+
+    .day-num.holiday-num {
+      color: #dc2626;
+    }
+
+    .holiday-tag {
+      background-color: #fee2e2;
+      color: #991b1b;
+      font-size: 0.75rem;
+      padding: 3px 5px;
+      border-radius: 4px;
+      border-left: 3px solid #ef4444;
+      line-height: 1.2;
+      font-weight: 500;
+    }
+
+    .activity-tag {
+      background-color: #fef3c7;
+      color: #78350f;
+      font-size: 0.72rem;
+      padding: 3px 5px;
+      border-radius: 4px;
+      border-left: 3px solid #f59e0b;
+      line-height: 1.2;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 1.1rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>校曆月曆表 (2026-2027)</h1>
+      <div class="controls">
+        <button onclick="changeMonth(-1)">◀ 上一個月</button>
+        <select id="monthSelect" onchange="renderCalendar()"></select>
+        <button onclick="changeMonth(1)">下一個月 ▶</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="badge-cycle">A-F</span> 循環日 Cycle Day</div>
+      <div class="legend-item"><span class="badge-holiday">假期/特別日</span> School Holiday</div>
+      <div class="legend-item"><span class="badge-activity">學校活動</span> Special Activity</div>
+    </div>
+
+    <div id="loading">載入 CSV 資料中，請稍候...</div>
+    <div id="calendar" class="calendar-grid" style="display: none;"></div>
+  </div>
+
+  <script>
+    // ⚠️ 請修改此處為您 GitHub 上原始 CSV 的檔名或 Raw 網址
+    const CSV_URL = 'Sch Calendar-Grid view.csv';
+
+    let calendarData = {}; // 以 'YYYY-MM-DD' 為 key 的資料字典
+    let availableMonths = [];
+    let currentMonthIndex = 0;
+
+    // 頁面載入後自動抓取 CSV
+    window.addEventListener('DOMContentLoaded', () => {
+      Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          processData(results.data);
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('calendar').style.display = 'grid';
+        },
+        error: (err) => {
+          document.getElementById('loading').innerHTML = '<span style="color:red;">載入失敗：請確認 CSV 檔案名稱與路徑正確。</span>';
+          console.error(err);
+        }
+      });
+    });
+
+    // 解析 CSV 資料並建立索引
+    function processData(rows) {
+      const monthSet = new Set();
+
+      rows.forEach(row => {
+        if (!row.Date) return;
+
+        // 解析日格式 (D/M/YYYY -> YYYY-MM-DD)
+        const parts = row.Date.split('/');
+        if (parts.length === 3) {
+          const day = parts[0].padStart(2, '0');
+          const month = parts[1].padStart(2, '0');
+          const year = parts[2];
+
+          const formattedDate = `${year}-${month}-${day}`;
+          const yearMonth = `${year}-${month}`;
+
+          calendarData[formattedDate] = row;
+          monthSet.add(yearMonth);
+        }
+      });
+
+      // 排序所有月份（例如 2026-09 至 2027-08）
+      availableMonths = Array.from(monthSet).sort();
+      
+      // 填充下拉選單
+      const select = document.getElementById('monthSelect');
+      availableMonths.forEach((ym, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        const [y, m] = ym.split('-');
+        option.textContent = `${y}年 ${parseInt(m)}月`;
+        select.appendChild(option);
+      });
+
+      renderCalendar();
+    }
+
+    // 渲染月曆表格
+    function renderCalendar() {
+      const select = document.getElementById('monthSelect');
+      currentMonthIndex = parseInt(select.value) || 0;
+      const targetYearMonth = availableMonths[currentMonthIndex];
+      if (!targetYearMonth) return;
+
+      const [year, month] = targetYearMonth.split('-').map(Number);
+      const calendarEl = document.getElementById('calendar');
+      calendarEl.innerHTML = '';
+
+      // 1. 產生星期表頭
+      const weekdays = ['星期日 Sun', '星期一 Mon', '星期二 Tue', '星期三 Wed', '星期四 Thu', '星期五 Fri', '星期六 Sat'];
+      weekdays.forEach((day, index) => {
+        const header = document.createElement('div');
+        header.className = `weekday-header ${index === 0 || index === 6 ? 'weekend' : ''}`;
+        header.textContent = day;
+        calendarEl.appendChild(header);
+      });
+
+      // 2. 計算月份日曆的起止
+      const firstDay = new Date(year, month - 1, 1);
+      const lastDay = new Date(year, month, 0);
+      const startDayOfWeek = firstDay.getDay(); // 0 = Sun
+      const totalDays = lastDay.getDate();
+
+      // 前填滿 (非本月份的日格子)
+      for (let i = 0; i < startDayOfWeek; i++) {
+        const prevCell = document.createElement('div');
+        prevCell.className = 'day-cell other-month';
+        calendarEl.appendChild(prevCell);
+      }
+
+      // 本月所有日格子
+      for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
+        const dayStr = String(dayNum).padStart(2, '0');
+        const monthStr = String(month).padStart(2, '0');
+        const dateKey = `${year}-${monthStr}-${dayStr}`;
+
+        const cellDate = new Date(year, month - 1, dayNum);
+        const dayOfWeek = cellDate.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+        const rowData = calendarData[dateKey] || {};
+        const cycle = rowData['Cycle Day'];
+        const holiday = rowData['Sch Holiday/Special Sch Day'];
+        const activity = rowData['Special Activity'];
+
+        const cell = document.createElement('div');
+        cell.className = `day-cell ${isWeekend ? 'weekend' : ''} ${holiday ? 'holiday-bg' : ''}`;
+
+        // 頂部日期與 Cycle Day 標籤
+        let headerHtml = `<div class="day-header">
+          <span class="day-num ${holiday || isWeekend ? 'holiday-num' : ''}">${dayNum}</span>`;
+        
+        if (cycle) {
+          headerHtml += `<span class="badge-cycle">${cycle}</span>`;
+        }
+        headerHtml += `</div>`;
+
+        let contentHtml = headerHtml;
+
+        // 假期標籤
+        if (holiday) {
+          contentHtml += `<div class="holiday-tag">${holiday}</div>`;
+        }
+
+        // 活動標籤
+        if (activity) {
+          contentHtml += `<div class="activity-tag">${activity}</div>`;
+        }
+
+        cell.innerHTML = contentHtml;
+        calendarEl.appendChild(cell);
+      }
+    }
+
+    // 切換月份
+    function changeMonth(delta) {
+      let newIndex = currentMonthIndex + delta;
+      if (newIndex >= 0 && newIndex < availableMonths.length) {
+        document.getElementById('monthSelect').value = newIndex;
+        renderCalendar();
+      }
+    }
+  </script>
+
+</body>
+</html>
