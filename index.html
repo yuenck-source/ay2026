@@ -11,6 +11,7 @@
   <style>
     :root {
       --primary-color: #2563eb;
+      --timetable-color: #0284c7;
       --math-color: #0d9488;
       --sow-color: #7c3aed;
       --ft-color: #ea580c;
@@ -83,6 +84,7 @@
       border-color: var(--primary-color);
     }
 
+    .tab-btn.active.tt-tab { background-color: var(--timetable-color); border-color: var(--timetable-color); }
     .tab-btn.active.math-tab { background-color: var(--math-color); border-color: var(--math-color); }
     .tab-btn.active.sow-tab { background-color: var(--sow-color); border-color: var(--sow-color); }
     .tab-btn.active.ft-tab { background-color: var(--ft-color); border-color: var(--ft-color); }
@@ -244,6 +246,7 @@
       gap: 10px;
     }
 
+    .tt-header-box { background: #e0f2fe; border: 1px solid #bae6fd; }
     .math-header-box { background: #ccfbf1; border: 1px solid #99f6e4; }
     .sow-header-box { background: #f3e8ff; border: 1px solid #d8b4fe; }
     .ft-header-box { background: #ffedd5; border: 1px solid #fed7aa; }
@@ -261,6 +264,7 @@
       gap: 8px;
     }
 
+    .tt-card { border-top: 4px solid var(--timetable-color); }
     .math-card { border-top: 4px solid var(--math-color); }
     .sow-card { border-top: 4px solid var(--sow-color); }
     .ft-card { border-top: 4px solid var(--ft-color); }
@@ -272,6 +276,13 @@
     /* 進度條 */
     .progress-bar-container { background-color: #e2e8f0; border-radius: 8px; height: 12px; width: 100%; overflow: hidden; margin-top: 6px; }
     .progress-bar-fill { background-color: var(--sow-color); height: 100%; width: 0%; transition: width 0.3s; }
+
+    /* 表格通用 */
+    .data-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 0.9rem; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background-color: #f1f5f9; color: #334155; font-weight: bold; }
+    tr:hover { background-color: #f8fafc; }
 
     #loading { text-align: center; padding: 30px; font-size: 1rem; color: #64748b; }
   </style>
@@ -286,6 +297,7 @@
     <!-- 切換 Tab 選單 -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆與 週檢視</button>
+      <button class="tab-btn tt-tab" onclick="switchTab('timetable-log')">📅 課堂時間表</button>
       <button class="tab-btn math-tab" onclick="switchTab('math-log')">📐 數學日誌</button>
       <button class="tab-btn sow-tab" onclick="switchTab('sow-log')">📘 教學計劃 SOW</button>
       <button class="tab-btn ft-tab" onclick="switchTab('ft-log')">🏫 班主任事務</button>
@@ -326,7 +338,35 @@
       </div>
     </div>
 
-    <!-- TAB 2: 數學科教學日誌 -->
+    <!-- TAB 2: 課堂時間表 Timetable -->
+    <div id="tab-timetable-log" style="display: none;">
+      <div class="section-header-box tt-header-box">
+        <div style="font-weight: bold; color: #0369a1;">📅 課堂時間表 (Timetable)</div>
+        <div>
+          <select id="ttCycleSelect" onchange="renderTimetable()">
+            <option value="ALL">所有循環日 (All Cycle Days)</option>
+          </select>
+        </div>
+      </div>
+      <div id="ttLoading" style="text-align: center; padding: 20px; color: #64748b;">載入時間表資料中...</div>
+      <div id="ttContent" class="data-table-wrapper">
+        <table id="ttTable">
+          <thead>
+            <tr>
+              <th>循環日</th>
+              <th>課節/時間</th>
+              <th>班別</th>
+              <th>科目</th>
+              <th>地點/課室</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody id="ttBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: 數學科教學日誌 -->
     <div id="tab-math-log" style="display: none;">
       <div class="section-header-box math-header-box">
         <div style="font-weight: bold; color: #115e59;">📐 數學科教學進度與提示</div>
@@ -340,7 +380,7 @@
       <div id="mathGrid" class="card-grid"></div>
     </div>
 
-    <!-- TAB 3: 教學計劃 SOW -->
+    <!-- TAB 4: 教學計劃 SOW -->
     <div id="tab-sow-log" style="display: none;">
       <div class="section-header-box sow-header-box">
         <div style="font-weight: bold; color: #5b21b6;">📘 科組教學計劃 (Scheme of Work)</div>
@@ -355,7 +395,7 @@
       <div id="sowGrid" class="card-grid"></div>
     </div>
 
-    <!-- TAB 4: 班主任事務 -->
+    <!-- TAB 5: 班主任事務 -->
     <div id="tab-ft-log" style="display: none;">
       <div class="section-header-box ft-header-box">
         <div style="font-weight: bold; color: #9a3412;">🏫 班主任事務與學生跟進</div>
@@ -371,7 +411,7 @@
       <div id="ftGrid" class="card-grid"></div>
     </div>
 
-    <!-- TAB 5: Google Calendar -->
+    <!-- TAB 6: Google Calendar -->
     <div id="tab-gcal" style="display: none;">
       <div class="gcal-container">
         <iframe src="https://calendar.google.com/calendar/embed?src=yuenck%40web.wfjlps.edu.hk&ctz=Asia%2FHong_Kong" style="border: 0" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>
@@ -384,6 +424,7 @@
     const CSV_URL = 'Sch Calendar-Grid view.csv';
     const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
     
+    const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable`;
     const MATH_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
     const SOW_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=SOW`;
     const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=FormTeacher`;
@@ -395,7 +436,7 @@
     let currentWeekIndex = 0;
     let currentMonthIndex = 0;
 
-    let mathRows = [], sowRows = [], ftRows = [];
+    let timetableRows = [], mathRows = [], sowRows = [], ftRows = [];
 
     window.addEventListener('DOMContentLoaded', () => {
       // 1. 校曆
@@ -414,35 +455,93 @@
     });
 
     function switchTab(tabName) {
-      const tabs = ['sch-grid', 'math-log', 'sow-log', 'ft-log', 'gcal'];
+      const tabs = ['sch-grid', 'timetable-log', 'math-log', 'sow-log', 'ft-log', 'gcal'];
       tabs.forEach(t => document.getElementById(`tab-${t}`).style.display = 'none');
 
       const buttons = document.querySelectorAll('.tab-btn');
       buttons.forEach(btn => btn.classList.remove('active'));
 
       if (tabName === 'sch-grid') { document.getElementById('tab-sch-grid').style.display = 'block'; buttons[0].classList.add('active'); }
-      else if (tabName === 'math-log') { document.getElementById('tab-math-log').style.display = 'block'; buttons[1].classList.add('active'); }
-      else if (tabName === 'sow-log') { document.getElementById('tab-sow-log').style.display = 'block'; buttons[2].classList.add('active'); }
-      else if (tabName === 'ft-log') { document.getElementById('tab-ft-log').style.display = 'block'; buttons[3].classList.add('active'); }
-      else if (tabName === 'gcal') { document.getElementById('tab-gcal').style.display = 'block'; buttons[4].classList.add('active'); }
+      else if (tabName === 'timetable-log') { document.getElementById('tab-timetable-log').style.display = 'block'; buttons[1].classList.add('active'); }
+      else if (tabName === 'math-log') { document.getElementById('tab-math-log').style.display = 'block'; buttons[2].classList.add('active'); }
+      else if (tabName === 'sow-log') { document.getElementById('tab-sow-log').style.display = 'block'; buttons[3].classList.add('active'); }
+      else if (tabName === 'ft-log') { document.getElementById('tab-ft-log').style.display = 'block'; buttons[4].classList.add('active'); }
+      else if (tabName === 'gcal') { document.getElementById('tab-gcal').style.display = 'block'; buttons[5].classList.add('active'); }
     }
 
     /* 讀取 Google Sheet 所有資料 */
     function loadGoogleSheets() {
+      // 時間表
+      Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
+        timetableRows = res.data; document.getElementById('ttLoading').style.display = 'none';
+        setupTimetableCycleFilter(); renderTimetable();
+      }, error: () => { document.getElementById('ttLoading').innerHTML = '請確認 Google Sheet 中有名為 <strong>timetable</strong> 的工作表。'; }});
+
+      // 數學日誌
       Papa.parse(MATH_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         mathRows = res.data; document.getElementById('mathLoading').style.display = 'none';
         setupMathClassFilter(); renderMathLogs();
       }});
 
+      // SOW
       Papa.parse(SOW_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         sowRows = res.data; document.getElementById('sowLoading').style.display = 'none';
         renderSOWLogs();
       }, error: () => { document.getElementById('sowLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>SOW</strong> 的分頁。'; }});
 
+      // 班主任事務
       Papa.parse(FT_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         ftRows = res.data; document.getElementById('ftLoading').style.display = 'none';
         renderFTLogs();
       }, error: () => { document.getElementById('ftLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>FormTeacher</strong> 的分頁。'; }});
+    }
+
+    function setupTimetableCycleFilter() {
+      const cycleSet = new Set();
+      timetableRows.forEach(row => {
+        const c = row.Cycle || row['循環日'] || row['Day'];
+        if (c) cycleSet.add(c.trim());
+      });
+      const select = document.getElementById('ttCycleSelect');
+      select.innerHTML = '<option value="ALL">所有循環日 (All Cycle Days)</option>';
+      Array.from(cycleSet).sort().forEach(cyc => {
+        const opt = document.createElement('option'); opt.value = cyc; opt.textContent = `循環日: ${cyc}`; select.appendChild(opt);
+      });
+    }
+
+    function renderTimetable() {
+      const tbody = document.getElementById('ttBody'); tbody.innerHTML = '';
+      const selectedCycle = document.getElementById('ttCycleSelect').value;
+
+      const filtered = timetableRows.filter(r => {
+        const c = (r.Cycle || r['循環日'] || r['Day'] || '').trim();
+        return selectedCycle === 'ALL' || c === selectedCycle;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">暫無時間表資料</td></tr>';
+        return;
+      }
+
+      filtered.forEach(row => {
+        const cycle = row.Cycle || row['循環日'] || row['Day'] || '-';
+        const period = row.Period || row['課節'] || row['時間'] || '-';
+        const className = row.Class || row['班別'] || '-';
+        const subject = row.Subject || row['科目'] || '-';
+        const room = row.Room || row['地點'] || row['課室'] || '-';
+        const remarks = row.Remarks || row['備註'] || '-';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="badge-cycle">${cycle}</span></td>
+          <td><strong>${period}</strong></td>
+          <td><span style="color:#0284c7; font-weight:bold;">${className}</span></td>
+          <td>${subject}</td>
+          <td>📍 ${room}</td>
+          <td style="color:#64748b;">${remarks}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function setupMathClassFilter() {
