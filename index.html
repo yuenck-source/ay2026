@@ -125,16 +125,16 @@
       select { padding: 6px 4px; font-size: 0.85rem; max-width: 160px; }
     }
 
-    /* Week 卡片區樣式 */
-    .week-section {
-      background-color: #f0f9ff;
-      border: 1px solid #bae6fd;
+    /* Cycle 卡片區樣式 */
+    .cycle-section {
+      background-color: #eff6ff;
+      border: 1px solid #bfdbfe;
       border-radius: 8px;
       padding: 12px;
       margin-bottom: 15px;
     }
 
-    .week-section-header {
+    .cycle-section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -142,16 +142,16 @@
       gap: 8px;
     }
 
-    .week-section-title { font-size: 0.95rem; font-weight: bold; color: #0369a1; margin: 0; }
-    .week-controls { display: flex; align-items: center; gap: 6px; }
+    .cycle-section-title { font-size: 0.95rem; font-weight: bold; color: #1e40af; margin: 0; }
+    .cycle-controls { display: flex; align-items: center; gap: 6px; }
 
-    .week-cards-grid {
+    .cycle-cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 8px;
     }
 
-    .week-card {
+    .cycle-card {
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
@@ -162,12 +162,7 @@
       gap: 4px;
     }
 
-    .week-card.is-weekend {
-      background-color: #fafafa;
-      border-color: #e2e8f0;
-    }
-
-    .week-card-header {
+    .cycle-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -175,9 +170,8 @@
       padding-bottom: 4px;
     }
 
-    .week-card-date { font-weight: bold; font-size: 0.85rem; color: #334155; }
-    .week-card-weekday { font-size: 0.75rem; color: #64748b; }
-    .week-card-weekday.weekend-text { color: #e11d48; font-weight: bold; }
+    .cycle-card-date { font-weight: bold; font-size: 0.85rem; color: #334155; }
+    .cycle-card-weekday { font-size: 0.75rem; color: #64748b; }
 
     /* 月曆圖例與滑動容器 */
     .legend { display: flex; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; flex-wrap: wrap; }
@@ -224,6 +218,7 @@
 
     .day-header { display: flex; justify-content: space-between; align-items: center; }
     .day-num { font-weight: bold; font-size: 0.95rem; color: #0f172a; }
+    .day-num.holiday-num { color: #dc2626; }
 
     .holiday-tag { background-color: #fee2e2; color: #991b1b; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; border-left: 3px solid #ef4444; line-height: 1.2; }
     .activity-tag { background-color: #fef3c7; color: #78350f; font-size: 0.72rem; padding: 2px 4px; border-radius: 4px; border-left: 3px solid #f59e0b; line-height: 1.2; }
@@ -285,7 +280,7 @@
 
     <!-- 切換 Tab 選單 -->
     <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆與 週檢視</button>
+      <button class="tab-btn active" onclick="switchTab('sch-grid')">📊 校曆與 Cycle</button>
       <button class="tab-btn math-tab" onclick="switchTab('math-log')">📐 數學日誌</button>
       <button class="tab-btn sow-tab" onclick="switchTab('sow-log')">📘 教學計劃 SOW</button>
       <button class="tab-btn ft-tab" onclick="switchTab('ft-log')">🏫 班主任事務</button>
@@ -294,16 +289,16 @@
 
     <!-- TAB 1: CSV 校曆網格區塊 -->
     <div id="tab-sch-grid">
-      <div id="weekSection" class="week-section" style="display: none;">
-        <div class="week-section-header">
-          <div class="week-section-title">🗓️ 週安排檢視 (Mon - Sun)</div>
-          <div class="week-controls">
-            <button class="btn-nav btn-secondary" onclick="changeWeek(-1)">◀<span class="btn-text"> 上一週</span></button>
-            <select id="weekSelect" onchange="onWeekSelectChange()"></select>
-            <button class="btn-nav btn-secondary" onclick="changeWeek(1)"><span class="btn-text">下一週 </span>▶</button>
+      <div id="cycleSection" class="cycle-section" style="display: none;">
+        <div class="cycle-section-header">
+          <div class="cycle-section-title">🔄 循環日預覽 (Day A - F)</div>
+          <div class="cycle-controls">
+            <button class="btn-nav btn-secondary" onclick="changeCycle(-1)">◀<span class="btn-text"> 上一個 Cycle</span></button>
+            <select id="cycleSelect" onchange="onCycleSelectChange()"></select>
+            <button class="btn-nav btn-secondary" onclick="changeCycle(1)"><span class="btn-text">下一個 Cycle </span>▶</button>
           </div>
         </div>
-        <div id="weekCards" class="week-cards-grid"></div>
+        <div id="cycleCards" class="cycle-cards-grid"></div>
       </div>
 
       <div class="controls">
@@ -326,7 +321,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: 數學科教學日誌 -->
+    <!-- TAB 2: 數學科教學日誌 (Google Sheet - Sheet 1) -->
     <div id="tab-math-log" style="display: none;">
       <div class="section-header-box math-header-box">
         <div style="font-weight: bold; color: #115e59;">📐 數學科教學進度與提示</div>
@@ -340,7 +335,7 @@
       <div id="mathGrid" class="card-grid"></div>
     </div>
 
-    <!-- TAB 3: 教學計劃 SOW -->
+    <!-- TAB 3: 教學計劃 SOW (Google Sheet - SOW) -->
     <div id="tab-sow-log" style="display: none;">
       <div class="section-header-box sow-header-box">
         <div style="font-weight: bold; color: #5b21b6;">📘 科組教學計劃 (Scheme of Work)</div>
@@ -355,7 +350,7 @@
       <div id="sowGrid" class="card-grid"></div>
     </div>
 
-    <!-- TAB 4: 班主任事務 -->
+    <!-- TAB 4: 班主任事務 (Google Sheet - FormTeacher) -->
     <div id="tab-ft-log" style="display: none;">
       <div class="section-header-box ft-header-box">
         <div style="font-weight: bold; color: #9a3412;">🏫 班主任事務與學生跟進</div>
@@ -384,6 +379,7 @@
     const CSV_URL = 'Sch Calendar-Grid view.csv';
     const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
     
+    // 不同工作表 CSV 導出連結
     const MATH_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
     const SOW_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=SOW`;
     const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=FormTeacher`;
@@ -391,8 +387,8 @@
     let calendarData = {}; 
     let availableDatesSorted = [];
     let availableMonths = [];
-    let allWeeks = [];
-    let currentWeekIndex = 0;
+    let allCycles = [];
+    let currentCycleIndex = 0;
     let currentMonthIndex = 0;
 
     let mathRows = [], sowRows = [], ftRows = [];
@@ -404,7 +400,7 @@
         complete: (results) => {
           processData(results.data);
           document.getElementById('loading').style.display = 'none';
-          document.getElementById('weekSection').style.display = 'block';
+          document.getElementById('cycleSection').style.display = 'block';
           document.getElementById('calendar').style.display = 'grid';
         }
       });
@@ -429,22 +425,26 @@
 
     /* 讀取 Google Sheet 所有資料 */
     function loadGoogleSheets() {
+      // 數學日誌
       Papa.parse(MATH_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         mathRows = res.data; document.getElementById('mathLoading').style.display = 'none';
         setupMathClassFilter(); renderMathLogs();
       }});
 
+      // SOW
       Papa.parse(SOW_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         sowRows = res.data; document.getElementById('sowLoading').style.display = 'none';
         renderSOWLogs();
       }, error: () => { document.getElementById('sowLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>SOW</strong> 的分頁。'; }});
 
+      // 班主任
       Papa.parse(FT_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         ftRows = res.data; document.getElementById('ftLoading').style.display = 'none';
         renderFTLogs();
       }, error: () => { document.getElementById('ftLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>FormTeacher</strong> 的分頁。'; }});
     }
 
+    /* 渲染數學日誌 */
     function setupMathClassFilter() {
       const classSet = new Set();
       mathRows.forEach(row => { const c = row.Class || row['班別']; if (c) classSet.add(c.trim()); });
@@ -477,6 +477,7 @@
       });
     }
 
+    /* 渲染 SOW */
     function renderSOWLogs() {
       const container = document.getElementById('sowGrid'); container.innerHTML = '';
       if (sowRows.length === 0) { container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">請在 Google Sheet「SOW」工作表中填寫教學計劃。</div>'; return; }
@@ -509,6 +510,7 @@
       document.getElementById('sowProgressBar').style.width = `${percent}%`;
     }
 
+    /* 渲染 班主任事務 */
     function renderFTLogs() {
       const container = document.getElementById('ftGrid'); container.innerHTML = '';
       const filterStatus = document.getElementById('ftStatusSelect').value;
@@ -540,7 +542,7 @@
       });
     }
 
-    /* 校曆與按 Week 分組邏輯 */
+    /* 校曆邏輯 (維持不變) */
     function processData(rows) {
       const monthSet = new Set(); const dateList = [];
       rows.forEach(row => {
@@ -550,7 +552,7 @@
           const formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
           calendarData[formattedDate] = row;
           monthSet.add(`${parts[2]}-${parts[1].padStart(2, '0')}`);
-          dateList.push({ dateStr: formattedDate, rawRow: row, dt: new Date(formattedDate) });
+          dateList.push({ dateStr: formattedDate, rawRow: row });
         }
       });
       dateList.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
@@ -563,73 +565,37 @@
         const [y, m] = ym.split('-'); opt.textContent = `${y}年${parseInt(m)}月`;
         select.appendChild(opt);
       });
-
-      parseAllWeeks(); 
-      renderCalendar();
+      parseAllCycles(); renderCalendar();
     }
 
-    /* 將日期按「星期一～星期日」進行分週 */
-    function parseAllWeeks() {
-      allWeeks = [];
-      if (availableDatesSorted.length === 0) return;
-
-      let currentWeekDays = [];
-      let weekCounter = 1;
-
-      availableDatesSorted.forEach((item, idx) => {
-        currentWeekDays.push(item);
-        const dayOfWeek = item.dt.getDay(); // 0 is Sun, 6 is Sat
-
-        // 當遇到星期日 (0) 或已經是最後一筆資料時，結算為一週
-        if (dayOfWeek === 0 || idx === availableDatesSorted.length - 1) {
-          const startDate = currentWeekDays[0].dateStr;
-          const endDate = currentWeekDays[currentWeekDays.length - 1].dateStr;
-          
-          const startM = parseInt(startDate.split('-')[1]);
-          const startD = parseInt(startDate.split('-')[2]);
-          const endM = parseInt(endDate.split('-')[1]);
-          const endD = parseInt(endDate.split('-')[2]);
-
-          allWeeks.push({
-            label: `第 ${weekCounter} 週 (${startM}/${startD} - ${endM}/${endD})`,
-            startDate: startDate,
-            days: currentWeekDays
-          });
-          weekCounter++;
-          currentWeekDays = [];
+    function parseAllCycles() {
+      allCycles = []; const required = ['A', 'B', 'C', 'D', 'E', 'F'];
+      let group = [], exp = 0;
+      availableDatesSorted.forEach(item => {
+        if (item.rawRow['Cycle Day'] === required[exp]) {
+          group.push(item); exp++;
+          if (exp === 6) {
+            allCycles.push({ label: `Cycle ${allCycles.length + 1}`, startDate: group[0].dateStr, days: group });
+            group = []; exp = 0;
+          }
         }
       });
-
-      const select = document.getElementById('weekSelect'); select.innerHTML = '';
-      allWeeks.forEach((w, idx) => {
-        const opt = document.createElement('option'); opt.value = idx; opt.textContent = w.label;
-        select.appendChild(opt);
-      });
-
-      if (allWeeks.length > 0) renderWeekCards(0);
+      const select = document.getElementById('cycleSelect'); select.innerHTML = '';
+      allCycles.forEach((c, idx) => { const opt = document.createElement('option'); opt.value = idx; opt.textContent = c.label; select.appendChild(opt); });
+      if (allCycles.length > 0) renderCycleCards(0);
     }
 
-    /* 渲染整週卡片 (Mon - Sun) */
-    function renderWeekCards(idx) {
-      const container = document.getElementById('weekCards'); container.innerHTML = '';
-      if (!allWeeks[idx]) return;
-      document.getElementById('weekSelect').value = idx;
-
-      allWeeks[idx].days.forEach(item => {
-        const row = item.rawRow;
-        const [y, m, d] = item.dateStr.split('-');
-        const dayOfWeek = item.dt.getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
-        const card = document.createElement('div');
-        card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
+    function renderCycleCards(idx) {
+      const container = document.getElementById('cycleCards'); container.innerHTML = '';
+      if (!allCycles[idx]) return;
+      document.getElementById('cycleSelect').value = idx;
+      allCycles[idx].days.forEach(item => {
+        const row = item.rawRow; const [y, m, d] = item.dateStr.split('-');
+        const card = document.createElement('div'); card.className = 'cycle-card';
         card.innerHTML = `
-          <div class="week-card-header">
-            <div>
-              <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
-              <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${row.Weekday || ''})</span>
-            </div>
-            ${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}
+          <div class="cycle-card-header">
+            <div><span class="cycle-card-date">${parseInt(m)}月${parseInt(d)}日</span> <span class="cycle-card-weekday">(${row.Weekday || ''})</span></div>
+            <span class="badge-cycle">${row['Cycle Day']}</span>
           </div>
           ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
           ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
@@ -638,30 +604,9 @@
       });
     }
 
-    function onWeekSelectChange() {
-      currentWeekIndex = parseInt(document.getElementById('weekSelect').value) || 0;
-      renderWeekCards(currentWeekIndex);
-      syncCalendarToWeek(currentWeekIndex);
-    }
-
-    function changeWeek(d) {
-      let n = currentWeekIndex + d;
-      if (n >= 0 && n < allWeeks.length) {
-        currentWeekIndex = n;
-        renderWeekCards(n);
-        syncCalendarToWeek(n);
-      }
-    }
-
-    function syncCalendarToWeek(idx) {
-      if (!allWeeks[idx]) return;
-      const ym = allWeeks[idx].startDate.substring(0,7);
-      const mIdx = availableMonths.indexOf(ym);
-      if (mIdx !== -1 && mIdx !== currentMonthIndex) {
-        document.getElementById('monthSelect').value = mIdx;
-        renderCalendar();
-      }
-    }
+    function onCycleSelectChange() { currentCycleIndex = parseInt(document.getElementById('cycleSelect').value) || 0; renderCycleCards(currentCycleIndex); syncCalendarToCycle(currentCycleIndex); }
+    function changeCycle(d) { let n = currentCycleIndex + d; if (n>=0 && n<allCycles.length) { currentCycleIndex=n; renderCycleCards(n); syncCalendarToCycle(n); } }
+    function syncCalendarToCycle(idx) { if (!allCycles[idx]) return; const ym = allCycles[idx].startDate.substring(0,7); const mIdx = availableMonths.indexOf(ym); if (mIdx!==-1 && mIdx!==currentMonthIndex) { document.getElementById('monthSelect').value=mIdx; renderCalendar(); } }
 
     function renderCalendar() {
       currentMonthIndex = parseInt(document.getElementById('monthSelect').value) || 0;
