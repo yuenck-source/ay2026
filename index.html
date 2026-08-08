@@ -431,7 +431,7 @@
     const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable`;
     const MATH_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
     const SOW_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=SOW`;
-    const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=FormTeacher`;
+    const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&sheet=FormTeacher`;
 
     let calendarData = {}; 
     let availableDatesSorted = [];
@@ -443,7 +443,7 @@
     let timetableRows = [], mathRows = [], sowRows = [], ftRows = [];
 
     window.addEventListener('DOMContentLoaded', () => {
-      // 1. 校曆
+      // 1. 校曆 CSV
       Papa.parse(CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
         complete: (results) => {
@@ -454,7 +454,7 @@
         }
       });
 
-      // 2. Google Sheet 各頁面
+      // 2. Google Sheet 各分頁
       loadGoogleSheets();
     });
 
@@ -479,7 +479,7 @@
       Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         timetableRows = res.data; document.getElementById('ttLoading').style.display = 'none';
         setupTimetableCycleFilter(); renderTimetable();
-      }, error: () => { document.getElementById('ttLoading').innerHTML = '請確認 Google Sheet 中有名為 <strong>timetable</strong> 的工作表。'; }});
+      }});
 
       // 數學日誌
       Papa.parse(MATH_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
@@ -491,16 +491,31 @@
       Papa.parse(SOW_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         sowRows = res.data; document.getElementById('sowLoading').style.display = 'none';
         renderSOWLogs();
-      }, error: () => { document.getElementById('sowLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>SOW</strong> 的分頁。'; }});
+      }});
 
-      // 班主任事務
-      Papa.parse(FT_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
-        ftRows = res.data; document.getElementById('ftLoading').style.display = 'none';
-        setupFTClassFilter();
-        renderFTLogs();
-      }, error: () => { document.getElementById('ftLoading').innerHTML = '請在 Google Sheet 建立名為 <strong>FormTeacher</strong> 的分頁。'; }});
+      // 班主任事務 FormTeacher (帶有清空快取的 timestamp，並且採用 header: false 無畏特殊符號/空格問題)
+      const ftFetchUrl = `${FT_CSV_URL}&_t=${new Date().getTime()}`;
+      Papa.parse(ftFetchUrl, {
+        download: true,
+        header: false,
+        skipEmptyLines: true,
+        complete: res => {
+          if (!res.data || res.data.length <= 1) {
+            document.getElementById('ftLoading').innerHTML = 'FormTeacher 分頁暫無數據。';
+            return;
+          }
+          ftRows = res.data.slice(1); // 扣除表頭列
+          document.getElementById('ftLoading').style.display = 'none';
+          setupFTClassFilter();
+          renderFTLogs();
+        },
+        error: (err) => {
+          document.getElementById('ftLoading').innerHTML = '無法載入 FormTeacher 資料，請檢查分頁名稱與共用權限。';
+        }
+      });
     }
 
+    /* 課堂時間表處理 */
     function setupTimetableCycleFilter() {
       const cycleSet = new Set();
       timetableRows.forEach(row => {
@@ -549,6 +564,7 @@
       });
     }
 
+    /* 數學日誌處理 */
     function setupMathClassFilter() {
       const classSet = new Set();
       mathRows.forEach(row => { const c = row.Class || row['班別']; if (c) classSet.add(c.trim()); });
@@ -581,9 +597,10 @@
       });
     }
 
+    /* SOW 處理 */
     function renderSOWLogs() {
       const container = document.getElementById('sowGrid'); container.innerHTML = '';
-      if (sowRows.length === 0) { container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">請在 Google Sheet「SOW」工作表中填寫教學計劃。</div>'; return; }
+      if (sowRows.length === 0) { container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">暫無 SOW 資料。</div>'; return; }
 
       let completedCount = 0;
       sowRows.forEach(row => {
@@ -613,104 +630,72 @@
       document.getElementById('sowProgressBar').style.width = `${percent}%`;
     }
 
-   /* 班主任事務 - 自動讀取與建立班別選單 */
-function setupFTClassFilter() {
-  const classSet = new Set();
-  ftRows.forEach(row => {
-    // 尋找符合 Class / 班別 的欄位內容
-    const c = getRowValue(row, ['Class', 'class', '班別']);
-    if (c) classSet.add(c.trim());
-  });
+    /* 班主任事務 (FormTeacher) 處理 - 直接使用欄位索引 [0~6] */
+    function setupFTClassFilter() {
+      const classSet = new Set();
+      ftRows.forEach(row => {
+        const cls = row[1] ? String(row[1]).trim() : ''; // Index 1 = Class
+        if (cls) classSet.add(cls);
+      });
+      const select = document.getElementById('ftClassSelect');
+      select.innerHTML = '<option value="ALL">所有班別</option>';
+      Array.from(classSet).sort().forEach(cls => {
+        const opt = document.createElement('option'); opt.value = cls; opt.textContent = `班別: ${cls}`; select.appendChild(opt);
+      });
+    }
 
-  const select = document.getElementById('ftClassSelect');
-  select.innerHTML = '<option value="ALL">所有班別</option>';
-  Array.from(classSet).sort().forEach(cls => {
-    const opt = document.createElement('option');
-    opt.value = cls;
-    opt.textContent = `班別: ${cls}`;
-    select.appendChild(opt);
-  });
-}
+    function renderFTLogs() {
+      const container = document.getElementById('ftGrid'); container.innerHTML = '';
+      const filterClass = document.getElementById('ftClassSelect').value;
+      const filterStatus = document.getElementById('ftStatusSelect').value;
 
-/* 班主任事務 - 100% 相容欄位顯示 */
-function renderFTLogs() {
-  const container = document.getElementById('ftGrid'); 
-  container.innerHTML = '';
+      // 欄位順序對應:
+      // row[0] = Date | row[1] = Class | row[2] = Category | row[3] = Item/task | row[4] = Target student | row[5] = Status | row[6] = Remarks
+      const filtered = ftRows.filter(r => {
+        const cls = r[1] ? String(r[1]).trim() : '';
+        const status = r[5] ? String(r[5]).trim() : '未完成';
 
-  const filterClass = document.getElementById('ftClassSelect').value;
-  const filterStatus = document.getElementById('ftStatusSelect').value;
+        const matchClass = (filterClass === 'ALL' || cls === filterClass);
+        let matchStatus = true;
+        if (filterStatus === '未完成') matchStatus = (status !== '已完成');
+        else if (filterStatus === '已完成') matchStatus = (status === '已完成');
 
-  const filtered = ftRows.filter(r => {
-    const cls = getColumnValue(r, 'Class', 1);
-    const status = getColumnValue(r, 'Status', 5) || '未完成';
+        return matchClass && matchStatus;
+      });
 
-    const matchClass = (filterClass === 'ALL' || cls === filterClass);
-    let matchStatus = true;
-    if (filterStatus === '未完成') matchStatus = (status !== '已完成');
-    else if (filterStatus === '已完成') matchStatus = (status === '已完成');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟進事項。</div>';
+        return;
+      }
 
-    return matchClass && matchStatus;
-  });
+      [...filtered].reverse().forEach(row => {
+        const date = row[0] ? String(row[0]).trim() : '';
+        const className = row[1] ? String(row[1]).trim() : '';
+        const category = row[2] ? String(row[2]).trim() : '';
+        const task = row[3] ? String(row[3]).trim() : '';
+        const targetStudent = row[4] ? String(row[4]).trim() : '';
+        const status = row[5] ? String(row[5]).trim() : '未完成';
+        const remarks = row[6] ? String(row[6]).trim() : '';
 
-  if (filtered.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">目前沒有跟进事項。</div>';
-    return;
-  }
+        let badgeClass = status === '已完成' ? 'badge-status-done' : 'badge-status-todo';
 
-  [...filtered].reverse().forEach(row => {
-    // 按 A~G 欄位順序對應 (A=0, B=1, C=2, D=3, E=4, F=5, G=6)
-    const date = getColumnValue(row, 'Date', 0);
-    const className = getColumnValue(row, 'Class', 1);
-    const category = getColumnValue(row, 'Category', 2);
-    const task = getColumnValue(row, 'Item/task', 3);
-    const targetStudent = getColumnValue(row, 'Target student', 4);
-    const status = getColumnValue(row, 'Status', 5) || '未完成';
-    const remarks = getColumnValue(row, 'Remarks', 6);
-
-    let badgeClass = status === '已完成' ? 'badge-status-done' : 'badge-status-todo';
-
-    const card = document.createElement('div'); 
-    card.className = 'data-card ft-card';
-    card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.85rem; color:#64748b;">📅 ${date}</span>
-        <div style="display:flex; gap:4px; align-items:center;">
-          ${className ? `<span style="background:#ea580c; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:bold;">${className}</span>` : ''}
-          <span class="${badgeClass}">${status}</span>
-        </div>
-      </div>
-      ${category ? `<div style="margin-top:4px;"><span class="badge-category">${category}</span></div>` : ''}
-      <div style="font-weight:bold; color:#9a3412; font-size:1rem; margin-top:6px;">📌 ${task}</div>
-      ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c; margin-top:4px;">👤 <strong>目標學生：</strong> ${targetStudent}</div>` : ''}
-      ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316; margin-top:6px;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
-    `;
-    container.appendChild(card);
-  });
-}
-
-/* 欄位數值讀取工具（優先嘗試 Key，失敗則讀取第 colIndex 欄位） */
-function getColumnValue(rowObj, keyName, colIndex) {
-  if (!rowObj) return '';
-  
-  // 1. 精準對應
-  if (rowObj[keyName] !== undefined && rowObj[keyName] !== '') {
-    return String(rowObj[keyName]).trim();
-  }
-
-  // 2. 去除首尾空格對應
-  const keys = Object.keys(rowObj);
-  const matchedKey = keys.find(k => k.trim().toLowerCase() === keyName.trim().toLowerCase());
-  if (matchedKey && rowObj[matchedKey] !== undefined && rowObj[matchedKey] !== '') {
-    return String(rowObj[matchedKey]).trim();
-  }
-
-  // 3. 欄位順序保底 (Index)
-  if (colIndex !== undefined && keys[colIndex] !== undefined && rowObj[keys[colIndex]] !== undefined) {
-    return String(rowObj[keys[colIndex]]).trim();
-  }
-
-  return '';
-}
+        const card = document.createElement('div'); card.className = 'data-card ft-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.85rem; color:#64748b;">📅 ${date}</span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              ${className ? `<span style="background:#ea580c; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:bold;">${className}</span>` : ''}
+              <span class="${badgeClass}">${status}</span>
+            </div>
+          </div>
+          ${category ? `<div style="margin-top:4px;"><span class="badge-category">${category}</span></div>` : ''}
+          <div style="font-weight:bold; color:#9a3412; font-size:1rem; margin-top:6px;">📌 ${task}</div>
+          ${targetStudent ? `<div style="font-size:0.88rem; color:#c2410c; margin-top:4px;">👤 <strong>目標學生：</strong> ${targetStudent}</div>` : ''}
+          ${remarks ? `<div style="font-size:0.85rem; color:#475569; background:#fff7ed; padding:6px; border-radius:4px; border-left:3px solid #f97316; margin-top:6px;">💬 <strong>備註：</strong> ${remarks}</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
 
     /* 校曆與按 Week 分組邏輯 */
     function processData(rows) {
@@ -740,7 +725,6 @@ function getColumnValue(rowObj, keyName, colIndex) {
       renderCalendar();
     }
 
-    /* 將日期按「星期一～星期日」進行分週 */
     function parseAllWeeks() {
       allWeeks = [];
       if (availableDatesSorted.length === 0) return;
@@ -750,9 +734,8 @@ function getColumnValue(rowObj, keyName, colIndex) {
 
       availableDatesSorted.forEach((item, idx) => {
         currentWeekDays.push(item);
-        const dayOfWeek = item.dt.getDay(); // 0 is Sun, 6 is Sat
+        const dayOfWeek = item.dt.getDay();
 
-        // 當遇到星期日 (0) 或已經是最後一筆資料時，結算為一週
         if (dayOfWeek === 0 || idx === availableDatesSorted.length - 1) {
           const startDate = currentWeekDays[0].dateStr;
           const endDate = currentWeekDays[currentWeekDays.length - 1].dateStr;
@@ -781,7 +764,6 @@ function getColumnValue(rowObj, keyName, colIndex) {
       if (allWeeks.length > 0) renderWeekCards(0);
     }
 
-    /* 渲染整週卡片 (Mon - Sun) */
     function renderWeekCards(idx) {
       const container = document.getElementById('weekCards'); container.innerHTML = '';
       if (!allWeeks[idx]) return;
