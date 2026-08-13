@@ -749,68 +749,127 @@
 
       if (allWeeks.length > 0) renderWeekCards(0);
     }
+/* 渲染週安排檢視卡片 (完美解析單獨當值列與修正空白課堂) */
+function renderWeekCards(idx) {
+  const container = document.getElementById('weekCards'); container.innerHTML = '';
+  if (!allWeeks[idx]) return;
+  document.getElementById('weekSelect').value = idx;
 
-    /* 渲染週安排檢視卡片 (課節旁附帶小字體上課時間) */
-    function renderWeekCards(idx) {
-      const container = document.getElementById('weekCards'); container.innerHTML = '';
-      if (!allWeeks[idx]) return;
-      document.getElementById('weekSelect').value = idx;
+  allWeeks[idx].days.forEach(item => {
+    const row = item.rawRow;
+    const [y, m, d] = item.dateStr.split('-');
+    const dayOfWeek = item.dt.getDay();
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    const cycleDay = (row['Cycle Day'] || '').trim();
+    const weekday = (row['Weekday'] || '').trim();
 
-      allWeeks[idx].days.forEach(item => {
-        const row = item.rawRow;
-        const [y, m, d] = item.dateStr.split('-');
-        const dayOfWeek = item.dt.getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-        const cycleDay = (row['Cycle Day'] || '').trim();
+    // 取得當天對應之課堂時間表
+    const matchedTT = getTimetableForDay(cycleDay, weekday);
 
-        // 取得當天 Cycle Day 對應之課堂時間表
-        const matchedTT = getTimetableForCycle(cycleDay);
+    let ttHtml = '';
+    let dutyItems = []; // 收集當天所有當值
 
-        let ttHtml = '';
-        if (matchedTT.length > 0) {
-          ttHtml = `<div class="week-tt-box">
-            <div class="week-tt-title">📖 課堂時間表 (${cycleDay})</div>`;
-          matchedTT.forEach(tt => {
-            const period = tt.Period || tt['課節'] || '';
-            const time = tt.Time || tt['時間'] || tt['上課時間'] || '';
-            const className = tt.Class || tt['班別'] || '';
-            const subject = tt.Subject || tt['科目'] || '';
-            const room = tt.Room || tt['地點'] || tt['課室'] || '';
-
-            ttHtml += `
-              <div class="week-tt-item">
-                <div>
-                  <span class="week-tt-period">${period}</span>
-                  ${time ? `<span class="week-tt-time">(${time})</span>` : ''}
-                  <span class="week-tt-class">${className}</span>
-                </div>
-                <div>
-                  <span class="week-tt-subject">${subject}</span>
-                  ${room ? `<span class="week-tt-room">📍 ${room}</span>` : ''}
-                </div>
-              </div>
-            `;
-          });
-          ttHtml += `</div>`;
+    if (matchedTT.length > 0) {
+      ttHtml = `<div class="week-tt-box">
+        <div class="week-tt-title">📖 課堂時間表 ${cycleDay ? `(${cycleDay})` : ''}</div>`;
+      
+      matchedTT.forEach(tt => {
+        const period = tt.Period || tt['節數'] || tt['課節'] || '';
+        
+        // 時間解析 (週一至四 / 週五)
+        let time = '';
+        if (dayOfWeek === 5) {
+          time = tt.Time_Fri || tt.Time_MonThu || tt.Time || '';
+        } else {
+          time = tt.Time_MonThu || tt.Time_Fri || tt.Time || '';
         }
 
-        const card = document.createElement('div');
-        card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
-        card.innerHTML = `
-          <div class="week-card-header">
-            <div>
-              <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
-              <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${row.Weekday || ''})</span>
+        const className = tt.Class || tt['班別'] || '';
+        const subject = tt.Subject || tt['科目'] || '';
+        const room = tt.Room || tt['地點'] || tt['課室'] || '';
+
+        // 💡 容錯讀取當值欄位 (自動忽略空格與大小寫)
+        const getDutyValue = (keys) => {
+          for (let k of Object.keys(tt)) {
+            const cleanK = k.replace(/\s+/g, '').toLowerCase();
+            if (keys.includes(cleanK)) {
+              return String(tt[k] || '').trim();
+            }
+          }
+          return '';
+        };
+
+        const breakDuty = getDutyValue(['breakduty', '小息當值']);
+        const playDuty = getDutyValue(['playtimeduty', 'playduty', '大息當值']);
+        const lunchDuty = getDutyValue(['lunchduty', '午膳當值', '看飯當值', '午膳看飯']);
+        const lunchPlayDuty = getDutyValue(['lunchplaytimeduty', 'lunchplayduty', '午膳小息當值']);
+
+        // 收集當值項目
+        if (breakDuty) dutyItems.push({ type: 'break', label: '☕ 小息當值', duty: breakDuty, time: time });
+        if (playDuty) dutyItems.push({ type: 'play', label: '🛝 大息當值', duty: playDuty, time: time });
+        if (lunchDuty) dutyItems.push({ type: 'lunch', label: '🍱 午膳看飯', duty: lunchDuty, time: time });
+        if (lunchPlayDuty) dutyItems.push({ type: 'lunchPlay', label: '🏃 午小當值', duty: lunchPlayDuty, time: time });
+
+        // 💡 只有當「有科目」或「有班別」時，才算作正式課堂渲染出來，避免空欄位顯示成空白區塊
+        if (subject || className) {
+          ttHtml += `
+            <div class="week-tt-item">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                <div>
+                  <span class="week-tt-period">${period}</span>
+                  ${time ? `<span style="font-size: 0.72rem; color: #0284c7; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; font-weight: 500; margin-left: 2px;">${time}</span>` : ''}
+                </div>
+                <span class="week-tt-class">${className}</span>
+              </div>
+              <div style="margin-top: 2px;">
+                <span class="week-tt-subject">${subject}</span>
+                ${room ? `<span class="week-tt-room">📍 ${room}</span>` : ''}
+              </div>
             </div>
-            ${cycleDay ? `<span class="badge-cycle">${cycleDay}</span>` : ''}
-          </div>
-          ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
-          ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
-          ${ttHtml}
-        `;
-        container.appendChild(card);
+          `;
+        }
       });
+      ttHtml += `</div>`;
     }
+
+    // 💡 渲染當值區塊
+    let dutyHtml = '';
+    if (dutyItems.length > 0) {
+      dutyHtml += `<div style="display: flex; flex-direction: column; gap: 3px; margin: 4px 0;">`;
+      dutyItems.forEach(item => {
+        let styleStr = '';
+        if (item.type === 'break') styleStr = 'background-color: #f3e8ff; color: #6b21a8; border-left: 3px solid #9333ea;';
+        if (item.type === 'play') styleStr = 'background-color: #e0f2fe; color: #0369a1; border-left: 3px solid #0284c7;';
+        if (item.type === 'lunch') styleStr = 'background-color: #ffedd5; color: #9a3412; border-left: 3px solid #ea580c;';
+        if (item.type === 'lunchPlay') styleStr = 'background-color: #dcfce7; color: #166534; border-left: 3px solid #16a34a;';
+
+        const timeTag = item.time ? `<span style="opacity: 0.85; font-size: 0.7rem; margin-right: 2px;">(${item.time})</span>` : '';
+
+        dutyHtml += `<div style="${styleStr} font-size: 0.72rem; padding: 3px 6px; border-radius: 4px; font-weight: 600;">
+          ${item.label} ${timeTag}: ${item.duty}
+        </div>`;
+      });
+      dutyHtml += `</div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
+    card.innerHTML = `
+      <div class="week-card-header">
+        <div>
+          <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
+          <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${weekday || ''})</span>
+        </div>
+        ${cycleDay ? `<span class="badge-cycle">${cycleDay}</span>` : ''}
+      </div>
+      ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
+      ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+      ${dutyHtml}
+      ${ttHtml}
+    `;
+    container.appendChild(card);
+  });
+}
 
     function onWeekSelectChange() {
       currentWeekIndex = parseInt(document.getElementById('weekSelect').value) || 0;
@@ -897,7 +956,7 @@
       });
     }
 
-   /* 渲染週安排檢視卡片 (自動判斷 Mon-Thu 或 Fri 時間) */
+/* 渲染週安排檢視卡片 (徹底分離當值區塊與課堂卡片) */
 function renderWeekCards(idx) {
   const container = document.getElementById('weekCards'); container.innerHTML = '';
   if (!allWeeks[idx]) return;
@@ -906,23 +965,22 @@ function renderWeekCards(idx) {
   allWeeks[idx].days.forEach(item => {
     const row = item.rawRow;
     const [y, m, d] = item.dateStr.split('-');
-    const dayOfWeek = item.dt.getDay(); // 0 是週日, 5 是週五, 6 是週六
+    const dayOfWeek = item.dt.getDay();
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     const cycleDay = (row['Cycle Day'] || '').trim();
     const weekday = (row['Weekday'] || '').trim();
 
-    // 取得當天對應之課堂時間表
+    // 取得當天對應之課堂時間表資料
     const matchedTT = getTimetableForDay(cycleDay, weekday);
 
-    let ttHtml = '';
+    let dutyItems = []; // 專門存放當值
+    let lessonItems = []; // 專門存放課堂
+
     if (matchedTT.length > 0) {
-      ttHtml = `<div class="week-tt-box">
-        <div class="week-tt-title">📖 課堂時間表 ${cycleDay ? `(${cycleDay})` : ''}</div>`;
-      
       matchedTT.forEach(tt => {
-        const period = tt.Period || tt['課節'] || '';
+        const period = tt.Period || tt['節數'] || tt['課節'] || '';
         
-        // 💡 關鍵判斷：週五 (dayOfWeek === 5) 取 Time_Fri，其餘取 Time_MonThu
+        // 判斷時間 (週一至四 / 週五)
         let time = '';
         if (dayOfWeek === 5) {
           time = tt.Time_Fri || tt.Time_MonThu || tt.Time || '';
@@ -934,18 +992,74 @@ function renderWeekCards(idx) {
         const subject = tt.Subject || tt['科目'] || '';
         const room = tt.Room || tt['地點'] || tt['課室'] || '';
 
+        // 💡 通用讀取當值欄位 (自動忽略大小寫與空格)
+        const getDutyValue = (keys) => {
+          for (let k of Object.keys(tt)) {
+            const cleanK = k.replace(/\s+/g, '').toLowerCase();
+            if (keys.includes(cleanK)) {
+              return String(tt[k] || '').trim();
+            }
+          }
+          return '';
+        };
+
+        const breakDuty = getDutyValue(['breakduty', '小息當值']);
+        const playDuty = getDutyValue(['playtimeduty', 'playduty', '大息當值']);
+        const lunchDuty = getDutyValue(['lunchduty', '午膳當值', '看飯當值', '午膳看飯']);
+        const lunchPlayDuty = getDutyValue(['lunchplaytimeduty', 'lunchplayduty', '午膳小息當值']);
+
+        // 1. 若有當值，存入 dutyItems (附帶該時段的時間)
+        if (breakDuty) dutyItems.push({ type: 'break', label: '☕ 小息當值', duty: breakDuty, time: time });
+        if (playDuty) dutyItems.push({ type: 'play', label: '🛝 大息當值', duty: playDuty, time: time });
+        if (lunchDuty) dutyItems.push({ type: 'lunch', label: '🍱 午膳看飯', duty: lunchDuty, time: time });
+        if (lunchPlayDuty) dutyItems.push({ type: 'lunchPlay', label: '🏃 午小當值', duty: lunchPlayDuty, time: time });
+
+        // 2. 只有當具有「科目」或「班別」時，才算作真正課堂！
+        if (subject || className) {
+          lessonItems.push({ period, time, className, subject, room });
+        }
+      });
+    }
+
+    // 💡 組合「當值區塊」HTML (顯示在最上方)
+    let dutyHtml = '';
+    if (dutyItems.length > 0) {
+      dutyHtml += `<div style="display: flex; flex-direction: column; gap: 4px; margin: 6px 0;">`;
+      dutyItems.forEach(item => {
+        let styleStr = '';
+        if (item.type === 'break') styleStr = 'background-color: #f3e8ff; color: #6b21a8; border-left: 4px solid #9333ea;';
+        if (item.type === 'play') styleStr = 'background-color: #e0f2fe; color: #0369a1; border-left: 4px solid #0284c7;';
+        if (item.type === 'lunch') styleStr = 'background-color: #ffedd5; color: #9a3412; border-left: 4px solid #ea580c;';
+        if (item.type === 'lunchPlay') styleStr = 'background-color: #dcfce7; color: #166534; border-left: 4px solid #16a34a;';
+
+        const timeTag = item.time ? `<span style="opacity: 0.8; font-size: 0.7rem; font-weight: normal; margin-left: 2px;">(${item.time})</span>` : '';
+
+        dutyHtml += `<div style="${styleStr} font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;">
+          ${item.label}${timeTag}：${item.duty}
+        </div>`;
+      });
+      dutyHtml += `</div>`;
+    }
+
+    // 💡 組合「課堂區塊」HTML
+    let ttHtml = '';
+    if (lessonItems.length > 0) {
+      ttHtml = `<div class="week-tt-box">
+        <div class="week-tt-title">📖 課堂時間表 ${cycleDay ? `(${cycleDay})` : ''}</div>`;
+      
+      lessonItems.forEach(item => {
         ttHtml += `
           <div class="week-tt-item">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
               <div>
-                <span class="week-tt-period">${period}</span>
-                ${time ? `<span style="font-size: 0.72rem; color: #0284c7; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; font-weight: 500; margin-left: 2px;">${time}</span>` : ''}
+                <span class="week-tt-period">${item.period}</span>
+                ${item.time ? `<span style="font-size: 0.72rem; color: #0284c7; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; font-weight: 500; margin-left: 2px;">${item.time}</span>` : ''}
               </div>
-              <span class="week-tt-class">${className}</span>
+              <span class="week-tt-class">${item.className}</span>
             </div>
             <div style="margin-top: 2px;">
-              <span class="week-tt-subject">${subject}</span>
-              ${room ? `<span class="week-tt-room">📍 ${room}</span>` : ''}
+              <span class="week-tt-subject">${item.subject}</span>
+              ${item.room ? `<span class="week-tt-room">📍 ${item.room}</span>` : ''}
             </div>
           </div>
         `;
@@ -965,6 +1079,7 @@ function renderWeekCards(idx) {
       </div>
       ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
       ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+      ${dutyHtml}
       ${ttHtml}
     `;
     container.appendChild(card);
