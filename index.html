@@ -149,7 +149,7 @@
 
     .week-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 8px;
     }
 
@@ -180,6 +180,37 @@
     .week-card-date { font-weight: bold; font-size: 0.85rem; color: #334155; }
     .week-card-weekday { font-size: 0.75rem; color: #64748b; }
     .week-card-weekday.weekend-text { color: #e11d48; font-weight: bold; }
+
+    /* 週檢視內課堂時間表樣式 */
+    .week-tt-box {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px dashed #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .week-tt-title {
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #0369a1;
+      margin-bottom: 2px;
+    }
+
+    .week-tt-item {
+      background-color: #f0f9ff;
+      border-left: 3px solid var(--timetable-color);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      line-height: 1.3;
+    }
+
+    .week-tt-period { font-weight: bold; color: #0284c7; }
+    .week-tt-class { font-weight: bold; color: #ea580c; float: right; }
+    .week-tt-subject { font-weight: bold; color: #0f172a; display: block; }
+    .week-tt-room { color: #64748b; font-size: 0.7rem; }
 
     /* 月曆圖例與滑動容器 */
     .legend { display: flex; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; flex-wrap: wrap; }
@@ -479,6 +510,8 @@
       Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         timetableRows = res.data; document.getElementById('ttLoading').style.display = 'none';
         setupTimetableCycleFilter(); renderTimetable();
+        // 當時間表載入完成後，若週檢視已解析完成，重新刷新週檢視以帶入課堂資訊
+        if (allWeeks.length > 0) renderWeekCards(currentWeekIndex);
       }});
 
       // 數學日誌
@@ -493,7 +526,7 @@
         renderSOWLogs();
       }});
 
-      // 班主任事務 FormTeacher (帶有清空快取的 timestamp，並且採用 header: false 無畏特殊符號/空格問題)
+      // 班主任事務 FormTeacher
       const ftFetchUrl = `${FT_CSV_URL}&_t=${new Date().getTime()}`;
       Papa.parse(ftFetchUrl, {
         download: true,
@@ -504,7 +537,7 @@
             document.getElementById('ftLoading').innerHTML = 'FormTeacher 分頁暫無數據。';
             return;
           }
-          ftRows = res.data.slice(1); // 扣除表頭列
+          ftRows = res.data.slice(1);
           document.getElementById('ftLoading').style.display = 'none';
           setupFTClassFilter();
           renderFTLogs();
@@ -561,6 +594,16 @@
           <td style="color:#64748b;">${remarks}</td>
         `;
         tbody.appendChild(tr);
+      });
+    }
+
+    /* 依據 Cycle Day 取得對應課堂資料的輔助函數 */
+    function getTimetableForCycle(cycleStr) {
+      if (!cycleStr || !timetableRows || timetableRows.length === 0) return [];
+      const target = String(cycleStr).trim().toUpperCase();
+      return timetableRows.filter(row => {
+        const c = String(row.Cycle || row['循環日'] || row['Day'] || '').trim().toUpperCase();
+        return c === target || c === `DAY ${target}` || `DAY ${c}` === target;
       });
     }
 
@@ -630,11 +673,11 @@
       document.getElementById('sowProgressBar').style.width = `${percent}%`;
     }
 
-    /* 班主任事務 (FormTeacher) 處理 - 直接使用欄位索引 [0~6] */
+    /* 班主任事務 (FormTeacher) 處理 */
     function setupFTClassFilter() {
       const classSet = new Set();
       ftRows.forEach(row => {
-        const cls = row[1] ? String(row[1]).trim() : ''; // Index 1 = Class
+        const cls = row[1] ? String(row[1]).trim() : '';
         if (cls) classSet.add(cls);
       });
       const select = document.getElementById('ftClassSelect');
@@ -649,8 +692,6 @@
       const filterClass = document.getElementById('ftClassSelect').value;
       const filterStatus = document.getElementById('ftStatusSelect').value;
 
-      // 欄位順序對應:
-      // row[0] = Date | row[1] = Class | row[2] = Category | row[3] = Item/task | row[4] = Target student | row[5] = Status | row[6] = Remarks
       const filtered = ftRows.filter(r => {
         const cls = r[1] ? String(r[1]).trim() : '';
         const status = r[5] ? String(r[5]).trim() : '未完成';
@@ -764,6 +805,7 @@
       if (allWeeks.length > 0) renderWeekCards(0);
     }
 
+    /* 渲染週安排檢視卡片 (已加入課堂時間表顯示) */
     function renderWeekCards(idx) {
       const container = document.getElementById('weekCards'); container.innerHTML = '';
       if (!allWeeks[idx]) return;
@@ -774,6 +816,36 @@
         const [y, m, d] = item.dateStr.split('-');
         const dayOfWeek = item.dt.getDay();
         const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const cycleDay = (row['Cycle Day'] || '').trim();
+
+        // 取得當天 Cycle Day 對應之課堂時間表
+        const matchedTT = getTimetableForCycle(cycleDay);
+
+        let ttHtml = '';
+        if (matchedTT.length > 0) {
+          ttHtml = `<div class="week-tt-box">
+            <div class="week-tt-title">📖 課堂時間表 (${cycleDay})</div>`;
+          matchedTT.forEach(tt => {
+            const period = tt.Period || tt['課節'] || tt['時間'] || '';
+            const className = tt.Class || tt['班別'] || '';
+            const subject = tt.Subject || tt['科目'] || '';
+            const room = tt.Room || tt['地點'] || tt['課室'] || '';
+
+            ttHtml += `
+              <div class="week-tt-item">
+                <div>
+                  <span class="week-tt-period">${period}</span>
+                  <span class="week-tt-class">${className}</span>
+                </div>
+                <div>
+                  <span class="week-tt-subject">${subject}</span>
+                  ${room ? `<span class="week-tt-room">📍 ${room}</span>` : ''}
+                </div>
+              </div>
+            `;
+          });
+          ttHtml += `</div>`;
+        }
 
         const card = document.createElement('div');
         card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
@@ -783,10 +855,11 @@
               <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
               <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${row.Weekday || ''})</span>
             </div>
-            ${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}
+            ${cycleDay ? `<span class="badge-cycle">${cycleDay}</span>` : ''}
           </div>
           ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
           ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+          ${ttHtml}
         `;
         container.appendChild(card);
       });
