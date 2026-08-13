@@ -208,8 +208,10 @@
     }
 
     .week-tt-period { font-weight: bold; color: #0284c7; }
+    /* 小字體顯示上課時間 */
+    .week-tt-time { font-size: 0.7rem; color: #64748b; margin-left: 3px; font-weight: normal; }
     .week-tt-class { font-weight: bold; color: #ea580c; float: right; }
-    .week-tt-subject { font-weight: bold; color: #0f172a; display: block; }
+    .week-tt-subject { font-weight: bold; color: #0f172a; display: block; margin-top: 1px; }
     .week-tt-room { color: #64748b; font-size: 0.7rem; }
 
     /* 月曆圖例與滑動容器 */
@@ -385,8 +387,9 @@
         <table id="ttTable">
           <thead>
             <tr>
-              <th>循環日</th>
-              <th>課節/時間</th>
+              <th>循環日 / 星期</th>
+              <th>課節</th>
+              <th>上課時間</th>
               <th>班別</th>
               <th>科目</th>
               <th>地點/課室</th>
@@ -510,7 +513,6 @@
       Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         timetableRows = res.data; document.getElementById('ttLoading').style.display = 'none';
         setupTimetableCycleFilter(); renderTimetable();
-        // 當時間表載入完成後，若週檢視已解析完成，重新刷新週檢視以帶入課堂資訊
         if (allWeeks.length > 0) renderWeekCards(currentWeekIndex);
       }});
 
@@ -552,57 +554,70 @@
     function setupTimetableCycleFilter() {
       const cycleSet = new Set();
       timetableRows.forEach(row => {
-        const c = row.Cycle || row['循環日'] || row['Day'];
+        const c = row.Cycle || row['循環日'] || row['Day'] || row['Weekday'] || row['星期'];
         if (c) cycleSet.add(c.trim());
       });
       const select = document.getElementById('ttCycleSelect');
-      select.innerHTML = '<option value="ALL">所有循環日 (All Cycle Days)</option>';
+      select.innerHTML = '<option value="ALL">所有循環日/星期 (All)</option>';
       Array.from(cycleSet).sort().forEach(cyc => {
-        const opt = document.createElement('option'); opt.value = cyc; opt.textContent = `循環日: ${cyc}`; select.appendChild(opt);
+        const opt = document.createElement('option'); opt.value = cyc; opt.textContent = `循環日/星期: ${cyc}`; select.appendChild(opt);
       });
     }
 
     function renderTimetable() {
-      const tbody = document.getElementById('ttBody'); tbody.innerHTML = '';
-      const selectedCycle = document.getElementById('ttCycleSelect').value;
+  const tbody = document.getElementById('ttBody'); tbody.innerHTML = '';
+  const selectedCycle = document.getElementById('ttCycleSelect').value;
 
-      const filtered = timetableRows.filter(r => {
-        const c = (r.Cycle || r['循環日'] || r['Day'] || '').trim();
-        return selectedCycle === 'ALL' || c === selectedCycle;
-      });
+  const filtered = timetableRows.filter(r => {
+    const c = (r.Cycle || r['循環日'] || r['Day'] || r['Weekday'] || r['星期'] || '').trim();
+    return selectedCycle === 'ALL' || c === selectedCycle;
+  });
 
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b;">暫無時間表資料</td></tr>';
-        return;
-      }
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b;">暫無時間表資料</td></tr>';
+    return;
+  }
 
-      filtered.forEach(row => {
-        const cycle = row.Cycle || row['循環日'] || row['Day'] || '-';
-        const period = row.Period || row['課節'] || row['時間'] || '-';
-        const className = row.Class || row['班別'] || '-';
-        const subject = row.Subject || row['科目'] || '-';
-        const room = row.Room || row['地點'] || row['課室'] || '-';
-        const remarks = row.Remarks || row['備註'] || '-';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="badge-cycle">${cycle}</span></td>
-          <td><strong>${period}</strong></td>
-          <td><span style="color:#0284c7; font-weight:bold;">${className}</span></td>
-          <td>${subject}</td>
-          <td>📍 ${room}</td>
-          <td style="color:#64748b;">${remarks}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+  filtered.forEach(row => {
+    const cycle = row.Cycle || row['循環日'] || row['Day'] || row['Weekday'] || row['星期'] || '-';
+    const period = row.Period || row['課節'] || '-';
+    
+    // 組合顯示 Mon-Thu 與 Fri 時間
+    const timeMonThu = row.Time_MonThu || '';
+    const timeFri = row.Time_Fri || '';
+    let timeDisplay = '-';
+    
+    if (timeMonThu && timeFri) {
+      timeDisplay = `Mon-Thu: ${timeMonThu}<br><span style="color:#e11d48;">Fri: ${timeFri}</span>`;
+    } else {
+      timeDisplay = timeMonThu || timeFri || row.Time || '-';
     }
 
-    /* 依據 Cycle Day 取得對應課堂資料的輔助函數 */
+    const className = row.Class || row['班別'] || '-';
+    const subject = row.Subject || row['科目'] || '-';
+    const room = row.Room || row['地點'] || row['課室'] || '-';
+    const remarks = row.Remarks || row['備註'] || '-';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge-cycle">${cycle}</span></td>
+      <td><strong>${period}</strong></td>
+      <td style="color:#0284c7; font-weight:600; font-size:0.85rem;">${timeDisplay}</td>
+      <td><span style="color:#ea580c; font-weight:bold;">${className}</span></td>
+      <td>${subject}</td>
+      <td>📍 ${room}</td>
+      <td style="color:#64748b;">${remarks}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+    /* 依據 Cycle Day / 星期 取得對應課堂資料的輔助函數 */
     function getTimetableForCycle(cycleStr) {
       if (!cycleStr || !timetableRows || timetableRows.length === 0) return [];
       const target = String(cycleStr).trim().toUpperCase();
       return timetableRows.filter(row => {
-        const c = String(row.Cycle || row['循環日'] || row['Day'] || '').trim().toUpperCase();
+        const c = String(row.Cycle || row['循環日'] || row['Day'] || row['Weekday'] || row['星期'] || '').trim().toUpperCase();
         return c === target || c === `DAY ${target}` || `DAY ${c}` === target;
       });
     }
@@ -805,7 +820,7 @@
       if (allWeeks.length > 0) renderWeekCards(0);
     }
 
-    /* 渲染週安排檢視卡片 (已加入課堂時間表顯示) */
+    /* 渲染週安排檢視卡片 (課節旁附帶小字體上課時間) */
     function renderWeekCards(idx) {
       const container = document.getElementById('weekCards'); container.innerHTML = '';
       if (!allWeeks[idx]) return;
@@ -826,7 +841,8 @@
           ttHtml = `<div class="week-tt-box">
             <div class="week-tt-title">📖 課堂時間表 (${cycleDay})</div>`;
           matchedTT.forEach(tt => {
-            const period = tt.Period || tt['課節'] || tt['時間'] || '';
+            const period = tt.Period || tt['課節'] || '';
+            const time = tt.Time || tt['時間'] || tt['上課時間'] || '';
             const className = tt.Class || tt['班別'] || '';
             const subject = tt.Subject || tt['科目'] || '';
             const room = tt.Room || tt['地點'] || tt['課室'] || '';
@@ -835,6 +851,7 @@
               <div class="week-tt-item">
                 <div>
                   <span class="week-tt-period">${period}</span>
+                  ${time ? `<span class="week-tt-time">(${time})</span>` : ''}
                   <span class="week-tt-class">${className}</span>
                 </div>
                 <div>
@@ -919,6 +936,110 @@
     }
 
     function changeMonth(d) { let n = currentMonthIndex + d; if (n>=0 && n<availableMonths.length) { document.getElementById('monthSelect').value=n; renderCalendar(); } }
+
+/* 依據 Cycle Day 或 星期 取得對應課堂資料的輔助函數 (增強版) */
+    function getTimetableForDay(cycleStr, weekdayStr) {
+      if (!timetableRows || timetableRows.length === 0) return [];
+      
+      const cleanCycle = cycleStr ? String(cycleStr).trim().toUpperCase() : '';
+      const cleanWeekday = weekdayStr ? String(weekdayStr).trim().toUpperCase() : '';
+
+      return timetableRows.filter(row => {
+        const c = String(row.Cycle || row['循環日'] || row['Day'] || row['Weekday'] || row['星期'] || '').trim().toUpperCase();
+        
+        if (!c) return false;
+
+        // 1. 比對循環日 (例如: "A", "Day A", "DAYA")
+        if (cleanCycle) {
+          if (c === cleanCycle || c === `DAY ${cleanCycle}` || `DAY ${c}` === cleanCycle || c.replace(/\s+/g, '') === cleanCycle.replace(/\s+/g, '')) {
+            return true;
+          }
+        }
+
+        // 2. 備用比對：按星期幾比對 (例如: "Mon", "Monday", "星期一")
+        if (cleanWeekday) {
+          if (c === cleanWeekday || cleanWeekday.includes(c) || c.includes(cleanWeekday)) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+    }
+
+   /* 渲染週安排檢視卡片 (自動判斷 Mon-Thu 或 Fri 時間) */
+function renderWeekCards(idx) {
+  const container = document.getElementById('weekCards'); container.innerHTML = '';
+  if (!allWeeks[idx]) return;
+  document.getElementById('weekSelect').value = idx;
+
+  allWeeks[idx].days.forEach(item => {
+    const row = item.rawRow;
+    const [y, m, d] = item.dateStr.split('-');
+    const dayOfWeek = item.dt.getDay(); // 0 是週日, 5 是週五, 6 是週六
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    const cycleDay = (row['Cycle Day'] || '').trim();
+    const weekday = (row['Weekday'] || '').trim();
+
+    // 取得當天對應之課堂時間表
+    const matchedTT = getTimetableForDay(cycleDay, weekday);
+
+    let ttHtml = '';
+    if (matchedTT.length > 0) {
+      ttHtml = `<div class="week-tt-box">
+        <div class="week-tt-title">📖 課堂時間表 ${cycleDay ? `(${cycleDay})` : ''}</div>`;
+      
+      matchedTT.forEach(tt => {
+        const period = tt.Period || tt['課節'] || '';
+        
+        // 💡 關鍵判斷：週五 (dayOfWeek === 5) 取 Time_Fri，其餘取 Time_MonThu
+        let time = '';
+        if (dayOfWeek === 5) {
+          time = tt.Time_Fri || tt.Time_MonThu || tt.Time || '';
+        } else {
+          time = tt.Time_MonThu || tt.Time_Fri || tt.Time || '';
+        }
+
+        const className = tt.Class || tt['班別'] || '';
+        const subject = tt.Subject || tt['科目'] || '';
+        const room = tt.Room || tt['地點'] || tt['課室'] || '';
+
+        ttHtml += `
+          <div class="week-tt-item">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+              <div>
+                <span class="week-tt-period">${period}</span>
+                ${time ? `<span style="font-size: 0.72rem; color: #0284c7; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; font-weight: 500; margin-left: 2px;">${time}</span>` : ''}
+              </div>
+              <span class="week-tt-class">${className}</span>
+            </div>
+            <div style="margin-top: 2px;">
+              <span class="week-tt-subject">${subject}</span>
+              ${room ? `<span class="week-tt-room">📍 ${room}</span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      ttHtml += `</div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = `week-card ${isWeekend ? 'is-weekend' : ''}`;
+    card.innerHTML = `
+      <div class="week-card-header">
+        <div>
+          <span class="week-card-date">${parseInt(m)}月${parseInt(d)}日</span>
+          <span class="week-card-weekday ${isWeekend ? 'weekend-text' : ''}">(${weekday || ''})</span>
+        </div>
+        ${cycleDay ? `<span class="badge-cycle">${cycleDay}</span>` : ''}
+      </div>
+      ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
+      ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+      ${ttHtml}
+    `;
+    container.appendChild(card);
+  });
+}
   </script>
 
 </body>
