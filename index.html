@@ -466,14 +466,15 @@
 
   </div>
 
-  <script>
+<script>
     const CSV_URL = 'Sch Calendar-Grid view.csv';
     const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
     
-    const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable`;
-    const MATH_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv`;
-    const SOW_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=SOW`;
-    const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=csv&sheet=FormTeacher`;
+    // 使用標準 gviz 匯出 API 並加上 timestamp 防快取
+    const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable&t=${new Date().getTime()}`;
+    const MATH_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&t=${new Date().getTime()}`;
+    const SOW_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=SOW&t=${new Date().getTime()}`;
+    const FT_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=FormTeacher&t=${new Date().getTime()}`;
 
     let calendarData = {}; 
     let availableDatesSorted = [];
@@ -485,6 +486,7 @@
     let timetableRows = [], mathRows = [], sowRows = [], ftRows = [];
 
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. 讀取本地校曆 CSV
       Papa.parse(CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
         complete: (results) => {
@@ -495,6 +497,7 @@
         }
       });
 
+      // 2. 讀取 Google Sheets 資料
       loadGoogleSheets();
     });
 
@@ -513,40 +516,83 @@
       else if (tabName === 'gcal') { document.getElementById('tab-gcal').style.display = 'block'; buttons[5].classList.add('active'); }
     }
 
+    // 💡 規格化物件 Key（忽略大小寫與空格）
+    function normalizeRowObject(row) {
+      const newRow = {};
+      Object.keys(row).forEach(key => {
+        const cleanKey = key.trim().toLowerCase().replace(/[\_\s]/g, '');
+        newRow[cleanKey] = row[key];
+        newRow[key.trim()] = row[key]; // 保留原 key
+      });
+      return newRow;
+    }
+
+    function getValueFromRow(row, candidateKeys) {
+      for (let k of candidateKeys) {
+        const cleanK = k.toLowerCase().replace(/[\_\s]/g, '');
+        if (row[cleanK] !== undefined && row[cleanK] !== null && String(row[cleanK]).trim() !== '') {
+          return String(row[cleanK]).trim();
+        }
+      }
+      return '';
+    }
+
     function loadGoogleSheets() {
-      Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
-        timetableRows = res.data; 
-        document.getElementById('ttLoading').style.display = 'none';
-        setupTimetableCycleFilter(); 
-        renderTimetable();
-        if (allWeeks.length > 0) renderWeekCards(currentWeekIndex);
-      }});
-
-      Papa.parse(MATH_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
-        mathRows = res.data; document.getElementById('mathLoading').style.display = 'none';
-        setupMathClassFilter(); renderMathLogs();
-      }});
-
-      Papa.parse(SOW_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
-        sowRows = res.data; document.getElementById('sowLoading').style.display = 'none';
-        renderSOWLogs();
-      }});
-
-      const ftFetchUrl = `${FT_CSV_URL}&_t=${new Date().getTime()}`;
-      Papa.parse(ftFetchUrl, {
-        download: true, header: false, skipEmptyLines: true,
+      // 載入 Timetable
+      Papa.parse(TIMETABLE_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
         complete: res => {
-          if (!res.data || res.data.length <= 1) {
-            document.getElementById('ftLoading').innerHTML = 'FormTeacher 分頁暫無數據。';
-            return;
+          if (res.data && res.data.length > 0) {
+            timetableRows = res.data.map(r => normalizeRowObject(r));
+            console.log("✅ Timetable 成功載入筆數：", timetableRows.length);
+            document.getElementById('ttLoading').style.display = 'none';
+            setupTimetableCycleFilter(); 
+            renderTimetable();
+            // 重新刷新週檢視以帶入 Timetable
+            if (allWeeks.length > 0) renderWeekCards(currentWeekIndex);
+          } else {
+            document.getElementById('ttLoading').innerHTML = '⚠️ Timetable 載入為空，請確認 Google Sheet 權限已設為「知道連結的人皆可存取」。';
           }
-          ftRows = res.data.slice(1);
-          document.getElementById('ftLoading').style.display = 'none';
-          setupFTClassFilter();
-          renderFTLogs();
         },
         error: (err) => {
-          document.getElementById('ftLoading').innerHTML = '無法載入 FormTeacher 資料。';
+          console.error("Timetable 載入失敗:", err);
+          document.getElementById('ttLoading').innerHTML = '❌ Timetable 載入失敗，請檢查網路或 Google Sheet 網址。';
+        }
+      });
+
+      // 載入 Math Log
+      Papa.parse(MATH_CSV_URL, { 
+        download: true, header: true, skipEmptyLines: true, 
+        complete: res => {
+          mathRows = res.data; 
+          document.getElementById('mathLoading').style.display = 'none';
+          setupMathClassFilter(); 
+          renderMathLogs();
+        }
+      });
+
+      // 載入 SOW
+      Papa.parse(SOW_CSV_URL, { 
+        download: true, header: true, skipEmptyLines: true, 
+        complete: res => {
+          sowRows = res.data; 
+          document.getElementById('sowLoading').style.display = 'none';
+          renderSOWLogs();
+        }
+      });
+
+      // 載入 FormTeacher
+      Papa.parse(FT_CSV_URL, {
+        download: true, header: false, skipEmptyLines: true,
+        complete: res => {
+          if (res.data && res.data.length > 1) {
+            ftRows = res.data.slice(1);
+            document.getElementById('ftLoading').style.display = 'none';
+            setupFTClassFilter();
+            renderFTLogs();
+          } else {
+            document.getElementById('ftLoading').innerHTML = 'FormTeacher 分頁無數據。';
+          }
         }
       });
     }
@@ -554,8 +600,8 @@
     function setupTimetableCycleFilter() {
       const cycleSet = new Set();
       timetableRows.forEach(row => {
-        const c = row.Cycle || row['循環日'] || row['Day'] || row['Weekday'] || row['星期'];
-        if (c) cycleSet.add(c.trim());
+        const c = getValueFromRow(row, ['cycle', '循環日', 'day', 'weekday', '星期']);
+        if (c) cycleSet.add(c);
       });
       const select = document.getElementById('ttCycleSelect');
       select.innerHTML = '<option value="ALL">所有循環日/星期 (All)</option>';
@@ -569,7 +615,7 @@
       const selectedCycle = document.getElementById('ttCycleSelect').value;
 
       const filtered = timetableRows.filter(r => {
-        const c = (r.Cycle || r['循環日'] || r['Day'] || r['Weekday'] || r['星期'] || '').trim();
+        const c = getValueFromRow(r, ['cycle', '循環日', 'day', 'weekday', '星期']);
         return selectedCycle === 'ALL' || c === selectedCycle;
       });
 
@@ -579,23 +625,24 @@
       }
 
       filtered.forEach(row => {
-        const cycle = row.Cycle || row['循環日'] || row['Day'] || row['Weekday'] || row['星期'] || '-';
-        const period = row.Period || row['課節'] || '-';
+        const cycle = getValueFromRow(row, ['cycle', '循環日', 'day', 'weekday', '星期']) || '-';
+        const period = getValueFromRow(row, ['period', '課節', '節數']) || '-';
         
-        const timeMonThu = row.Time_MonThu || '';
-        const timeFri = row.Time_Fri || '';
+        const timeMonThu = getValueFromRow(row, ['timemonthu', 'time_monthu', 'monthu']);
+        const timeFri = getValueFromRow(row, ['timefri', 'time_fri', 'fri']);
+        const timeGeneral = getValueFromRow(row, ['time', '時間']);
+
         let timeDisplay = '-';
-        
         if (timeMonThu && timeFri) {
           timeDisplay = `Mon-Thu: ${timeMonThu}<br><span style="color:#e11d48;">Fri: ${timeFri}</span>`;
         } else {
-          timeDisplay = timeMonThu || timeFri || row.Time || '-';
+          timeDisplay = timeMonThu || timeFri || timeGeneral || '-';
         }
 
-        const className = row.Class || row['班別'] || '-';
-        const subject = row.Subject || row['科目'] || '-';
-        const room = row.Room || row['地點'] || row['課室'] || '-';
-        const remarks = row.Remarks || row['備註'] || '-';
+        const className = getValueFromRow(row, ['class', '班別']) || '-';
+        const subject = getValueFromRow(row, ['subject', '科目']) || '-';
+        const room = getValueFromRow(row, ['room', '地點', '課室']) || '-';
+        const remarks = getValueFromRow(row, ['remarks', '備註']) || '-';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -789,6 +836,7 @@
           allWeeks.push({
             label: `第 ${weekCounter} 週 (${startM}/${startD} - ${endM}/${endD})`,
             startDate: startDate,
+            endDate: endDate,
             days: currentWeekDays
           });
           weekCounter++;
@@ -802,17 +850,38 @@
         select.appendChild(opt);
       });
 
-      if (allWeeks.length > 0) renderWeekCards(0);
+      // 自動定位至「最接近當前日期 (Today)」的週次
+      if (allWeeks.length > 0) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        let targetIndex = 0;
+
+        let matchedIndex = allWeeks.findIndex(w => todayStr >= w.startDate && todayStr <= w.endDate);
+
+        if (matchedIndex !== -1) {
+          targetIndex = matchedIndex;
+        } else {
+          let futureIndex = allWeeks.findIndex(w => w.startDate > todayStr);
+          if (futureIndex !== -1) {
+            targetIndex = futureIndex;
+          } else {
+            targetIndex = allWeeks.length - 1;
+          }
+        }
+
+        currentWeekIndex = targetIndex;
+        if (select) select.value = currentWeekIndex;
+
+        renderWeekCards(currentWeekIndex);
+        syncCalendarToWeek(currentWeekIndex);
+      }
     }
 
-    /* 時間格式標準化 (1500 -> 15:00) */
     function formatTimeString(str) {
       if (!str) return '';
       let s = String(str).trim();
       return s.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
     }
 
-    /* 獲取時間點的分鐘數（排序專用） */
     function getStartMinutes(tStr) {
       if (!tStr) return 9999;
       const match = String(tStr).match(/(\d{1,2}):?(\d{2})/);
@@ -824,7 +893,6 @@
       return 9999;
     }
 
-    /* 星期名稱正規化 */
     function normalizeWeekday(str) {
       if (!str) return '';
       const s = String(str).trim().toLowerCase();
@@ -836,7 +904,6 @@
       return s;
     }
 
-    /* 匹配時間表資料 */
     function getTimetableForDay(cycleDay, weekday) {
       if (!timetableRows || !Array.isArray(timetableRows) || timetableRows.length === 0) {
         return [];
@@ -847,8 +914,7 @@
 
       return timetableRows.filter(row => {
         if (!row) return false;
-        const rowDayRaw = row.Day || row['Day'] || row['循環日'] || row['星期'] || '';
-        const rowDay = String(rowDayRaw).trim().toLowerCase();
+        const rowDay = getValueFromRow(row, ['cycle', '循環日', 'day', 'weekday', '星期']).toLowerCase();
         const normalizedRowDay = normalizeWeekday(rowDay);
 
         const matchCycle = targetCycle && (rowDay === targetCycle);
@@ -858,7 +924,6 @@
       });
     }
 
-    /* 週檢視核心渲染 */
     function renderWeekCards(idx) {
       try {
         const container = document.getElementById('weekCards'); 
@@ -884,8 +949,6 @@
           const weekday = String(row['Weekday'] || '').trim();
 
           const normalizedDayKey = normalizeWeekday(weekday);
-
-          // 第一條規則：若當天沒有 cycleDay，則不顯示課堂與 Duty
           const hasCycle = Boolean(cycleDay && cycleDay !== '-' && cycleDay.toLowerCase() !== 'null');
 
           let combinedTimeline = [];
@@ -898,49 +961,32 @@
               matchedTT.forEach(tt => {
                 if (!tt) return;
 
-                const periodRaw = String(tt.Period || tt['節數'] || tt['課節'] || '').trim();
+                const periodRaw = getValueFromRow(tt, ['period', '課節', '節數']);
                 
                 let rawTime = '';
                 if (isFri) {
-                  rawTime = tt.Time_Fri || tt.Time_MonThu || tt.Time || '';
+                  rawTime = getValueFromRow(tt, ['timefri', 'time_fri', 'fri']) || getValueFromRow(tt, ['timemonthu', 'time_monthu', 'time']);
                 } else {
-                  rawTime = tt.Time_MonThu || tt.Time_Fri || tt.Time || '';
+                  rawTime = getValueFromRow(tt, ['timemonthu', 'time_monthu', 'time']) || getValueFromRow(tt, ['timefri', 'time_fri']);
                 }
                 const time = formatTimeString(rawTime);
 
-                const className = tt.Class || tt['班別'] || '';
-                const subject = tt.Subject || tt['科目'] || '';
-                const room = tt.Room || tt['地點'] || tt['課室'] || '';
+                const className = getValueFromRow(tt, ['class', '班別']);
+                const subject = getValueFromRow(tt, ['subject', '科目']);
+                const room = getValueFromRow(tt, ['room', '地點', '課室']);
 
-                // Duty 讀取：支援所有小息與放學當值欄位
-                const getDutyValue = (keys) => {
-                  for (let k of Object.keys(tt)) {
-                    const cleanK = k.replace(/\s+/g, '').toLowerCase();
-                    if (keys.includes(cleanK)) {
-                      const val = String(tt[k] || '').trim();
-                      if (val && val !== '-') return val;
-                    }
-                  }
-                  return '';
-                };
+                const breakDuty = getValueFromRow(tt, ['breakduty', '小息當值']);
+                const playDuty = getValueFromRow(tt, ['playtimeduty', 'playduty', '大息當值']);
+                const lunchDuty = getValueFromRow(tt, ['lunchduty', '午膳當值', '看飯當值']);
+                const lunchPlayDuty = getValueFromRow(tt, ['lunchplaytimeduty', 'lunchplayduty', '午膳小息當值']);
+                const dismissalDuty = getValueFromRow(tt, ['dismissalduty', '放學當值']);
+                const ecaDuty = getValueFromRow(tt, ['ecaduty', 'eca當值']);
+                const ecaDismissalDuty = getValueFromRow(tt, ['ecadismissalduty', 'eca放學當值']);
 
-                const breakDuty = getDutyValue(['breakduty', '小息當值']);
-                const playDuty = getDutyValue(['playtimeduty', 'playduty', '大息當值']);
-                const lunchDuty = getDutyValue(['lunchduty', '午膳當值', '看飯當值', '午膳看飯']);
-                const lunchPlayDuty = getDutyValue(['lunchplaytimeduty', 'lunchplayduty', '午膳小息當值']);
-                
-                // 新增：放學後當值
-                const dismissalDuty = getDutyValue(['dismissalduty', '放學當值']);
-                const ecaDuty = getDutyValue(['ecaduty', 'eca當值', '課外活動當值']);
-                const ecaDismissalDuty = getDutyValue(['ecadismissalduty', 'eca放學當值']);
-
-                // 小息與校內當值
                 if (breakDuty) combinedTimeline.push({ type: 'duty', label: '☕ 小息當值', duty: breakDuty, time, rawTime: rawTime || '09:40' });
                 if (playDuty) combinedTimeline.push({ type: 'duty', label: '🛝 大息當值', duty: playDuty, time, rawTime: rawTime || '10:30' });
                 if (lunchDuty) combinedTimeline.push({ type: 'duty', label: '🍱 午膳看飯', duty: lunchDuty, time, rawTime: rawTime || '12:00' });
                 if (lunchPlayDuty) combinedTimeline.push({ type: 'duty-lunchplay', label: '🏃 午小當值', duty: lunchPlayDuty, time, rawTime: rawTime || '12:40' });
-
-                // 放學後當值 (預設時間點 15:15 ~ 16:30，自動排在下午課堂之後)
                 if (dismissalDuty) combinedTimeline.push({ type: 'duty-pm', label: '🏫 放學當值', duty: dismissalDuty, time, rawTime: rawTime || '15:15' });
                 if (ecaDuty) combinedTimeline.push({ type: 'duty-pm', label: '🎨 ECA 當值', duty: ecaDuty, time, rawTime: rawTime || '15:30' });
                 if (ecaDismissalDuty) combinedTimeline.push({ type: 'duty-pm', label: '🚌 ECA 放學當值', duty: ecaDismissalDuty, time, rawTime: rawTime || '16:30' });
@@ -948,75 +994,50 @@
                 const cleanSubject = (subject && subject !== '-') ? subject : '';
                 const cleanClass = (className && className !== '-') ? className : '';
 
-                // 晨間活動：明確以 08:20 (500分鐘) 為界
                 const startMins = getStartMinutes(rawTime);
                 const isMorningSlot = (startMins < 500) || periodRaw.includes('晨') || periodRaw.toLowerCase().includes('check-in') || periodRaw.toLowerCase().includes('ceremony');
 
                 if (cleanSubject || cleanClass) {
                   if (isMorningSlot) {
                     combinedTimeline.push({
-                      type: 'morning',
-                      time,
-                      className: cleanClass,
-                      subject: cleanSubject,
-                      room: (room && room !== '-') ? room : '',
-                      rawTime
+                      type: 'morning', time, className: cleanClass, subject: cleanSubject, room: (room && room !== '-') ? room : '', rawTime
                     });
                   } else {
                     let periodLabel = periodRaw;
-                    if (/^\d+$/.test(periodRaw.trim())) {
-                      periodLabel = `Period ${periodRaw.trim()}`;
-                    }
+                    if (/^\d+$/.test(periodRaw.trim())) periodLabel = `Period ${periodRaw.trim()}`;
 
                     combinedTimeline.push({ 
-                      type: 'lesson',
-                      period: periodLabel, 
-                      time, 
-                      className: cleanClass, 
-                      subject: cleanSubject, 
-                      room: (room && room !== '-') ? room : '',
-                      rawTime
+                      type: 'lesson', period: periodLabel, time, className: cleanClass, subject: cleanSubject, room: (room && room !== '-') ? room : '', rawTime
                     });
                   }
                 }
               });
             }
 
-            // 按時間排序
             combinedTimeline.sort((a, b) => getStartMinutes(a.rawTime) - getStartMinutes(b.rawTime));
           }
 
-          // 組合 HTML 結構
           let ttHtml = '';
           if (hasCycle && combinedTimeline.length > 0) {
             ttHtml = `<div class="week-tt-box">`;
-            
-            let hasShownMorningDivider = false;
-            let hasShownAMDivider = false;
-            let hasShownPMDivider = false;
+            let hasShownMorningDivider = false, hasShownAMDivider = false, hasShownPMDivider = false;
 
             combinedTimeline.forEach(item => {
               const mins = getStartMinutes(item.rawTime);
 
-              // 1. 晨間時段間隔線 (< 08:20)
               if (!hasShownMorningDivider && (item.type === 'morning' || mins < 500)) {
                 ttHtml += `<div class="section-divider divider-morning">🌅 晨間活動</div>`;
                 hasShownMorningDivider = true;
               }
-
-              // 2. 上午課堂間隔線 (>= 08:20 且 < 13:00)
               if (!hasShownAMDivider && mins >= 500 && mins < 780) {
                 ttHtml += `<div class="section-divider divider-am">📚 上午課堂</div>`;
                 hasShownAMDivider = true;
               }
-
-              // 3. 下午課堂 / 放學與活動間隔線 (>= 13:00)
               if (!hasShownPMDivider && (mins >= 780 || item.type === 'duty-lunchplay' || item.type === 'duty-pm')) {
                 ttHtml += `<div class="section-divider divider-pm">👇 下午課堂 / 活動</div>`;
                 hasShownPMDivider = true;
               }
 
-              // 卡片渲染
               if (item.type === 'morning') {
                 ttHtml += `
                   <div class="morning-item">
@@ -1032,11 +1053,7 @@
                 `;
               } else if (item.type.startsWith('duty')) {
                 const timeTag = item.time ? `<span style="opacity: 0.85; font-size: 0.7rem; font-weight: normal; margin-left: 4px;">(${item.time})</span>` : '';
-                ttHtml += `
-                  <div class="duty-item">
-                    ${item.label}${timeTag}：${item.duty}
-                  </div>
-                `;
+                ttHtml += `<div class="duty-item">${item.label}${timeTag}：${item.duty}</div>`;
               } else {
                 const isPM = mins >= 780;
                 const cardStyleClass = isPM ? 'week-tt-item-pm' : 'week-tt-item';
