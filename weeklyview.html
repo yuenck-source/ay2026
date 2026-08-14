@@ -12,11 +12,9 @@
   :root {
     --primary-color: #2563eb;
     --timetable-color: #0284c7;
-    --pm-timetable-color: #0d9488; /* 下午課堂專用顏色：翡翠綠 */
     --math-color: #0d9488;
     --sow-color: #7c3aed;
     --ft-color: #ea580c;
-    --duty-color: #ea580c; /* 橙色 Duty */
     --bg-color: #f8fafc;
     --border-color: #cbd5e1;
   }
@@ -196,24 +194,15 @@
 
   .week-tt-box {
     margin-top: 4px;
-    padding-top: 2px;
+    padding-top: 4px;
+    border-top: 1px dashed #cbd5e1;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
   }
 
-  /* 晨間活動卡片 (改為溫暖柔橙色風格) */
-  .morning-item {
-    background-color: #fff7ed !important;
-    border-left: 3px solid #f97316 !important;
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 0.78rem;
-    line-height: 1.3;
-    border-bottom: 1px dashed #ffedd5;
-  }
+  .week-tt-title { font-size: 0.72rem; font-weight: bold; color: #0369a1; margin-bottom: 2px; }
 
-  /* 上午課堂項目卡片（藍色系） */
   .week-tt-item {
     background-color: #f0f9ff;
     border-left: 3px solid var(--timetable-color);
@@ -221,64 +210,9 @@
     border-radius: 4px;
     font-size: 0.78rem;
     line-height: 1.3;
-    border-bottom: 1px dashed #cbd5e1;
-  }
-
-  /* 下午課堂項目卡片（翡翠綠色系） */
-  .week-tt-item-pm {
-    background-color: #f0fdf4;
-    border-left: 3px solid var(--pm-timetable-color);
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 0.78rem;
-    line-height: 1.3;
-    border-bottom: 1px dashed #bbf7d0;
-  }
-
-  /* Duty 專屬橙色風格 */
-  .duty-item {
-    background-color: #fff7ed !important;
-    border-left: 3px solid var(--duty-color) !important;
-    color: #9a3412;
-    font-size: 0.75rem;
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    border-bottom: 1px dashed #fdba74;
-  }
-
-  /* 各時段分隔標示線 */
-  .section-divider {
-    margin-top: 4px;
-    margin-bottom: 2px;
-    padding: 3px 6px;
-    font-size: 0.72rem;
-    font-weight: bold;
-    border-radius: 4px;
-    text-align: center;
-  }
-
-  /* 晨間分隔線 (新橙色調) */
-  .divider-morning {
-    background-color: #ffedd5;
-    color: #c2410c;
-    border: 1px dashed #fed7aa;
-  }
-
-  .divider-am {
-    background-color: #e0f2fe;
-    color: #0369a1;
-    border: 1px dashed #bae6fd;
-  }
-
-  .divider-pm {
-    background-color: #dcfce7;
-    color: #15803d;
-    border: 1px dashed #86efac;
   }
 
   .week-tt-period { font-weight: bold; color: #0284c7; }
-  .week-tt-period-pm { font-weight: bold; color: #0d9488; }
   .week-tt-class { font-weight: bold; color: #ea580c; }
   .week-tt-subject { font-weight: bold; color: #0f172a; display: block; margin-top: 1px; }
   .week-tt-room { color: #64748b; font-size: 0.7rem; }
@@ -290,29 +224,8 @@
 
   .legend { display: flex; gap: 6px; font-size: 0.75rem; margin-bottom: 8px; flex-wrap: wrap; }
   .badge-cycle { background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.72rem; }
-  
-  /* 強化視覺效果的 Holiday & Activity 標籤 */
-  .holiday-tag, .badge-holiday {
-    background-color: #ffe4e6;
-    color: #9f1239;
-    font-size: 0.75rem;
-    font-weight: bold;
-    padding: 3px 6px;
-    border-radius: 4px;
-    border-left: 3px solid #f43f5e;
-    margin-top: 3px;
-  }
-
-  .activity-tag, .badge-activity {
-    background-color: #fef3c7;
-    color: #92400e;
-    font-size: 0.75rem;
-    font-weight: bold;
-    padding: 3px 6px;
-    border-radius: 4px;
-    border-left: 3px solid #f59e0b;
-    margin-top: 3px;
-  }
+  .badge-holiday { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; border: 1px solid #fca5a5; font-size: 0.72rem; }
+  .badge-activity { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; border: 1px solid #fcd34d; font-size: 0.72rem; }
 
   .scroll-hint { display: none; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; text-align: right; }
   @media (max-width: 768px) { .scroll-hint { display: block; } }
@@ -322,6 +235,8 @@
   .weekday-header { background-color: #1e293b; color: #ffffff; text-align: center; padding: 6px 0; font-weight: bold; font-size: 0.8rem; }
   .day-cell { background-color: #ffffff; min-height: 80px; padding: 4px; display: flex; flex-direction: column; gap: 3px; }
   .day-num { font-weight: bold; font-size: 0.85rem; }
+  .holiday-tag { background-color: #fee2e2; color: #991b1b; font-size: 0.7rem; padding: 2px 4px; border-radius: 3px; border-left: 2px solid #ef4444; }
+  .activity-tag { background-color: #fef3c7; color: #78350f; font-size: 0.7rem; padding: 2px 4px; border-radius: 3px; border-left: 2px solid #f59e0b; }
 
   .data-table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -485,6 +400,7 @@
     let timetableRows = [], mathRows = [], sowRows = [], ftRows = [];
 
     window.addEventListener('DOMContentLoaded', () => {
+      // 1. 校曆 CSV
       Papa.parse(CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
         complete: (results) => {
@@ -495,6 +411,7 @@
         }
       });
 
+      // 2. Google Sheet 各分頁
       loadGoogleSheets();
     });
 
@@ -513,7 +430,9 @@
       else if (tabName === 'gcal') { document.getElementById('tab-gcal').style.display = 'block'; buttons[5].classList.add('active'); }
     }
 
+    /* 讀取 Google Sheet 所有資料 */
     function loadGoogleSheets() {
+      // 時間表
       Papa.parse(TIMETABLE_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         timetableRows = res.data; 
         document.getElementById('ttLoading').style.display = 'none';
@@ -522,19 +441,24 @@
         if (allWeeks.length > 0) renderWeekCards(currentWeekIndex);
       }});
 
+      // 數學日誌
       Papa.parse(MATH_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         mathRows = res.data; document.getElementById('mathLoading').style.display = 'none';
         setupMathClassFilter(); renderMathLogs();
       }});
 
+      // SOW
       Papa.parse(SOW_CSV_URL, { download: true, header: true, skipEmptyLines: true, complete: res => {
         sowRows = res.data; document.getElementById('sowLoading').style.display = 'none';
         renderSOWLogs();
       }});
 
+      // 班主任事務 FormTeacher
       const ftFetchUrl = `${FT_CSV_URL}&_t=${new Date().getTime()}`;
       Papa.parse(ftFetchUrl, {
-        download: true, header: false, skipEmptyLines: true,
+        download: true,
+        header: false,
+        skipEmptyLines: true,
         complete: res => {
           if (!res.data || res.data.length <= 1) {
             document.getElementById('ftLoading').innerHTML = 'FormTeacher 分頁暫無數據。';
@@ -546,11 +470,12 @@
           renderFTLogs();
         },
         error: (err) => {
-          document.getElementById('ftLoading').innerHTML = '無法載入 FormTeacher 資料。';
+          document.getElementById('ftLoading').innerHTML = '無法載入 FormTeacher 資料，請檢查分頁名稱與共用權限。';
         }
       });
     }
 
+    /* 課堂時間表處理 */
     function setupTimetableCycleFilter() {
       const cycleSet = new Set();
       timetableRows.forEach(row => {
@@ -611,6 +536,7 @@
       });
     }
 
+    /* 數學日誌處理 */
     function setupMathClassFilter() {
       const classSet = new Set();
       mathRows.forEach(row => { const c = row.Class || row['班別']; if (c) classSet.add(c.trim()); });
@@ -643,6 +569,7 @@
       });
     }
 
+    /* SOW 處理 */
     function renderSOWLogs() {
       const container = document.getElementById('sowGrid'); container.innerHTML = '';
       if (sowRows.length === 0) { container.innerHTML = '<div style="grid-column:1/-1; color:#64748b; text-align:center;">暫無 SOW 資料。</div>'; return; }
@@ -675,6 +602,7 @@
       document.getElementById('sowProgressBar').style.width = `${percent}%`;
     }
 
+    /* 班主任事務 (FormTeacher) 處理 */
     function setupFTClassFilter() {
       const classSet = new Set();
       ftRows.forEach(row => {
@@ -739,6 +667,7 @@
       });
     }
 
+    /* 校曆與按 Week 分組邏輯 */
     function processData(rows) {
       const monthSet = new Set(); const dateList = [];
       rows.forEach(row => {
@@ -805,14 +734,14 @@
       if (allWeeks.length > 0) renderWeekCards(0);
     }
 
-    /* 時間格式標準化 (1500 -> 15:00) */
+    /* 核心工具函數：時間格式自動轉換 (將 1500 - 1505 轉為 15:00-15:05) */
     function formatTimeString(str) {
       if (!str) return '';
       let s = String(str).trim();
       return s.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
     }
 
-    /* 獲取時間點的分鐘數（排序專用） */
+    /* 核心工具函數：計算時間分鐘數 (支援 1500 與 15:00) 供正確排序 */
     function getStartMinutes(tStr) {
       if (!tStr) return 9999;
       const match = String(tStr).match(/(\d{1,2}):?(\d{2})/);
@@ -824,7 +753,7 @@
       return 9999;
     }
 
-    /* 星期名稱正規化 */
+    /* 核心工具函數：星期名稱標準化 */
     function normalizeWeekday(str) {
       if (!str) return '';
       const s = String(str).trim().toLowerCase();
@@ -836,7 +765,7 @@
       return s;
     }
 
-    /* 匹配時間表資料 */
+    /* 核心工具函數：匹配時間表（同時修復變數名稱統一使用 timetableRows） */
     function getTimetableForDay(cycleDay, weekday) {
       if (!timetableRows || !Array.isArray(timetableRows) || timetableRows.length === 0) {
         return [];
@@ -858,7 +787,7 @@
       });
     }
 
-    /* 週檢視核心渲染 */
+    /* 核心工具函數：終極週卡片渲染 */
     function renderWeekCards(idx) {
       try {
         const container = document.getElementById('weekCards'); 
@@ -883,181 +812,111 @@
           const cycleDay = String(row['Cycle Day'] || '').trim();
           const weekday = String(row['Weekday'] || '').trim();
 
-          const normalizedDayKey = normalizeWeekday(weekday);
+          const matchedTT = getTimetableForDay(cycleDay, weekday);
 
-          // 第一條規則：若當天沒有 cycleDay，則不顯示課堂與 Duty
-          const hasCycle = Boolean(cycleDay && cycleDay !== '-' && cycleDay.toLowerCase() !== 'null');
+          let dutyItems = []; 
+          let lessonItems = []; 
 
-          let combinedTimeline = [];
+          if (matchedTT.length > 0) {
+            matchedTT.forEach(tt => {
+              if (!tt) return;
 
-          if (hasCycle) {
-            const isFri = (normalizedDayKey === 'fri' || dayOfWeek === 5);
-            const matchedTT = getTimetableForDay(cycleDay, weekday);
+              const period = tt.Period || tt['節數'] || tt['課節'] || '';
+              
+              let rawTime = '';
+              if (dayOfWeek === 5) {
+                rawTime = tt.Time_Fri || tt.Time_MonThu || tt.Time || '';
+              } else {
+                rawTime = tt.Time_MonThu || tt.Time_Fri || tt.Time || '';
+              }
+              const time = formatTimeString(rawTime);
 
-            if (matchedTT.length > 0) {
-              matchedTT.forEach(tt => {
-                if (!tt) return;
+              const className = tt.Class || tt['班別'] || '';
+              const subject = tt.Subject || tt['科目'] || '';
+              const room = tt.Room || tt['地點'] || tt['課室'] || '';
 
-                const periodRaw = String(tt.Period || tt['節數'] || tt['課節'] || '').trim();
-                
-                let rawTime = '';
-                if (isFri) {
-                  rawTime = tt.Time_Fri || tt.Time_MonThu || tt.Time || '';
-                } else {
-                  rawTime = tt.Time_MonThu || tt.Time_Fri || tt.Time || '';
-                }
-                const time = formatTimeString(rawTime);
-
-                const className = tt.Class || tt['班別'] || '';
-                const subject = tt.Subject || tt['科目'] || '';
-                const room = tt.Room || tt['地點'] || tt['課室'] || '';
-
-                // Duty 讀取：支援所有小息與放學當值欄位
-                const getDutyValue = (keys) => {
-                  for (let k of Object.keys(tt)) {
-                    const cleanK = k.replace(/\s+/g, '').toLowerCase();
-                    if (keys.includes(cleanK)) {
-                      const val = String(tt[k] || '').trim();
-                      if (val && val !== '-') return val;
-                    }
-                  }
-                  return '';
-                };
-
-                const breakDuty = getDutyValue(['breakduty', '小息當值']);
-                const playDuty = getDutyValue(['playtimeduty', 'playduty', '大息當值']);
-                const lunchDuty = getDutyValue(['lunchduty', '午膳當值', '看飯當值', '午膳看飯']);
-                const lunchPlayDuty = getDutyValue(['lunchplaytimeduty', 'lunchplayduty', '午膳小息當值']);
-                
-                // 新增：放學後當值
-                const dismissalDuty = getDutyValue(['dismissalduty', '放學當值']);
-                const ecaDuty = getDutyValue(['ecaduty', 'eca當值', '課外活動當值']);
-                const ecaDismissalDuty = getDutyValue(['ecadismissalduty', 'eca放學當值']);
-
-                // 小息與校內當值
-                if (breakDuty) combinedTimeline.push({ type: 'duty', label: '☕ 小息當值', duty: breakDuty, time, rawTime: rawTime || '09:40' });
-                if (playDuty) combinedTimeline.push({ type: 'duty', label: '🛝 大息當值', duty: playDuty, time, rawTime: rawTime || '10:30' });
-                if (lunchDuty) combinedTimeline.push({ type: 'duty', label: '🍱 午膳看飯', duty: lunchDuty, time, rawTime: rawTime || '12:00' });
-                if (lunchPlayDuty) combinedTimeline.push({ type: 'duty-lunchplay', label: '🏃 午小當值', duty: lunchPlayDuty, time, rawTime: rawTime || '12:40' });
-
-                // 放學後當值 (預設時間點 15:15 ~ 16:30，自動排在下午課堂之後)
-                if (dismissalDuty) combinedTimeline.push({ type: 'duty-pm', label: '🏫 放學當值', duty: dismissalDuty, time, rawTime: rawTime || '15:15' });
-                if (ecaDuty) combinedTimeline.push({ type: 'duty-pm', label: '🎨 ECA 當值', duty: ecaDuty, time, rawTime: rawTime || '15:30' });
-                if (ecaDismissalDuty) combinedTimeline.push({ type: 'duty-pm', label: '🚌 ECA 放學當值', duty: ecaDismissalDuty, time, rawTime: rawTime || '16:30' });
-
-                const cleanSubject = (subject && subject !== '-') ? subject : '';
-                const cleanClass = (className && className !== '-') ? className : '';
-
-                // 晨間活動：明確以 08:20 (500分鐘) 為界
-                const startMins = getStartMinutes(rawTime);
-                const isMorningSlot = (startMins < 500) || periodRaw.includes('晨') || periodRaw.toLowerCase().includes('check-in') || periodRaw.toLowerCase().includes('ceremony');
-
-                if (cleanSubject || cleanClass) {
-                  if (isMorningSlot) {
-                    combinedTimeline.push({
-                      type: 'morning',
-                      time,
-                      className: cleanClass,
-                      subject: cleanSubject,
-                      room: (room && room !== '-') ? room : '',
-                      rawTime
-                    });
-                  } else {
-                    let periodLabel = periodRaw;
-                    if (/^\d+$/.test(periodRaw.trim())) {
-                      periodLabel = `Period ${periodRaw.trim()}`;
-                    }
-
-                    combinedTimeline.push({ 
-                      type: 'lesson',
-                      period: periodLabel, 
-                      time, 
-                      className: cleanClass, 
-                      subject: cleanSubject, 
-                      room: (room && room !== '-') ? room : '',
-                      rawTime
-                    });
+              const getDutyValue = (keys) => {
+                for (let k of Object.keys(tt)) {
+                  const cleanK = k.replace(/\s+/g, '').toLowerCase();
+                  if (keys.includes(cleanK)) {
+                    const val = String(tt[k] || '').trim();
+                    if (val && val !== '-') return val;
                   }
                 }
-              });
-            }
+                return '';
+              };
 
-            // 按時間排序
-            combinedTimeline.sort((a, b) => getStartMinutes(a.rawTime) - getStartMinutes(b.rawTime));
+              const breakDuty = getDutyValue(['breakduty', '小息當值']);
+              const playDuty = getDutyValue(['playtimeduty', 'playduty', '大息當值']);
+              const lunchDuty = getDutyValue(['lunchduty', '午膳當值', '看飯當值', '午膳看飯']);
+              const lunchPlayDuty = getDutyValue(['lunchplaytimeduty', 'lunchplayduty', '午膳小息當值']);
+
+              if (breakDuty) dutyItems.push({ type: 'break', label: '☕ 小息當值', duty: breakDuty, time });
+              if (playDuty) dutyItems.push({ type: 'play', label: '🛝 大息當值', duty: playDuty, time });
+              if (lunchDuty) dutyItems.push({ type: 'lunch', label: '🍱 午膳看飯', duty: lunchDuty, time });
+              if (lunchPlayDuty) dutyItems.push({ type: 'lunchPlay', label: '🏃 午小當值', duty: lunchPlayDuty, time });
+
+              const cleanSubject = (subject && subject !== '-') ? subject : '';
+              const cleanClass = (className && className !== '-') ? className : '';
+
+              if (cleanSubject || cleanClass) {
+                lessonItems.push({ 
+                  period, 
+                  time, 
+                  className: cleanClass, 
+                  subject: cleanSubject, 
+                  room: (room && room !== '-') ? room : '',
+                  rawTime
+                });
+              }
+            });
           }
 
-          // 組合 HTML 結構
+          // 按時間精確排序
+          lessonItems.sort((a, b) => getStartMinutes(a.rawTime) - getStartMinutes(b.rawTime));
+
+          // 組合當值 HTML
+          let dutyHtml = '';
+          if (dutyItems.length > 0) {
+            dutyHtml += `<div style="display: flex; flex-direction: column; gap: 4px; margin: 6px 0;">`;
+            dutyItems.forEach(item => {
+              let styleStr = '';
+              if (item.type === 'break') styleStr = 'background-color: #f3e8ff; color: #6b21a8; border-left: 4px solid #9333ea;';
+              if (item.type === 'play') styleStr = 'background-color: #e0f2fe; color: #0369a1; border-left: 4px solid #0284c7;';
+              if (item.type === 'lunch') styleStr = 'background-color: #ffedd5; color: #9a3412; border-left: 4px solid #ea580c;';
+              if (item.type === 'lunchPlay') styleStr = 'background-color: #dcfce7; color: #166534; border-left: 4px solid #16a34a;';
+
+              const timeTag = item.time ? `<span style="opacity: 0.8; font-size: 0.7rem; font-weight: normal; margin-left: 2px;">(${item.time})</span>` : '';
+
+              dutyHtml += `<div style="${styleStr} font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;">
+                ${item.label}${timeTag}：${item.duty}
+              </div>`;
+            });
+            dutyHtml += `</div>`;
+          }
+
+          // 組合課堂 HTML
           let ttHtml = '';
-          if (hasCycle && combinedTimeline.length > 0) {
-            ttHtml = `<div class="week-tt-box">`;
+          if (lessonItems.length > 0) {
+            ttHtml = `<div class="week-tt-box">
+              <div class="week-tt-title">📖 課堂時間表 ${cycleDay ? `(${cycleDay})` : ''}</div>`;
             
-            let hasShownMorningDivider = false;
-            let hasShownAMDivider = false;
-            let hasShownPMDivider = false;
-
-            combinedTimeline.forEach(item => {
-              const mins = getStartMinutes(item.rawTime);
-
-              // 1. 晨間時段間隔線 (< 08:20)
-              if (!hasShownMorningDivider && (item.type === 'morning' || mins < 500)) {
-                ttHtml += `<div class="section-divider divider-morning">🌅 晨間活動</div>`;
-                hasShownMorningDivider = true;
-              }
-
-              // 2. 上午課堂間隔線 (>= 08:20 且 < 13:00)
-              if (!hasShownAMDivider && mins >= 500 && mins < 780) {
-                ttHtml += `<div class="section-divider divider-am">📚 上午課堂</div>`;
-                hasShownAMDivider = true;
-              }
-
-              // 3. 下午課堂 / 放學與活動間隔線 (>= 13:00)
-              if (!hasShownPMDivider && (mins >= 780 || item.type === 'duty-lunchplay' || item.type === 'duty-pm')) {
-                ttHtml += `<div class="section-divider divider-pm">👇 下午課堂 / 活動</div>`;
-                hasShownPMDivider = true;
-              }
-
-              // 卡片渲染
-              if (item.type === 'morning') {
-                ttHtml += `
-                  <div class="morning-item">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
-                      <span style="font-weight:bold; color:#c2410c; font-size: 0.72rem; background: #ffedd5; padding: 1px 5px; border-radius: 3px;">${item.time}</span>
-                      ${item.className ? `<span class="week-tt-class">${item.className}</span>` : ''}
+            lessonItems.forEach(item => {
+              ttHtml += `
+                <div class="week-tt-item">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                    <div>
+                      <span class="week-tt-period">${item.period}</span>
+                      ${item.time ? `<span style="font-size: 0.72rem; color: #0284c7; background: #e0f2fe; padding: 1px 4px; border-radius: 3px; font-weight: 500; margin-left: 2px;">${item.time}</span>` : ''}
                     </div>
-                    <div style="margin-top: 3px;">
-                      <span class="week-tt-subject" style="color:#9a3412;">${item.subject}</span>
-                      ${item.room ? `<span class="week-tt-room">📍 ${item.room}</span>` : ''}
-                    </div>
+                    <span class="week-tt-class">${item.className}</span>
                   </div>
-                `;
-              } else if (item.type.startsWith('duty')) {
-                const timeTag = item.time ? `<span style="opacity: 0.85; font-size: 0.7rem; font-weight: normal; margin-left: 4px;">(${item.time})</span>` : '';
-                ttHtml += `
-                  <div class="duty-item">
-                    ${item.label}${timeTag}：${item.duty}
+                  <div style="margin-top: 2px;">
+                    <span class="week-tt-subject">${item.subject}</span>
+                    ${item.room ? `<span class="week-tt-room">📍 ${item.room}</span>` : ''}
                   </div>
-                `;
-              } else {
-                const isPM = mins >= 780;
-                const cardStyleClass = isPM ? 'week-tt-item-pm' : 'week-tt-item';
-                const periodStyleClass = isPM ? 'week-tt-period-pm' : 'week-tt-period';
-
-                ttHtml += `
-                  <div class="${cardStyleClass}">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
-                      <div>
-                        <span class="${periodStyleClass}">${item.period}</span>
-                        ${item.time ? `<span style="font-size: 0.72rem; color: ${isPM ? '#0d9488' : '#0284c7'}; background: ${isPM ? '#e6fffa' : '#e0f2fe'}; padding: 1px 4px; border-radius: 3px; font-weight: 500; margin-left: 2px;">${item.time}</span>` : ''}
-                      </div>
-                      <span class="week-tt-class">${item.className}</span>
-                    </div>
-                    <div style="margin-top: 2px;">
-                      <span class="week-tt-subject">${item.subject}</span>
-                      ${item.room ? `<span class="week-tt-room">📍 ${item.room}</span>` : ''}
-                    </div>
-                  </div>
-                `;
-              }
+                </div>
+              `;
             });
             ttHtml += `</div>`;
           }
@@ -1072,8 +931,9 @@
               </div>
               ${cycleDay ? `<span class="badge-cycle">${cycleDay}</span>` : ''}
             </div>
-            ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">🚩 ${row['Sch Holiday/Special Sch Day']}</div>` : ''}
-            ${row['Special Activity'] ? `<div class="activity-tag">⭐ ${row['Special Activity']}</div>` : ''}
+            ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
+            ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
+            ${dutyHtml}
             ${ttHtml}
           `;
           container.appendChild(card);
@@ -1129,8 +989,8 @@
         const cell = document.createElement('div'); cell.className = `day-cell ${row['Sch Holiday/Special Sch Day'] ? 'holiday-bg' : ''}`;
         cell.innerHTML = `
           <div class="day-header"><span class="day-num">${d}</span>${row['Cycle Day'] ? `<span class="badge-cycle">${row['Cycle Day']}</span>` : ''}</div>
-          ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">🚩 ${row['Sch Holiday/Special Sch Day']}</div>` : ''}
-          ${row['Special Activity'] ? `<div class="activity-tag">⭐ ${row['Special Activity']}</div>` : ''}
+          ${row['Sch Holiday/Special Sch Day'] ? `<div class="holiday-tag">${row['Sch Holiday/Special Sch Day']}</div>` : ''}
+          ${row['Special Activity'] ? `<div class="activity-tag">${row['Special Activity']}</div>` : ''}
         `;
         calendarEl.appendChild(cell);
       }
