@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教學進度與家課管理系統</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+
+      --status-done-bg: #dcfce7;
+      --status-done-text: #15803d;
+      --status-prog-bg: #fef9c3;
+      --status-prog-text: #a16207;
+      --status-todo-bg: #fee2e2;
+      --status-todo-text: #b91c1c;
+      --status-none-bg: #f1f5f9;
+      --status-none-text: #475569;
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background-color: #f3f4f6;
+      color: var(--slate-800);
+      line-height: 1.5;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      background: white;
+      padding: 24px 28px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--slate-200);
+    }
+
+    .brand h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--slate-900);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand h1 svg {
+      color: var(--primary);
+    }
+
+    .brand p {
+      font-size: 0.875rem;
+      color: var(--slate-500);
+      margin-top: 4px;
+    }
+
+    /* Config Modal / Inline Bar */
+    .api-config {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .api-config label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      white-space: nowrap;
+    }
+
+    .api-config input {
+      flex: 1;
+      min-width: 280px;
+      padding: 10px 14px;
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .api-config input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid var(--slate-300);
+      color: var(--slate-700);
+    }
+
+    .btn-outline:hover {
+      background: var(--slate-50);
+      border-color: var(--slate-400);
+    }
+
+    /* Stats Overview */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card .label {
+      font-size: 0.875rem;
+      color: var(--slate-500);
+      font-weight: 500;
+    }
+
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-top: 6px;
+    }
+
+    /* Controls & Filters */
+    .controls {
+      background: white;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      flex: 1;
+    }
+
+    .search-input {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .search-input input {
+      width: 100%;
+      padding: 9px 12px 9px 36px;
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .search-input svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--slate-400);
+    }
+
+    select {
+      padding: 9px 14px;
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      outline: none;
+      background-color: white;
+      color: var(--slate-700);
+      cursor: pointer;
+    }
+
+    /* Data Table View (Desktop) */
+    .table-container {
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: var(--slate-50);
+      color: var(--slate-600);
+      font-weight: 600;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--slate-200);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--slate-700);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .badge-done {
+      background-color: var(--status-done-bg);
+      color: var(--status-done-text);
+    }
+
+    .badge-prog {
+      background-color: var(--status-prog-bg);
+      color: var(--status-prog-text);
+    }
+
+    .badge-todo {
+      background-color: var(--status-todo-bg);
+      color: var(--status-todo-text);
+    }
+
+    .badge-none {
+      background-color: var(--status-none-bg);
+      color: var(--status-none-text);
+    }
+
+    /* Cards Layout for Mobile */
+    .cards-container {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--slate-100);
+      padding-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .card-sub {
+      font-size: 0.8125rem;
+      color: var(--slate-500);
+      margin-top: 2px;
+    }
+
+    .card-row {
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+
+    .card-label {
+      font-weight: 600;
+      color: var(--slate-500);
+      margin-right: 6px;
+    }
+
+    /* Loading & Empty States */
+    .state-box {
+      text-align: center;
+      padding: 60px 20px;
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--slate-200);
+      color: var(--slate-500);
+    }
+
+    .spinner {
+      border: 3px solid var(--slate-200);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .table-container {
+        display: none;
+      }
+      .cards-container {
+        display: grid;
+      }
+      body {
+        padding: 16px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <h1>
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+          教學進度與家課管理
+        </h1>
+        <p>即時讀取 Google Sheets 數據，掌握各班進度與批改狀態</p>
+      </div>
+      <div>
+        <button class="btn btn-outline" id="demo-btn">戴入模擬測試數據</button>
+        <button class="btn btn-primary" id="refresh-btn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          重新整理
+        </button>
+      </div>
+    </header>
+
+    <!-- API Settings -->
+    <div class="api-config">
+      <label for="api-url">GAS API 網址：</label>
+      <input type="url" id="api-url" placeholder="https://script.google.com/macros/s/.../exec">
+      <button class="btn btn-primary" id="save-url-btn">儲存並讀取</button>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">總教學紀錄數</div>
+        <div class="value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">進行中單元</div>
+        <div class="value" id="stat-prog" style="color: var(--primary);">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">已完成單元</div>
+        <div class="value" id="stat-completed" style="color: var(--status-done-text);">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">待批改家課</div>
+        <div class="value" id="stat-pending-grading" style="color: var(--status-prog-text);">0</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="controls">
+      <div class="filter-group">
+        <div class="search-input">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="search-keyword" placeholder="搜尋單元、內容或家課...">
+        </div>
+        <select id="filter-class">
+          <option value="">所有班別</option>
+        </select>
+        <select id="filter-status">
+          <option value="">所有批改狀態</option>
+          <option value="已發還">已發還</option>
+          <option value="批改中">批改中</option>
+          <option value="未收齊">未收齊</option>
+          <option value="無需批改">無需批改</option>
+        </select>
+        <select id="filter-completion">
+          <option value="">所有完成狀態</option>
+          <option value="completed">已完成</option>
+          <option value="in_progress">進行中</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading / Empty Box -->
+    <div id="state-box" class="state-box" style="display: none;"></div>
+
+    <!-- Desktop Table -->
+    <div class="table-container" id="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>班別</th>
+            <th>冊數</th>
+            <th>單元</th>
+            <th>教學內容</th>
+            <th>已發出之家課</th>
+            <th>批改進度</th>
+            <th>單元完成日期</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- JS 動態渲染 -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="cards-container" id="cards-container">
+      <!-- JS 動態渲染 -->
+    </div>
+  </div>
+
+  <script>
+    // 預設示範數據（當使用者未輸入 API URL 時）
+    const DEMO_DATA = [
+      {
+        "班別": "3A",
+        "使用冊數": "第一冊",
+        "單元": "第一章 函數概念",
+        "教學內容": "講解一次函數與二次函數之圖像特徵與性質",
+        "已發出家課": "工作紙 (一) Q.1-10",
+        "批改進度": "已發還",
+        "單元完成日期": "2026-08-10"
+      },
+      {
+        "班別": "3A",
+        "使用冊數": "第一冊",
+        "單元": "第二章 一元二次方程",
+        "教學內容": "配方法與公式解運用，解應用題練習",
+        "已發出家課": "課本 P.45 練習 2B",
+        "批改進度": "批改中",
+        "單元完成日期": ""
+      },
+      {
+        "班別": "4B",
+        "使用冊數": "第三冊",
+        "單元": "第四章 三角學應用",
+        "教學內容": "正弦公式 (Sine Formula) 與餘弦公式求面積",
+        "已發出家課": "工作紙 (三) Q.1-5",
+        "批改進度": "未收齊",
+        "單元完成日期": ""
+      },
+      {
+        "班別": "2C",
+        "使用冊數": "第二冊",
+        "單元": "第三章 全等與相似三角形",
+        "教學內容": "全等三角形證明 (SAS, SSS, ASA, AAS, RHS)",
+        "已發出家課": "課本 P.102 Q.1-8",
+        "批改進度": "已發還",
+        "單元完成日期": "2026-08-12"
+      }
+    ];
+
+    let allData = [];
+
+    // DOM Elements
+    const apiUrlInput = document.getElementById('api-url');
+    const saveUrlBtn = document.getElementById('save-url-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const demoBtn = document.getElementById('demo-btn');
+    const tableBody = document.getElementById('table-body');
+    const cardsContainer = document.getElementById('cards-container');
+    const stateBox = document.getElementById('state-box');
+    const tableContainer = document.getElementById('table-container');
+
+    // Filters & Stats DOM
+    const searchKeyword = document.getElementById('search-keyword');
+    const filterClass = document.getElementById('filter-class');
+    const filterStatus = document.getElementById('filter-status');
+    const filterCompletion = document.getElementById('filter-completion');
+
+    const statTotal = document.getElementById('stat-total');
+    const statProg = document.getElementById('stat-prog');
+    const statCompleted = document.getElementById('stat-completed');
+    const statPendingGrading = document.getElementById('stat-pending-grading');
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUrl = localStorage.getItem('gas_api_url');
+      if (savedUrl) {
+        apiUrlInput.value = savedUrl;
+        fetchDataFromAPI(savedUrl);
+      } else {
+        // 使用 Demo 數據
+        loadData(DEMO_DATA);
+      }
+    });
+
+    // 儲存 URL 並獲取
+    saveUrlBtn.addEventListener('click', () => {
+      const url = apiUrlInput.value.trim();
+      if (!url) {
+        alert('請輸入有效的 Google Apps Script API 網址！');
+        return;
+      }
+      localStorage.setItem('gas_api_url', url);
+      fetchDataFromAPI(url);
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      const url = apiUrlInput.value.trim();
+      if (url) {
+        fetchDataFromAPI(url);
+      } else {
+        loadData(DEMO_DATA);
+      }
+    });
+
+    demoBtn.addEventListener('click', () => {
+      loadData(DEMO_DATA);
+    });
+
+    // 從 GAS 獲取數據
+    async function fetchDataFromAPI(url) {
+      showLoading();
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('網路回應錯誤');
+        const data = await response.json();
+        loadData(data);
+      } catch (err) {
+        showError(`讀取失敗：${err.message}。請確認 GAS 已部署為「任何人 (Anyone)」可存取。`);
+      }
+    }
+
+    // 載入數據並更新選單
+    function loadData(data) {
+      allData = Array.isArray(data) ? data : [];
+      populateClassOptions();
+      applyFiltersAndRender();
+    }
+
+    // 動態填入班別下拉式選單
+    function populateClassOptions() {
+      const classes = [...new Set(allData.map(item => item['班別']).filter(Boolean))];
+      const currentVal = filterClass.value;
+      filterClass.innerHTML = '<option value="">所有班別</option>';
+      classes.forEach(cls => {
+        const opt = document.createElement('option');
+        opt.value = cls;
+        opt.textContent = cls;
+        filterClass.appendChild(opt);
+      });
+      filterClass.value = currentVal;
+    }
+
+    // 篩選數據與渲染
+    function applyFiltersAndRender() {
+      const keyword = searchKeyword.value.toLowerCase().trim();
+      const cls = filterClass.value;
+      const status = filterStatus.value;
+      const completion = filterCompletion.value;
+
+      const filtered = allData.filter(item => {
+        // 關鍵字搜尋
+        const matchKeyword = !keyword || 
+          (item['單元'] || '').toLowerCase().includes(keyword) ||
+          (item['教學內容'] || '').toLowerCase().includes(keyword) ||
+          (item['已發出之家課'] || '').toLowerCase().includes(keyword);
+
+        // 班別篩選
+        const matchClass = !cls || item['班別'] === cls;
+
+        // 批改狀態篩選
+        const matchStatus = !status || item['批改進度'] === status;
+
+        // 完成狀態篩選
+        const isDone = !!(item['單元完成日期'] && item['單元完成日期'].trim() !== '');
+        const matchCompletion = !completion || 
+          (completion === 'completed' && isDone) ||
+          (completion === 'in_progress' && !isDone);
+
+        return matchKeyword && matchClass && matchStatus && matchCompletion;
+      });
+
+      updateStats(filtered);
+      renderUI(filtered);
+    }
+
+    // 更新數據統計卡片
+    function updateStats(data) {
+      statTotal.textContent = data.length;
+      
+      const completed = data.filter(d => d['單元完成日期'] && d['單元完成日期'].trim() !== '').length;
+      statCompleted.textContent = completed;
+      statProg.textContent = data.length - completed;
+
+      const pendingGrading = data.filter(d => d['批改進度'] === '批改中' || d['批改進度'] === '未收齊').length;
+      statPendingGrading.textContent = pendingGrading;
+    }
+
+    // 渲染 UI (表格 & 卡片)
+    function renderUI(data) {
+      if (data.length === 0) {
+        showEmpty('沒有找到符合條件的教學紀錄。');
+        return;
+      }
+
+      hideStateBox();
+
+      // Table Render
+      tableBody.innerHTML = data.map(item => `
+        <tr>
+          <td><strong>${escapeHtml(item['班別'] || '-')}</strong></td>
+          <td>${escapeHtml(item['使用冊數'] || '-')}</td>
+          <td><strong>${escapeHtml(item['單元'] || '-')}</strong></td>
+          <td>${escapeHtml(item['教學內容'] || '-')}</td>
+          <td>${escapeHtml(item['已發出之家課'] || '-')}</td>
+          <td>${getGradingBadge(item['批改進度'])}</td>
+          <td>${getCompletionBadge(item['單元完成日期'])}</td>
+        </tr>
+      `).join('');
+
+      // Cards Render (Mobile)
+      cardsContainer.innerHTML = data.map(item => `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${escapeHtml(item['單元'] || '-')}</div>
+              <div class="card-sub">${escapeHtml(item['班別'] || '')} • ${escapeHtml(item['使用冊數'] || '')}</div>
+            </div>
+            ${getCompletionBadge(item['單元完成日期'])}
+          </div>
+          <div class="card-row">
+            <span class="card-label">教學內容:</span> ${escapeHtml(item['教學內容'] || '-')}
+          </div>
+          <div class="card-row">
+            <span class="card-label">家課作業:</span> ${escapeHtml(item['已發出之家課'] || '-')}
+          </div>
+          <div class="card-row" style="margin-top: 10px;">
+            <span class="card-label">批改進度:</span> ${getGradingBadge(item['批改進度'])}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Helper: 批改進度 Badge
+    function getGradingBadge(status) {
+      if (!status) return `<span class="badge badge-none">未填寫</span>`;
+      switch (status.trim()) {
+        case '已發還': return `<span class="badge badge-done">已發還</span>`;
+        case '批改中': return `<span class="badge badge-prog">批改中</span>`;
+        case '未收齊': return `<span class="badge badge-todo">未收齊</span>`;
+        default: return `<span class="badge badge-none">${escapeHtml(status)}</span>`;
+      }
+    }
+
+    // Helper: 完成日期 Badge
+    function getCompletionBadge(dateStr) {
+      if (dateStr && dateStr.trim() !== '') {
+        return `<span class="badge badge-done">已完成 (${escapeHtml(dateStr.trim())})</span>`;
+      }
+      return `<span class="badge badge-prog">進行中</span>`;
+    }
+
+    // State Handlers
+    function showLoading() {
+      stateBox.style.display = 'block';
+      tableContainer.style.display = 'none';
+      cardsContainer.style.display = 'none';
+      stateBox.innerHTML = `
+        <div class="spinner"></div>
+        <p>正在載入最新教學進度數據...</p>
+      `;
+    }
+
+    function showError(msg) {
+      stateBox.style.display = 'block';
+      tableContainer.style.display = 'none';
+      cardsContainer.style.display = 'none';
+      stateBox.innerHTML = `
+        <p style="color: var(--status-todo-text); font-weight: 600;">⚠️ ${msg}</p>
+      `;
+    }
+
+    function showEmpty(msg) {
+      stateBox.style.display = 'block';
+      tableContainer.style.display = 'none';
+      cardsContainer.style.display = 'none';
+      stateBox.innerHTML = `<p>${msg}</p>`;
+    }
+
+    function hideStateBox() {
+      stateBox.style.display = 'none';
+      tableContainer.style.display = 'block';
+      // 根據 CSS media query 決定 mobile 是否顯示
+      if (window.innerWidth <= 768) {
+        cardsContainer.style.display = 'grid';
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Event Listeners for Filters
+    searchKeyword.addEventListener('input', applyFiltersAndRender);
+    filterClass.addEventListener('change', applyFiltersAndRender);
+    filterStatus.addEventListener('change', applyFiltersAndRender);
+    filterCompletion.addEventListener('change', applyFiltersAndRender);
+  </script>
+</body>
+</html>
