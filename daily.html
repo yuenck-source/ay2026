@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏫 Daily Log</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root { --primary-color: #6366f1; --bg-color: #f8fafc; --border-color: #cbd5e1; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
+    .container { max-width: 950px; margin: 0 auto; background: #fff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    
+    /* 導覽列 */
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; white-space: nowrap; }
+    .nav-btn { padding: 8px 14px; font-size: 0.88rem; border-radius: 6px; text-decoration: none; background: #e2e8f0; color: #475569; font-weight: bold; flex-shrink: 0; }
+    .nav-btn.active { background: var(--primary-color); color: #fff; }
+
+    /* 日期控制列 */
+    .date-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .date-nav-btn { background: #e0e7ff; color: #3730a3; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    .date-nav-btn:hover { background: #c7d2fe; }
+
+    /* 快速新增列 Rapid Logging */
+    .rapid-input-box { background: #eef2ff; border: 1px solid #c7d2fe; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .rapid-input-box input, .rapid-input-box select { padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.88rem; }
+    .rapid-input-box input[type="text"] { flex: 1; min-width: 200px; }
+
+    /* 列表與卡片 */
+    .log-section { margin-bottom: 20px; }
+    .section-title { font-size: 0.85rem; font-weight: bold; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .log-list { display: flex; flex-direction: column; gap: 8px; }
+    .log-item { background: #fff; border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+    .log-item.done { background: #f8fafc; opacity: 0.75; }
+    .log-item.done .log-content { text-decoration: line-through; color: #64748b; }
+    
+    .status-btn { padding: 4px 10px; font-size: 0.78rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .status-btn.todo { background: #fee2e2; color: #dc2626; }
+    .status-btn.done { background: #dcfce7; color: #15803d; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 1. 更新後的頂部導覽列 -->
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-btn">📊 今天事項及月曆</a>
+      <a href="week.html" class="nav-btn">🗓️ 週安排檢視</a>
+      <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
+      <a href="daily.html" class="nav-btn active">🏫 Daily Log</a>
+      <a href="monthly.html" class="nav-btn">🗓️ Monthly Log</a>
+      <a href="math.html" class="nav-btn">📐 數學日誌</a>
+      <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
+      <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
+    </div>
+
+    <!-- 2. 日期選擇器與前後一日按鈕導航 -->
+    <div class="date-controls">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h3 style="margin:0; color:var(--primary-color);">📝 Daily Rapid Log</h3>
+        <button class="date-nav-btn" onclick="changeDate(-1)">◀ 前一日</button>
+        <input type="date" id="dateFilter" onchange="renderLogs()" style="padding:6px; border-radius:6px; border:1px solid var(--border-color);">
+        <button class="date-nav-btn" onclick="changeDate(1)">後一日 ▶</button>
+        <button class="date-nav-btn" onclick="goToday()" style="background:#4f46e5; color:#fff;">今天</button>
+      </div>
+
+      <!-- 3. 已完成事項開關 -->
+      <label style="font-size:0.85rem; font-weight:bold; color:#475569; cursor:pointer; display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="showCompletedToggle" checked onchange="renderLogs()">
+        顯示已完成事項
+      </label>
+    </div>
+
+    <!-- 快速輸入列 Rapid Logging -->
+    <form class="rapid-input-box" onsubmit="handleRapidAdd(event)">
+      <select id="newType">
+        <option value="• Task">• 任務</option>
+        <option value="◦ Event">◦ 事件</option>
+        <option value="- Note">- 便條</option>
+      </select>
+      <input type="text" id="newContent" placeholder="⚡ 快速記下事項或筆記..." required>
+      <input type="time" id="newTime">
+      <button type="submit" style="background:var(--primary-color); color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">新增</button>
+    </form>
+
+    <div id="loading">⏳ 正在載入 Daily Log...</div>
+
+    <!-- 未完成事項列表 -->
+    <div class="log-section">
+      <div class="section-title">⏳ 待辦 / 事件 / 筆記</div>
+      <div id="todoList" class="log-list"></div>
+    </div>
+
+    <!-- 已完成事項列表 -->
+    <div id="completedSection" class="log-section">
+      <div class="section-title" style="color:#16a34a;">✅ 已完成事項</div>
+      <div id="doneList" class="log-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
+    const GID = '887624823';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec';
+
+    let logs = [];
+
+    window.onload = () => {
+      document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+      loadData();
+    };
+
+    function loadData() {
+      Papa.parse(CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: (results) => {
+          logs = results.data.map((item, index) => ({ ...item, _rowIndex: index + 2 }));
+          renderLogs();
+          document.getElementById('loading').style.display = 'none';
+        }
+      });
+    }
+
+    /* 前後一日導航 */
+    function changeDate(days) {
+      const dateInput = document.getElementById('dateFilter');
+      const currentDate = new Date(dateInput.value || new Date());
+      currentDate.setDate(currentDate.getDate() + days);
+      dateInput.value = currentDate.toISOString().split('T')[0];
+      renderLogs();
+    }
+
+    /* 快速回到今天 */
+    function goToday() {
+      document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+      renderLogs();
+    }
+
+    /* 渲染畫面 */
+    function renderLogs() {
+      const todoList = document.getElementById('todoList');
+      const doneList = document.getElementById('doneList');
+      const completedSection = document.getElementById('completedSection');
+      const selectedDate = document.getElementById('dateFilter').value;
+      const showCompleted = document.getElementById('showCompletedToggle').checked;
+
+      todoList.innerHTML = '';
+      doneList.innerHTML = '';
+
+      // 篩選選取日期的紀錄
+      const filtered = logs.filter(r => (r.Date || '').trim() === selectedDate);
+
+      const todos = filtered.filter(r => r.Status !== '已完成');
+      const dones = filtered.filter(r => r.Status === '已完成');
+
+      // 1. 渲染待辦事項
+      if (todos.length === 0) {
+        todoList.innerHTML = '<div style="color:#94a3b8; font-size:0.88rem; padding:6px 0;">此日期暫無待辦事項。</div>';
+      } else {
+        todos.forEach(item => todoList.appendChild(createLogItemHTML(item, false)));
+      }
+
+      // 2. 渲染已完成事項與控制顯示/隱藏
+      if (showCompleted && dones.length > 0) {
+        completedSection.style.display = 'block';
+        dones.forEach(item => doneList.appendChild(createLogItemHTML(item, true)));
+      } else {
+        completedSection.style.display = 'none';
+      }
+    }
+
+    /* 建立單個項目 HTML */
+    function createLogItemHTML(item, isDone) {
+      const div = document.createElement('div');
+      div.className = `log-item ${isDone ? 'done' : ''}`;
+      
+      div.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-weight:bold; color:var(--primary-color);">${item.Type || '•'}</span>
+          <span class="log-content">${item.Content || ''}</span>
+          ${item.Time ? `<span style="font-size:0.75rem; color:#94a3b8;">(${item.Time})</span>` : ''}
+        </div>
+        <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleStatus(${item._rowIndex}, '${item.Status}')">
+          ${isDone ? '✅ 已完成' : '⏳ 未完成'}
+        </button>
+      `;
+      return div;
+    }
+
+    /* 切換狀態 */
+    function toggleStatus(rowIndex, currentStatus) {
+      const newStatus = (currentStatus === '已完成') ? '未完成' : '已完成';
+      const target = logs.find(r => r._rowIndex === rowIndex);
+      if (target) { target.Status = newStatus; renderLogs(); }
+      fetch(`${API_URL}?gid=${GID}&action=toggleStatus&rowIndex=${rowIndex}&newStatus=${encodeURIComponent(newStatus)}`, { mode: 'no-cors' });
+    }
+
+    /* 快速新增紀錄 */
+    function handleRapidAdd(e) {
+      e.preventDefault();
+      const date = document.getElementById('dateFilter').value;
+      const type = document.getElementById('newType').value;
+      const content = document.getElementById('newContent').value.trim();
+      const time = document.getElementById('newTime').value;
+
+      const params = new URLSearchParams({
+        gid: GID, action: 'add',
+        Date: date, Type: type, Content: content, Time: time, Status: '未完成'
+      });
+
+      fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' }).then(() => {
+        logs.unshift({ Date: date, Type: type, Content: content, Time: time, Status: '未完成', _rowIndex: logs.length + 2 });
+        renderLogs();
+        document.getElementById('newContent').value = '';
+      });
+    }
+  </script>
+</body>
+</html>

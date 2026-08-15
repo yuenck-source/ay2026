@@ -3,76 +3,435 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📐 數學日誌</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <style>
-    :root { --primary-color: #0d9488; --bg-color: #f8fafc; --border-color: #cbd5e1; }
-    body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
-    .container { max-width: 1150px; margin: 0 auto; background: #ffffff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; }
-    .nav-btn { padding: 8px 14px; font-size: 0.88rem; border-radius: 6px; text-decoration: none; background: #e2e8f0; color: #475569; font-weight: bold; }
-    .nav-btn.active.math-tab { background: var(--primary-color); color: #fff; }
+  <title>📐 數學教學進程與 SOW - Dashboard</title>
 
-    .header-box { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; padding: 12px 16px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 16px; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-    .math-card { background: #fff; border: 1px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  <!-- PapaParse 用於解析 Google Sheet CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --border-color: #cbd5e1;
+      --success-color: #16a34a;
+      --warning-color: #d97706;
+      --danger-color: #dc2626;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: #1e293b;
+      margin: 0;
+      padding: 8px;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+    }
+
+    /* 頁籤導覽列 */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+
+    .nav-btn {
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      border-radius: 6px;
+      text-decoration: none;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover { background: #cbd5e1; }
+    .nav-btn.active { background: var(--primary-color); color: #ffffff; }
+
+    /* 進度統計面板 */
+    .dashboard-panel {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #15803d;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .progress-bar-bg {
+      background: #e2e8f0;
+      border-radius: 10px;
+      height: 12px;
+      width: 100%;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar-fill {
+      background: var(--success-color);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .stat-card:hover { border-color: var(--primary-color); }
+    .stat-card.active { border-color: var(--primary-color); background-color: #eff6ff; }
+    .stat-val { font-size: 1.2rem; font-weight: bold; }
+    .stat-lbl { font-size: 0.75rem; color: #64748b; }
+
+    /* 搜尋列 */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      width: 100%;
+      max-width: 300px;
+      box-sizing: border-box;
+    }
+
+    /* 狀態標籤 */
+    .badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      display: inline-block;
+    }
+    .badge-completed { background: #dcfce7; color: #15803d; }
+    .badge-progress { background: #fef3c7; color: #b45309; }
+    .badge-pending { background: #f1f5f9; color: #64748b; }
+
+    /* 表格與卡片 */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #475569;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    tr:hover { background-color: #f8fafc; }
+
+    .cards-container {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.88rem;
+    }
+
+    .card-title {
+      font-weight: bold;
+      color: var(--primary-color);
+      border-bottom: 1px dashed #cbd5e1;
+      padding-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    @media (max-width: 639px) {
+      .table-container { display: none; }
+      .cards-container { display: flex; }
+      .search-input { max-width: 100%; }
+    }
+
+    #loading { font-size: 0.88rem; color: #0284c7; font-weight: bold; padding: 12px 0; }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <!-- 頁籤導覽列 -->
     <div class="nav-tabs">
-      <a href="index.html" class="nav-btn">📊 校曆與週檢視</a>
+      <a href="index.html" class="nav-btn active">📊 今天事項及月曆</a>
+      <a href="week.html" class="nav-btn">🗓️ 週安排檢視</a>
       <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
-      <a href="math.html" class="nav-btn active math-tab">📐 數學日誌</a>
+      <a href="daily.html" class="nav-btn">🏫 Daily Log</a>
+      <a href="monthly.html" class="nav-btn">🗓️ Monthly Log</a>
+      <a href="math.html" class="nav-btn">📐 數學日誌</a>
       <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
       <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
     </div>
 
-    <div class="header-box">
-      <strong style="color: #0f766e;">📐 數學科教學進度與提示</strong>
-      <span id="status" style="font-size: 0.85rem; color: #64748b;">Ready</span>
+    <!-- 進度統計 Dashboard -->
+    <div class="dashboard-panel">
+      <div class="panel-title">
+        <span>📈 數學科整體教學進度</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="progressBar" class="progress-bar-fill"></div>
+      </div>
+      <div class="stats-cards">
+        <div class="stat-card active" onclick="filterByStatus('ALL', this)">
+          <div id="countAll" class="stat-val">0</div>
+          <div class="stat-lbl">全部課題</div>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('Completed', this)">
+          <div id="countCompleted" class="stat-val" style="color: var(--success-color);">0</div>
+          <div class="stat-lbl">已完成</div>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('In Progress', this)">
+          <div id="countProgress" class="stat-val" style="color: var(--warning-color);">0</div>
+          <div class="stat-lbl">進行中</div>
+        </div>
+        <div class="stat-card" onclick="filterByStatus('Pending', this)">
+          <div id="countPending" class="stat-val" style="color: #64748b;">0</div>
+          <div class="stat-lbl">未開始</div>
+        </div>
+      </div>
     </div>
 
-    <div id="mathGrid" class="card-grid"></div>
+    <!-- 搜尋工具列 -->
+    <div class="toolbar">
+      <h3 style="margin: 0; font-size: 1rem; color: #1e293b;">📋 教學進程清單</h3>
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋週次、單元或課題..." oninput="filterData()">
+    </div>
+
+    <div id="loading">⏳ 正在載入數學教學進程數據...</div>
+
+    <!-- 電腦端表格 -->
+    <div class="table-container">
+      <table id="dataTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>週次</th>
+            <th>單元</th>
+            <th>課題</th>
+            <th>預計完成</th>
+            <th>進度狀態</th>
+            <th>實際完成</th>
+            <th>備註 / 日誌</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 手機端卡片列表 -->
+    <div id="cardsContainer" class="cards-container"></div>
   </div>
 
   <script>
-    // 若有 CSV 連結可在這裡替換
-    const MATH_CSV_URL = ''; 
+    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
+    const GID = '1864939358';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
 
-    window.onload = function() {
-      if (MATH_CSV_URL) {
-        fetchCSV();
-      } else {
-        document.getElementById('status').innerText = '💡 請配置 Google Sheet CSV 網址以自動讀取資料';
-      }
-    };
+    let rawData = [];
+    let currentStatusFilter = 'ALL';
 
-    function fetchCSV() {
-      Papa.parse(MATH_CSV_URL, {
+    window.addEventListener('DOMContentLoaded', () => {
+      Papa.parse(CSV_URL, {
         download: true,
         header: true,
-        complete: function(results) {
-          renderCards(results.data);
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (results.data && results.data.length > 0) {
+            rawData = results.data;
+            updateDashboard();
+            renderData(rawData);
+          } else {
+            document.getElementById('loading').textContent = '⚠️ 試算表中暫無數據。';
+          }
+        },
+        error: (err) => {
+          document.getElementById('loading').textContent = '❌ 載入數據失敗，請確認 GID 與公開權限。';
+          console.error(err);
         }
       });
+    });
+
+    // 更新進度條與統計卡片
+    function updateDashboard() {
+      const total = rawData.length;
+      let completed = 0, progress = 0, pending = 0;
+
+      rawData.forEach(r => {
+        const status = String(r['Status'] || r['狀態'] || '').trim().toLowerCase();
+        if (status === 'completed' || status === '已完成') completed++;
+        else if (status === 'in progress' || status === '進行中') progress++;
+        else pending++;
+      });
+
+      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      document.getElementById('progressPercent').textContent = `${percent}%`;
+      document.getElementById('progressBar').style.width = `${percent}%`;
+
+      document.getElementById('countAll').textContent = total;
+      document.getElementById('countCompleted').textContent = completed;
+      document.getElementById('countProgress').textContent = progress;
+      document.getElementById('countPending').textContent = pending;
     }
 
-    function renderCards(data) {
-      const grid = document.getElementById('mathGrid');
-      grid.innerHTML = '';
-      data.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'math-card';
-        card.innerHTML = `
-          <div style="font-size:0.8rem; color:#64748b;">📅 ${item.Date || '無日期'}</div>
-          <div style="font-weight:bold; margin: 4px 0; color:#0f766e;">${item.Topic || '未定課題'}</div>
-          <div style="font-size:0.85rem; color:#334155;">💬 ${item.Note || '無備註'}</div>
+    function renderData(data) {
+      document.getElementById('loading').style.display = 'none';
+      const table = document.getElementById('dataTable');
+      const tableBody = document.getElementById('tableBody');
+      const cardsContainer = document.getElementById('cardsContainer');
+
+      tableBody.innerHTML = '';
+      cardsContainer.innerHTML = '';
+
+      if (data.length === 0) {
+        cardsContainer.innerHTML = `<div style="color: #64748b; font-size: 0.88rem;">無相關的教學數據。</div>`;
+        return;
+      }
+
+      data.forEach(row => {
+        const week = row['Week'] || row['週次'] || '-';
+        const unit = row['Unit'] || row['單元'] || '-';
+        const topic = row['Topic'] || row['課題'] || '-';
+        const targetDate = row['Target Date'] || row['預計完成日期'] || '-';
+        const statusRaw = row['Status'] || row['進度狀態'] || 'Pending';
+        const actualDate = row['Actual Date'] || row['實際完成日期'] || '-';
+        const remarks = row['Remarks'] || row['備註'] || '-';
+
+        const badgeHtml = getStatusBadge(statusRaw);
+
+        // 1. 電腦端 Table
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${week}</b></td>
+          <td>${unit}</td>
+          <td><b>${topic}</b></td>
+          <td>${targetDate}</td>
+          <td>${badgeHtml}</td>
+          <td>${actualDate}</td>
+          <td><span style="color:#64748b; font-size:0.82rem;">${remarks}</span></td>
         `;
-        grid.appendChild(card);
+        tableBody.appendChild(tr);
+
+        // 2. 手機端 Card
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-title">
+            <span>${week} - ${topic}</span>
+            ${badgeHtml}
+          </div>
+          <div><b>單元：</b>${unit}</div>
+          <div><b>預計完成：</b>${targetDate} ${actualDate !== '-' ? `(實際: ${actualDate})` : ''}</div>
+          ${remarks !== '-' ? `<div style="color:#64748b; font-size:0.82rem; margin-top:4px;">💬 ${remarks}</div>` : ''}
+        `;
+        cardsContainer.appendChild(card);
       });
+
+      table.style.display = 'table';
+    }
+
+    function getStatusBadge(status) {
+      const s = String(status).trim().toLowerCase();
+      if (s === 'completed' || s === '已完成') {
+        return `<span class="badge badge-completed">已完成</span>`;
+      } else if (s === 'in progress' || s === '進行中') {
+        return `<span class="badge badge-progress">進行中</span>`;
+      }
+      return `<span class="badge badge-pending">未開始</span>`;
+    }
+
+    function filterByStatus(status, el) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      filterData();
+    }
+
+    function filterData() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      const filtered = rawData.filter(row => {
+        const statusRaw = String(row['Status'] || row['進度狀態'] || '').trim().toLowerCase();
+        
+        // 狀態篩選
+        let matchStatus = true;
+        if (currentStatusFilter === 'Completed') matchStatus = (statusRaw === 'completed' || statusRaw === '已完成');
+        else if (currentStatusFilter === 'In Progress') matchStatus = (statusRaw === 'in progress' || statusRaw === '進行中');
+        else if (currentStatusFilter === 'Pending') matchStatus = (statusRaw !== 'completed' && statusRaw !== '已完成' && statusRaw !== 'in progress' && statusRaw !== '進行中');
+
+        // 關鍵字篩選
+        const matchKeyword = Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
+
+        return matchStatus && matchKeyword;
+      });
+
+      renderData(filtered);
     }
   </script>
 </body>

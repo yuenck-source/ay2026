@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Monthly Future Log</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root { --primary-color: #0d9488; --bg-color: #f8fafc; --border-color: #cbd5e1; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
+    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; }
+    .nav-btn { padding: 8px 14px; font-size: 0.88rem; border-radius: 6px; text-decoration: none; background: #e2e8f0; color: #475569; font-weight: bold; }
+    .nav-btn.active { background: var(--primary-color); color: #fff; }
+    
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .log-card { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+    
+    .status-btn { padding: 4px 10px; font-size: 0.78rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .status-btn.todo { background: #fee2e2; color: #dc2626; }
+    .status-btn.done { background: #dcfce7; color: #16a34a; }
+    
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; }
+    .modal-box { background:#fff; width:90%; max-width:480px; border-radius:12px; padding:20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-btn active">📊 今天事項及月曆</a>
+      <a href="week.html" class="nav-btn">🗓️ 週安排檢視</a>
+      <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
+      <a href="daily.html" class="nav-btn">🏫 Daily Log</a>
+      <a href="monthly.html" class="nav-btn">🗓️ Monthly Log</a>
+      <a href="math.html" class="nav-btn">📐 數學日誌</a>
+      <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
+      <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
+    </div>
+
+    <div class="controls">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <h3 style="margin:0; color:var(--primary-color);">🗓️ Monthly Future Log (月誌)</h3>
+        <button onclick="openModal()" style="background:var(--primary-color); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ 新增月誌事項</button>
+      </div>
+      <input type="month" id="monthFilter" onchange="renderLogs()" style="padding:6px; border-radius:6px; border:1px solid var(--border-color);">
+    </div>
+
+    <div id="loading">⏳ 正在載入 Monthly Log...</div>
+    <div id="logGrid" class="card-grid"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal-box">
+      <h3 style="margin-top:0; color:var(--primary-color);">📝 新增 Monthly 事項</h3>
+      <form id="addForm" onsubmit="handleSubmit(event)">
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.8rem; font-weight:bold;">日期/月份</label>
+          <input type="date" id="newDate" required style="width:100%; padding:8px; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.8rem; font-weight:bold;">類別 (Category)</label>
+          <input type="text" id="newCategory" placeholder="例: 校務 / 教學" required style="width:100%; padding:8px; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.8rem; font-weight:bold;">類型 (Signifier)</label>
+          <select id="newSignifier" style="width:100%; padding:8px; box-sizing:border-box;">
+            <option value="• Task">• 任務 (Task)</option>
+            <option value="◦ Event">◦ 事件 (Event)</option>
+            <option value="- Note">- 便條 (Note)</option>
+          </select>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:0.8rem; font-weight:bold;">事項名稱 (Task/Event)</label>
+          <input type="text" id="newTask" required style="width:100%; padding:8px; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
+          <button type="button" onclick="closeModal()">取消</button>
+          <button type="submit" id="submitBtn" style="background:var(--primary-color); color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold;">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
+    const GID = '782306667';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwnpWBweDBZoEvHukGHitf0yq3ycBLfF_YpYTCsPhgz-H5snw9rfgEdgGIv7sbMETyVYA/exec';
+
+    let logs = [];
+
+    window.onload = () => {
+      document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7);
+      loadData();
+    };
+
+    function loadData() {
+      Papa.parse(CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: (results) => {
+          logs = results.data.map((item, index) => ({ ...item, _rowIndex: index + 2 }));
+          renderLogs();
+          document.getElementById('loading').style.display = 'none';
+        }
+      });
+    }
+
+    function renderLogs() {
+      const grid = document.getElementById('logGrid');
+      const selectedMonth = document.getElementById('monthFilter').value;
+      grid.innerHTML = '';
+
+      const filtered = logs.filter(r => (r['Date/Month'] || r.Date || '').startsWith(selectedMonth));
+
+      if(filtered.length === 0) {
+        grid.innerHTML = '<div style="color:#64748b;">本月暫無記錄。</div>';
+        return;
+      }
+
+      filtered.forEach(item => {
+        const isDone = (item.Status === '已完成');
+        const card = document.createElement('div');
+        card.className = 'log-card';
+        card.style.borderLeft = isDone ? '4px solid #22c55e' : '4px solid #0d9488';
+        
+        card.innerHTML = `
+          <div>
+            <div style="font-size:0.8rem; color:#64748b; display:flex; justify-content:space-between;">
+              <span>📅 ${item['Date/Month'] || ''}</span>
+              <span style="background:#ccfbf1; color:#115e59; padding:2px 6px; border-radius:4px;">${item.Category || ''}</span>
+            </div>
+            <div style="font-weight:bold; font-size:0.95rem; margin-top:6px;">${item.Signifier || '•'} ${item['Task/Event'] || ''}</div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; border-top:1px dashed #cbd5e1; padding-top:6px;">
+            <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleStatus(${item._rowIndex}, '${item.Status}')">
+              ${isDone ? '✅ 已完成' : '⏳ 待辦'}
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function toggleStatus(rowIndex, currentStatus) {
+      const newStatus = (currentStatus === '已完成') ? '未完成' : '已完成';
+      const target = logs.find(r => r._rowIndex === rowIndex);
+      if (target) { target.Status = newStatus; renderLogs(); }
+      fetch(`${API_URL}?gid=${GID}&action=toggleStatus&rowIndex=${rowIndex}&newStatus=${encodeURIComponent(newStatus)}`, { mode: 'no-cors' });
+    }
+
+    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      const params = new URLSearchParams({
+        gid: GID, action: 'add',
+        Date: document.getElementById('newDate').value,
+        Category: document.getElementById('newCategory').value,
+        Signifier: document.getElementById('newSignifier').value,
+        'Task/Event': document.getElementById('newTask').value,
+        Status: '未完成'
+      });
+      fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' }).then(() => {
+        logs.unshift({
+          'Date/Month': document.getElementById('newDate').value,
+          Category: document.getElementById('newCategory').value,
+          Signifier: document.getElementById('newSignifier').value,
+          'Task/Event': document.getElementById('newTask').value,
+          Status: '未完成',
+          _rowIndex: logs.length + 2
+        });
+        renderLogs(); closeModal(); document.getElementById('addForm').reset();
+      });
+    }
+  </script>
+</body>
+</html>

@@ -11,6 +11,7 @@
   <style>
     :root {
       --primary-color: #2563eb;
+      --daily-color: #6366f1;
       --timetable-color: #0284c7;
       --pm-timetable-color: #0d9488;
       --duty-color: #ea580c;
@@ -107,6 +108,71 @@
 
     .today-card.duty { border-left-color: var(--duty-color); background-color: #fff7ed; }
     .today-card.morning { border-left-color: #f97316; background-color: #fff7ed; }
+
+    /* 今日 Daily Log 區塊 */
+    .daily-box {
+      background-color: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .daily-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed #a5b4fc;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .daily-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #3730a3;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .daily-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .daily-item {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .daily-item.done {
+      background: #f8fafc;
+      opacity: 0.7;
+    }
+
+    .daily-item.done .daily-text {
+      text-decoration: line-through;
+      color: #64748b;
+    }
+
+    .status-btn {
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+    .status-btn.todo { background: #fee2e2; color: #dc2626; }
+    .status-btn.done { background: #dcfce7; color: #15803d; }
 
     /* 月曆控制項 */
     .calendar-controls {
@@ -240,7 +306,7 @@
       gap: 6px;
     }
 
-    /* RWD 手機優化 (螢幕寬度低於 640px 時切換模式) */
+    /* RWD 手機優化 */
     @media (max-width: 639px) {
       .calendar-grid { display: none; }
       .calendar-list { display: flex; }
@@ -254,9 +320,11 @@
   <div class="container">
     <!-- 導覽選單 -->
     <div class="nav-tabs">
-      <a href="index.html" class="nav-btn active">📊 校曆與月檢視</a>
+      <a href="index.html" class="nav-btn active">📊 今天事項及月曆</a>
       <a href="week.html" class="nav-btn">🗓️ 週安排檢視</a>
       <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
+      <a href="daily.html" class="nav-btn">🏫 Daily Log</a>
+      <a href="monthly.html" class="nav-btn">🗓️ Monthly Log</a>
       <a href="math.html" class="nav-btn">📐 數學日誌</a>
       <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
       <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
@@ -270,6 +338,17 @@
       </div>
       <div id="todaySchedule" class="today-grid">
         <div style="color: #64748b; font-size: 0.85rem;">⏳ 載入今日行程中...</div>
+      </div>
+    </div>
+
+    <!-- 🎯 中間新增：今日 Daily Log 區塊 (地位於今天安排以下、月曆之前) -->
+    <div class="daily-box">
+      <div class="daily-header">
+        <div class="daily-title">📝 今日 Daily Log 工作與筆記</div>
+        <a href="daily.html" style="font-size: 0.82rem; color: #4f46e5; font-weight: bold; text-decoration: none;">前往完整 Daily Log 頁面 ➔</a>
+      </div>
+      <div id="todayDailyList" class="daily-list">
+        <div style="color: #64748b; font-size: 0.85rem;">⏳ 載入今日 Daily Log 中...</div>
       </div>
     </div>
 
@@ -300,9 +379,15 @@
     const CSV_URL = 'Sch Calendar-Grid view.csv';
     const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
     const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable&t=${new Date().getTime()}`;
+    
+    // Daily Log CSV URL (GID: 887624823)
+    const DAILY_GID = '887624823';
+    const DAILY_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${DAILY_GID}&t=${new Date().getTime()}`;
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec';
 
     let calendarData = {};
     let timetableRows = [];
+    let dailyRows = [];
     let availableMonths = [];
     let currentYearMonth = '';
     const todayStr = new Date().toISOString().split('T')[0];
@@ -315,6 +400,8 @@
           processCalendarData(results.data);
           // 讀取課堂時間表
           loadTimetable();
+          // 讀取 Daily Log
+          loadDailyLog();
         }
       });
     });
@@ -328,6 +415,64 @@
           renderTodaySchedule();
         }
       });
+    }
+
+    /* 讀取 Daily Log 資料並篩選今日工作 */
+    function loadDailyLog() {
+      Papa.parse(DAILY_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: (res) => {
+          if (res.data) {
+            dailyRows = res.data.map((item, index) => ({
+              ...item,
+              _rowIndex: index + 2
+            }));
+            renderTodayDailyLog();
+          }
+        }
+      });
+    }
+
+    /* 渲染今日 Daily Log 工作 */
+    function renderTodayDailyLog() {
+      const container = document.getElementById('todayDailyList');
+      container.innerHTML = '';
+
+      const todayLogs = dailyRows.filter(r => (r.Date || '').trim() === todayStr);
+
+      if (todayLogs.length === 0) {
+        container.innerHTML = `<div style="color:#64748b; font-size:0.85rem;">今天尚無 Daily Log 事項。可點擊右上角進入 Daily Log 快速記錄！</div>`;
+        return;
+      }
+
+      todayLogs.forEach(item => {
+        const isDone = (item.Status === '已完成');
+        const div = document.createElement('div');
+        div.className = `daily-item ${isDone ? 'done' : ''}`;
+        
+        div.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:bold; color:#4f46e5;">${item.Type || '•'}</span>
+            <span class="daily-text">${item.Content || ''}</span>
+            ${item.Time ? `<span style="font-size:0.75rem; color:#94a3b8;">(${item.Time})</span>` : ''}
+          </div>
+          <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleDailyStatus(${item._rowIndex}, '${item.Status}')">
+            ${isDone ? '✅ 完成' : '⏳ 待辦'}
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    /* 在 index 頁面直接切換 Daily Log 狀態 */
+    function toggleDailyStatus(rowIndex, currentStatus) {
+      const newStatus = (currentStatus === '已完成') ? '未完成' : '已完成';
+      const target = dailyRows.find(r => r._rowIndex === rowIndex);
+      if (target) {
+        target.Status = newStatus;
+        renderTodayDailyLog();
+      }
+      fetch(`${API_URL}?gid=${DAILY_GID}&action=toggleStatus&rowIndex=${rowIndex}&newStatus=${encodeURIComponent(newStatus)}`, { mode: 'no-cors' });
     }
 
     function processCalendarData(rows) {
@@ -466,7 +611,7 @@
         }
         grid.appendChild(createCell(`day-cell ${isToday ? 'is-today' : ''}`, gridContent));
 
-        // --- List 清單卡片 (手機端優化：只顯示有內容的日期或今天) ---
+        // --- List 清單卡片 (手機端優化) ---
         if (data && (data.cycleDay || data.holiday || data.activity || isToday)) {
           const dayOfWeekText = weekDays[new Date(year, month - 1, day).getDay()];
           let listHtml = `
