@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎯 Habit Tracker - 習慣追蹤</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #10b981;
+      --bg-color: #f8fafc;
+      --border-color: #cbd5e1;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: #1e293b;
+      margin: 0;
+      padding: 12px;
+    }
+
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    /* 導覽列 */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .nav-btn {
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      border-radius: 6px;
+      text-decoration: none;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: bold;
+    }
+    .nav-btn.active { background: var(--primary-color); color: #ffffff; }
+
+    /* 進度條看板 */
+    .progress-box {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      color: #065f46;
+      margin-bottom: 8px;
+    }
+    .progress-bar-bg {
+      background: #d1fae5;
+      border-radius: 10px;
+      height: 12px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: var(--primary-color);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* 新增習慣列 */
+    .add-box {
+      background: #f1f5f9;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .add-box input, .add-box select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 0.88rem;
+    }
+    .add-box input[type="text"] { flex: 1; min-width: 180px; }
+    .add-btn {
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* 今日習慣打勾清單 */
+    .habit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .habit-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .habit-card.done {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+    .habit-info { display: flex; align-items: center; gap: 8px; font-weight: bold; }
+    .check-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .check-btn.done { background: #10b981; color: #fff; }
+    .check-btn.todo { background: #e2e8f0; color: #64748b; }
+
+    /* 本週熱力表 Table */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { border: 1px solid var(--border-color); padding: 8px; text-align: center; }
+    th { background: #f8fafc; }
+    .status-cell { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 1. 全站導覽列 -->
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-btn">📊 今天事項及月曆</a>
+      <a href="week.html" class="nav-btn">🗓️ 週安排檢視</a>
+      <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
+      <a href="daily.html" class="nav-btn">🏫 Daily Log</a>
+      <a href="monthly.html" class="nav-btn">🗓️ Monthly Log</a>
+      <a href="math.html" class="nav-btn">📐 數學日誌</a>
+      <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
+      <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
+      <a href="habit.html" class="nav-btn active">🎯 Habit Tracker</a>
+    </div>
+
+    <!-- 2. 今日進度看板 -->
+    <div class="progress-box">
+      <div class="progress-header">
+        <span>🔥 今日習慣達成進度</span>
+        <span id="progressText">0 / 0 (0%)</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="progressBar" class="progress-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- 3. 新增習慣輸入框 -->
+    <form class="add-box" onsubmit="handleAddHabit(event)">
+      <input type="text" id="newHabitName" placeholder="✨ 輸入新習慣名稱 (例如: 閱讀15分鐘)..." required>
+      <select id="newHabitIcon">
+        <option value="💧">💧 喝水</option>
+        <option value="🏃">🏃 運動</option>
+        <option value="📖">📖 閱讀</option>
+        <option value="🧘">🧘 冥想/放鬆</option>
+        <option value="💊">💊 維他命/服藥</option>
+        <option value="😴">😴 早睡</option>
+        <option value="✅">✅ 其他</option>
+      </select>
+      <button type="submit" class="add-btn">+ 新增習慣</button>
+    </form>
+
+    <div id="loading" style="font-size:0.88rem; color:#10b981; font-weight:bold; margin-bottom:12px;">⏳ 載入習慣資料中...</div>
+
+    <!-- 4. 今天習慣打勾卡片 -->
+    <h3 style="color:#065f46; margin-bottom:10px;">📌 今天要做的事</h3>
+    <div id="habitGrid" class="habit-grid"></div>
+
+    <!-- 5. 近 7 天紀錄矩陣 -->
+    <h3 style="color:#334155; margin-top:24px; margin-bottom:10px;">📅 近 7 天達成狀況</h3>
+    <div class="table-container">
+      <table id="weeklyTable">
+        <thead><tr id="weeklyHeader"><th>習慣項目</th></tr></thead>
+        <tbody id="weeklyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SHEET_ID = '1q3NLPoGG8qr33knDt6REdLM8-GVrarzSercPLrjKSbo'; // 👈 已更新為新 Sheet ID
+const HABITS_GID = '837132755';
+const LOGS_GID = '1991677412';
+    
+    const HABITS_CSV = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${HABITS_GID}&t=${new Date().getTime()}`;
+    const LOGS_CSV = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${LOGS_GID}&t=${new Date().getTime()}`;
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzJvHfBxxGBkSB35tAwYaT8K9nT6Oh4janOfJtp5EGx1iXqzvJMy8Tk-zdhdMk5onQb/exec';
+
+    let habits = [];
+    let habitLogs = [];
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    window.onload = () => { loadData(); };
+
+    /* 強大解析：兼顧按名稱/按欄位索引讀取 */
+    function parseHabitsData(rows) {
+      if (!rows || rows.length === 0) return [];
+      
+      return rows.map((r, index) => {
+        const values = Object.values(r);
+        
+        // ID: 找 ID 欄，或第一欄
+        const id = r.ID || r.HabitID || r.id || values[0] || `H_${index}`;
+        
+        // Name: 找名字欄，或第二欄
+        let name = r.HabitName || r.Name || r.Habit || r['習慣名稱'] || r['習慣'];
+        if (!name || name === 'undefined') {
+          name = values[1] || `習慣 ${index + 1}`;
+        }
+        
+        // Icon: 找圖示欄，或第三欄
+        let icon = r.Icon || r['圖示'] || values[2];
+        if (!icon || icon.length > 4) icon = '✅'; // 若誤抓成其他文字，設預設值
+
+        return { id: String(id).trim(), name: String(name).trim(), icon: String(icon).trim() };
+      });
+    }
+
+    function parseLogsData(rows) {
+      if (!rows || rows.length === 0) return [];
+      return rows.map(r => {
+        const values = Object.values(r);
+        const date = r.Date || values[0] || '';
+        const habitId = r.HabitID || r.ID || values[1] || '';
+        const status = r.Status || values[2] || '';
+        return { date: String(date).trim(), habitId: String(habitId).trim(), status: String(status).trim() };
+      });
+    }
+
+    function loadData() {
+      Papa.parse(HABITS_CSV, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: (resHabits) => {
+          habits = parseHabitsData(resHabits.data);
+          Papa.parse(LOGS_CSV, {
+            download: true, header: true, skipEmptyLines: true,
+            complete: (resLogs) => {
+              habitLogs = parseLogsData(resLogs.data);
+              document.getElementById('loading').style.display = 'none';
+              renderAll();
+            }
+          });
+        }
+      });
+    }
+
+    function renderAll() {
+      renderTodayHabits();
+      renderWeeklyHeatmap();
+    }
+
+    /* 渲染今日習慣卡片與進度條 */
+    function renderTodayHabits() {
+      const grid = document.getElementById('habitGrid');
+      grid.innerHTML = '';
+
+      if (habits.length === 0) {
+        grid.innerHTML = '<div style="color:#64748b;">目前尚未建立任何習慣。</div>';
+        updateProgress(0, 0);
+        return;
+      }
+
+      let doneCount = 0;
+
+      habits.forEach(h => {
+        const isDone = habitLogs.some(l => l.date === todayStr && l.habitId === h.id && l.status === 'Done');
+        if (isDone) doneCount++;
+
+        const card = document.createElement('div');
+        card.className = `habit-card ${isDone ? 'done' : ''}`;
+        card.innerHTML = `
+          <div class="habit-info">
+            <span style="font-size:1.2rem;">${h.icon}</span>
+            <span>${h.name}</span>
+          </div>
+          <button class="check-btn ${isDone ? 'done' : 'todo'}" onclick="toggleHabit('${h.id}', ${isDone})">
+            ${isDone ? '✅ 已完成' : '⭕ 未打勾'}
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+
+      updateProgress(doneCount, habits.length);
+    }
+
+    /* 更新進度條 */
+    function updateProgress(done, total) {
+      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+      document.getElementById('progressText').textContent = `${done} / ${total} (${percent}%)`;
+      document.getElementById('progressBar').style.width = `${percent}%`;
+    }
+
+    /* 切換習慣打勾狀態 */
+    function toggleHabit(habitId, isCurrentlyDone) {
+      const newStatus = isCurrentlyDone ? '' : 'Done';
+      
+      // 本地即時更新 UI
+      if (isCurrentlyDone) {
+        habitLogs = habitLogs.filter(l => !(l.date === todayStr && l.habitId === habitId));
+      } else {
+        habitLogs.push({ date: todayStr, habitId: habitId, status: 'Done' });
+      }
+      renderAll();
+
+      // 後端寫入 API
+      fetch(`${API_URL}?action=toggleHabit&date=${todayStr}&habitId=${encodeURIComponent(habitId)}&status=${newStatus}`, { mode: 'no-cors' });
+    }
+
+    /* 新增習慣 */
+    function handleAddHabit(e) {
+      e.preventDefault();
+      const name = document.getElementById('newHabitName').value.trim();
+      const icon = document.getElementById('newHabitIcon').value;
+      const newId = 'H' + new Date().getTime();
+
+      habits.push({ id: newId, name: name, icon: icon });
+      renderAll();
+      document.getElementById('newHabitName').value = '';
+
+      fetch(`${API_URL}?action=addHabit&name=${encodeURIComponent(name)}&icon=${encodeURIComponent(icon)}&id=${newId}`, { mode: 'no-cors' });
+    }
+
+    /* 渲染近 7 天熱力矩陣 */
+    function renderWeeklyHeatmap() {
+      const headerRow = document.getElementById('weeklyHeader');
+      const body = document.getElementById('weeklyBody');
+      headerRow.innerHTML = '<th>習慣項目</th>';
+      body.innerHTML = '';
+
+      // 計算過去 7 天的日期
+      const dates = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+
+      // 表頭日期
+      dates.forEach(d => {
+        const th = document.createElement('th');
+        th.textContent = d.substring(5); // 顯示 MM-DD
+        headerRow.appendChild(th);
+      });
+
+      // 表身列
+      habits.forEach(h => {
+        const tr = document.createElement('tr');
+        let rowHtml = `<td style="text-align:left; font-weight:bold;">${h.icon} ${h.name}</td>`;
+        
+        dates.forEach(d => {
+          const isDone = habitLogs.some(l => l.date === d && l.habitId === h.id && l.status === 'Done');
+          rowHtml += `<td class="status-cell" style="background:${isDone ? '#dcfce7' : '#fff'}; color:${isDone ? '#15803d' : '#cbd5e1'};">
+            ${isDone ? '✓' : '-'}
+          </td>`;
+        });
+
+        tr.innerHTML = rowHtml;
+        body.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
