@@ -11,6 +11,9 @@
   <style>
     :root {
       --primary-color: #2563eb;
+      --timetable-color: #0284c7;
+      --pm-timetable-color: #0d9488;
+      --duty-color: #ea580c;
       --bg-color: #f8fafc;
       --border-color: #cbd5e1;
       --header-bg: #1e293b;
@@ -45,7 +48,6 @@
       white-space: nowrap;
       -webkit-overflow-scrolling: touch;
     }
-
     .nav-tabs::-webkit-scrollbar { display: none; }
 
     .nav-btn {
@@ -58,11 +60,55 @@
       font-weight: bold;
       transition: all 0.2s ease;
     }
-
     .nav-btn:hover { background: #cbd5e1; }
     .nav-btn.active { background: var(--primary-color); color: #ffffff; }
 
-    /* 月曆頂部控制欄 */
+    /* 今日安排區塊 (Today Schedule) */
+    .today-box {
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .today-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed #93c5fd;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .today-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .today-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .today-card {
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      border-left: 3px solid var(--primary-color);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .today-card.duty { border-left-color: var(--duty-color); background-color: #fff7ed; }
+    .today-card.morning { border-left-color: #f97316; background-color: #fff7ed; }
+
+    /* 月曆控制項 */
     .calendar-controls {
       display: flex;
       justify-content: space-between;
@@ -74,26 +120,20 @@
       background-color: #2563eb;
       color: white;
       border: none;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 0.88rem;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      font-size: 0.85rem;
     }
 
-    .btn-month:hover { background-color: #1d4ed8; }
-
     #monthSelect {
-      padding: 6px 12px;
-      font-size: 0.95rem;
+      padding: 6px 10px;
+      font-size: 0.9rem;
       font-weight: bold;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       background-color: #fff;
-      cursor: pointer;
     }
 
     /* 圖例 Legend */
@@ -102,14 +142,8 @@
       align-items: center;
       gap: 12px;
       margin-bottom: 12px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
 
     .tag-badge {
@@ -117,38 +151,34 @@
       font-weight: bold;
       padding: 2px 6px;
       border-radius: 4px;
-      display: inline-block;
     }
-
     .badge-cycle { background: #2563eb; color: #fff; }
     .badge-holiday { background: #ffe4e6; color: #e11d48; border: 1px solid #fecdd3; }
     .badge-activity { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
 
-    /* 日曆主網格 */
+    /* 桌面端：網格樣式 Grid */
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       border: 1px solid #cbd5e1;
       border-radius: 8px;
       overflow: hidden;
-      background-color: #cbd5e1; /* 作為格線顏色 */
+      background-color: #cbd5e1;
       gap: 1px;
     }
 
-    /* 星期標題 Header */
     .calendar-header-day {
       background-color: var(--header-bg);
       color: #ffffff;
       text-align: center;
       padding: 8px 0;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
 
-    /* 日期格子 Body Cell */
     .day-cell {
-      background-color: #f0f4f8; /* 預設淡藍底色 (如圖片) */
-      min-height: 100px;
+      background-color: #ffffff;
+      min-height: 95px;
       padding: 6px;
       box-sizing: border-box;
       display: flex;
@@ -156,60 +186,67 @@
       gap: 4px;
     }
 
-    .day-cell.other-month {
-      background-color: #cbd5e1; /* 非本月填滿灰色 (如圖片底部) */
-      opacity: 0.6;
-    }
+    .day-cell.other-month { background-color: #f1f5f9; opacity: 0.6; }
+    .day-cell.is-today { background-color: #e0f2fe; outline: 2px solid #0284c7; outline-offset: -2px; }
 
-    .day-number {
-      font-weight: bold;
-      font-size: 0.95rem;
-      color: #0f172a;
-    }
+    .day-number { font-weight: bold; font-size: 0.88rem; color: #0f172a; }
 
-    /* 今天的高亮 */
-    .day-cell.is-today {
-      background-color: #e0f2fe;
-      outline: 2px solid #0284c7;
-      outline-offset: -2px;
-    }
-
-    /* 日曆內的事件卡片標籤 */
     .event-tag {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       padding: 3px 5px;
       border-radius: 4px;
       line-height: 1.2;
-      word-break: break-all;
     }
 
-    .event-cycle {
-      background-color: #eff6ff;
-      color: #1d4ed8;
-      border-left: 3px solid #2563eb;
-      font-weight: bold;
+    .event-cycle { background-color: #eff6ff; color: #1d4ed8; border-left: 3px solid #2563eb; font-weight: bold; }
+    .event-holiday { background-color: #ffe4e6; color: #9f1239; border-left: 3px solid #f43f5e; font-weight: bold; }
+    .event-activity { background-color: #fef3c7; color: #92400e; border-left: 3px solid #f59e0b; font-weight: bold; }
+
+    /* 手機端：清單樣式 List (預設隱藏) */
+    .calendar-list {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .event-holiday {
-      background-color: #ffe4e6;
-      color: #9f1239;
-      border-left: 3px solid #f43f5e;
-      font-weight: bold;
+    .list-day-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .event-activity {
-      background-color: #fef3c7;
-      color: #92400e;
-      border-left: 3px solid #f59e0b;
-      font-weight: bold;
+    .list-day-card.is-today {
+      border-color: #0284c7;
+      background-color: #f0f9ff;
     }
 
-    #loading {
-      font-size: 0.88rem;
-      color: #0284c7;
+    .list-day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-weight: bold;
-      padding: 12px 0;
+      font-size: 0.9rem;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 4px;
     }
+
+    .list-day-events {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* RWD 手機優化 (螢幕寬度低於 640px 時切換模式) */
+    @media (max-width: 639px) {
+      .calendar-grid { display: none; }
+      .calendar-list { display: flex; }
+    }
+
+    #loading { font-size: 0.88rem; color: #0284c7; font-weight: bold; padding: 12px 0; }
   </style>
 </head>
 <body>
@@ -225,79 +262,94 @@
       <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
     </div>
 
-    <!-- 月份控制項 (與圖片樣式一致) -->
+    <!-- 頂部：今日安排區塊 -->
+    <div class="today-box">
+      <div class="today-header">
+        <div class="today-title">📌 今日安排 <span id="todayDateStr" style="font-size: 0.85rem; color: #64748b; font-weight: normal;"></span></div>
+        <div id="todayBadge"></div>
+      </div>
+      <div id="todaySchedule" class="today-grid">
+        <div style="color: #64748b; font-size: 0.85rem;">⏳ 載入今日行程中...</div>
+      </div>
+    </div>
+
+    <!-- 月份控制項 -->
     <div class="calendar-controls">
-      <button class="btn-month" onclick="changeMonth(-1)">◀ 上一個月</button>
+      <button class="btn-month" onclick="changeMonth(-1)">◀ 上月</button>
       <select id="monthSelect" onchange="onMonthSelectChange()"></select>
-      <button class="btn-month" onclick="changeMonth(1)">下一個月 ▶</button>
+      <button class="btn-month" onclick="changeMonth(1)">下月 ▶</button>
     </div>
 
-    <!-- 圖例 Legend -->
+    <!-- 圖例 -->
     <div class="legend-container">
-      <div class="legend-item">
-        <span class="tag-badge badge-cycle">A-F</span> 循環日
-      </div>
-      <div class="legend-item">
-        <span class="tag-badge badge-holiday">假期</span> 學校假期
-      </div>
-      <div class="legend-item">
-        <span class="tag-badge badge-activity">活動</span> 特別活動
-      </div>
+      <div style="display:flex; align-items:center; gap:4px;"><span class="tag-badge badge-cycle">A-F</span> 循環日</div>
+      <div style="display:flex; align-items:center; gap:4px;"><span class="tag-badge badge-holiday">假期</span> 學校假期</div>
+      <div style="display:flex; align-items:center; gap:4px;"><span class="tag-badge badge-activity">活動</span> 特別活動</div>
     </div>
 
-    <div id="loading">⏳ 正在載入校曆資料中...</div>
+    <div id="loading">⏳ 正在載入校曆與時間表...</div>
 
-    <!-- 月曆容器 -->
+    <!-- 電腦端：網格 View -->
     <div id="calendarGrid" class="calendar-grid"></div>
+
+    <!-- 手機端：直向卡片 View -->
+    <div id="calendarList" class="calendar-list"></div>
   </div>
 
   <script>
     const CSV_URL = 'Sch Calendar-Grid view.csv';
-    let calendarData = {}; // key: YYYY-MM-DD
-    let availableMonths = []; // 儲存 CSV 內出現的所有年月 (例: ["2026-08", "2026-09"...])
-    let currentYearMonth = ''; // 當前選擇的 "YYYY-MM"
+    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
+    const TIMETABLE_CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable&t=${new Date().getTime()}`;
+
+    let calendarData = {};
+    let timetableRows = [];
+    let availableMonths = [];
+    let currentYearMonth = '';
+    const todayStr = new Date().toISOString().split('T')[0];
 
     window.addEventListener('DOMContentLoaded', () => {
+      // 讀取校曆 CSV
       Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
+        download: true, header: true, skipEmptyLines: true,
         complete: (results) => {
-          processData(results.data);
-          document.getElementById('loading').style.display = 'none';
-        },
-        error: (err) => {
-          document.getElementById('loading').textContent = '❌ 載入資料失敗，請確認 CSV 檔案是否存在。';
-          console.error(err);
+          processCalendarData(results.data);
+          // 讀取課堂時間表
+          loadTimetable();
         }
       });
     });
 
-    function processData(rows) {
-      const monthSet = new Set();
+    function loadTimetable() {
+      Papa.parse(TIMETABLE_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: (res) => {
+          if (res.data) timetableRows = res.data;
+          document.getElementById('loading').style.display = 'none';
+          renderTodaySchedule();
+        }
+      });
+    }
 
+    function processCalendarData(rows) {
+      const monthSet = new Set();
       rows.forEach(row => {
         if (!row.Date) return;
-
-        // 解析 DD/MM/YYYY -> YYYY-MM-DD
         const parts = row.Date.split('/');
         if (parts.length === 3) {
           const formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
           const ym = `${parts[2]}-${parts[1].padStart(2, '0')}`;
 
           calendarData[formattedDate] = {
+            weekday: row['Weekday'] || '',
             cycleDay: row['Cycle Day'] || '',
             holiday: row['Sch Holiday/Special Sch Day'] || '',
             activity: row['Special Activity'] || ''
           };
-
           monthSet.add(ym);
         }
       });
 
       availableMonths = Array.from(monthSet).sort();
-
-      // 初始化下拉選單
       const select = document.getElementById('monthSelect');
       select.innerHTML = '';
       availableMonths.forEach(ym => {
@@ -308,28 +360,79 @@
         select.appendChild(opt);
       });
 
-      // 預設選取「今天」所在的月份，若不在範圍內則預設第一個月份
-      const todayYM = new Date().toISOString().substring(0, 7);
-      if (availableMonths.includes(todayYM)) {
-        currentYearMonth = todayYM;
-      } else if (availableMonths.length > 0) {
-        currentYearMonth = availableMonths[0];
-      }
-
+      const todayYM = todayStr.substring(0, 7);
+      currentYearMonth = availableMonths.includes(todayYM) ? todayYM : (availableMonths[0] || '');
       select.value = currentYearMonth;
+
       renderCalendar(currentYearMonth);
     }
 
+    /* 渲染今日安排 */
+    function renderTodaySchedule() {
+      const todayInfo = calendarData[todayStr];
+      const todayBox = document.getElementById('todaySchedule');
+      const todayDateStr = document.getElementById('todayDateStr');
+      const todayBadge = document.getElementById('todayBadge');
+
+      const d = new Date();
+      const dateDisplay = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+      todayDateStr.textContent = `(${dateDisplay})`;
+
+      if (!todayInfo) {
+        todayBox.innerHTML = `<div style="color:#64748b; font-size:0.85rem;">今日無校曆紀錄或為放假日。</div>`;
+        return;
+      }
+
+      let badgeHtml = '';
+      if (todayInfo.cycleDay && todayInfo.cycleDay !== '-') badgeHtml += `<span class="tag-badge badge-cycle">${todayInfo.cycleDay}</span> `;
+      if (todayInfo.holiday) badgeHtml += `<span class="tag-badge badge-holiday">${todayInfo.holiday}</span> `;
+      if (todayInfo.activity) badgeHtml += `<span class="tag-badge badge-activity">${todayInfo.activity}</span>`;
+      todayBadge.innerHTML = badgeHtml;
+
+      // 比對當天時間表
+      const cycle = String(todayInfo.cycleDay || '').trim();
+      const matched = timetableRows.filter(r => {
+        const rDay = String(r['Cycle'] || r['循環日'] || '').trim();
+        return rDay && rDay.toLowerCase() === cycle.toLowerCase();
+      });
+
+      if (matched.length === 0) {
+        todayBox.innerHTML = `<div style="color:#64748b; font-size:0.85rem;">今日沒有預定的課堂或當值安排。</div>`;
+        return;
+      }
+
+      let cardsHtml = '';
+      matched.forEach(item => {
+        const period = item['Period'] || item['課節'] || '';
+        const subject = item['Subject'] || item['科目'] || '';
+        const className = item['Class'] || item['班別'] || '';
+        const room = item['Room'] || item['地點'] || '';
+        const duty = item['Break Duty'] || item['Playtime Duty'] || item['Lunch Duty'] || item['Dismissal Duty'] || '';
+
+        if (duty) {
+          cardsHtml += `<div class="today-card duty"><b>📢 當值：</b>${duty}</div>`;
+        }
+        if (subject) {
+          cardsHtml += `<div class="today-card"><b>${period}：</b>${subject} (${className}) <span style="color:#64748b;">📍${room}</span></div>`;
+        }
+      });
+
+      todayBox.innerHTML = cardsHtml;
+    }
+
+    /* 渲染月曆 (兼顧 Grid 與 List 模式) */
     function renderCalendar(ym) {
       const grid = document.getElementById('calendarGrid');
+      const list = document.getElementById('calendarList');
       grid.innerHTML = '';
+      list.innerHTML = '';
 
       if (!ym) return;
 
       const [year, month] = ym.split('-').map(Number);
-
-      // 1. 渲染星期表頭 (日, 一, 二, 三, 四, 五, 六)
       const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+
+      // 1. Grid 模式 Header
       weekDays.forEach(day => {
         const header = document.createElement('div');
         header.className = 'calendar-header-day';
@@ -337,63 +440,65 @@
         grid.appendChild(header);
       });
 
-      // 2. 計算本月第一天是星期幾 & 本月總天數
-      const firstDayOfMonth = new Date(year, month - 1, 1);
-      const startingDayOfWeek = firstDayOfMonth.getDay(); // 0(日) - 6(六)
+      const startingDayOfWeek = new Date(year, month - 1, 1).getDay();
       const daysInMonth = new Date(year, month, 0).getDate();
 
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      // 3. 填補月份開頭的空白格子
+      // 前方補白
       for (let i = 0; i < startingDayOfWeek; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'day-cell other-month';
-        grid.appendChild(emptyCell);
+        grid.appendChild(createCell('day-cell other-month', ''));
       }
 
-      // 4. 渲染本月的每一天
+      // 2. 渲染每一天
       for (let day = 1; day <= daysInMonth; day++) {
-        const dayStr = String(day).padStart(2, '0');
         const monthStr = String(month).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
         const fullDateStr = `${year}-${monthStr}-${dayStr}`;
-
-        const cell = document.createElement('div');
-        cell.className = 'day-cell';
-        if (fullDateStr === todayStr) {
-          cell.classList.add('is-today');
-        }
-
-        let cellContent = `<div class="day-number">${day}</div>`;
-
-        // 如果這一天有校曆資料，顯示標籤
         const data = calendarData[fullDateStr];
-        if (data) {
-          // 循環日 Cycle Day
-          if (data.cycleDay && data.cycleDay !== '-' && data.cycleDay.toLowerCase() !== 'null') {
-            cellContent += `<div class="event-tag event-cycle">🔄 ${data.cycleDay}</div>`;
-          }
-          // 學校假期
-          if (data.holiday) {
-            cellContent += `<div class="event-tag event-holiday">🚩 ${data.holiday}</div>`;
-          }
-          // 特別活動
-          if (data.activity) {
-            cellContent += `<div class="event-tag event-activity">⭐ ${data.activity}</div>`;
-          }
-        }
 
-        cell.innerHTML = cellContent;
-        grid.appendChild(cell);
+        const isToday = (fullDateStr === todayStr);
+
+        // --- Grid 網格儲存格 ---
+        let gridContent = `<div class="day-number">${day}</div>`;
+        if (data) {
+          if (data.cycleDay && data.cycleDay !== '-') gridContent += `<div class="event-tag event-cycle">${data.cycleDay}</div>`;
+          if (data.holiday) gridContent += `<div class="event-tag event-holiday">${data.holiday}</div>`;
+          if (data.activity) gridContent += `<div class="event-tag event-activity">${data.activity}</div>`;
+        }
+        grid.appendChild(createCell(`day-cell ${isToday ? 'is-today' : ''}`, gridContent));
+
+        // --- List 清單卡片 (手機端優化：只顯示有內容的日期或今天) ---
+        if (data && (data.cycleDay || data.holiday || data.activity || isToday)) {
+          const dayOfWeekText = weekDays[new Date(year, month - 1, day).getDay()];
+          let listHtml = `
+            <div class="list-day-header">
+              <span>${month}月${day}日 (${dayOfWeekText}) ${isToday ? '📌 今日' : ''}</span>
+              ${data.cycleDay && data.cycleDay !== '-' ? `<span class="tag-badge badge-cycle">${data.cycleDay}</span>` : ''}
+            </div>
+            <div class="list-day-events">
+              ${data.holiday ? `<span class="event-tag event-holiday">🚩 ${data.holiday}</span>` : ''}
+              ${data.activity ? `<span class="event-tag event-activity">⭐ ${data.activity}</span>` : ''}
+            </div>
+          `;
+          const listCard = document.createElement('div');
+          listCard.className = `list-day-card ${isToday ? 'is-today' : ''}`;
+          listCard.innerHTML = listHtml;
+          list.appendChild(listCard);
+        }
       }
 
-      // 5. 填補月份結尾的空白格子，使其保持完整的列數
+      // 後方補白
       const totalRendered = startingDayOfWeek + daysInMonth;
       const remainingCells = (7 - (totalRendered % 7)) % 7;
       for (let i = 0; i < remainingCells; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'day-cell other-month';
-        grid.appendChild(emptyCell);
+        grid.appendChild(createCell('day-cell other-month', ''));
       }
+    }
+
+    function createCell(className, content) {
+      const cell = document.createElement('div');
+      cell.className = className;
+      cell.innerHTML = content;
+      return cell;
     }
 
     function onMonthSelectChange() {
@@ -403,13 +508,10 @@
 
     function changeMonth(delta) {
       const idx = availableMonths.indexOf(currentYearMonth);
-      if (idx !== -1) {
-        const newIdx = idx + delta;
-        if (newIdx >= 0 && newIdx < availableMonths.length) {
-          currentYearMonth = availableMonths[newIdx];
-          document.getElementById('monthSelect').value = currentYearMonth;
-          renderCalendar(currentYearMonth);
-        }
+      if (idx !== -1 && idx + delta >= 0 && idx + delta < availableMonths.length) {
+        currentYearMonth = availableMonths[idx + delta];
+        document.getElementById('monthSelect').value = currentYearMonth;
+        renderCalendar(currentYearMonth);
       }
     }
   </script>
