@@ -319,17 +319,8 @@
 
   <div class="container">
     <!-- 導覽選單 -->
-    <div class="nav-tabs">
-      <a href="index.html" class="nav-btn">📊 今天事項及月曆</a>
-      <a href="week.html" class="nav-btn">🗓️ 週安排檢視</a>
-      <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
-      <a href="daily.html" class="nav-btn">🏫 Daily Log</a>
-      <a href="monthly.html" class="nav-btn">🗓️ Monthly Log</a>
-      <a href="math.html" class="nav-btn">📐 數學日誌</a>
-      <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
-      <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
-      <a href="habit.html" class="nav-btn active">🎯 Habit Tracker</a>
-    </div>
+    <!-- 在各頁面中 (例如 habit.html) -->
+	<div id="navbar" class="nav-tabs"></div>
 
     <!-- 頂部：今日安排區塊 -->
     <div class="today-box">
@@ -660,6 +651,27 @@
         renderCalendar(currentYearMonth);
       }
     }
+
+  // 自動動態載入導覽列並標示目前頁面
+  fetch('nav.html')
+    .then(response => response.text())
+    .then(data => {
+      const navContainer = document.getElementById('navbar');
+      if (navContainer) {
+        navContainer.innerHTML = data;
+        
+        // 取得目前頁面檔名 (例如 "habit.html")
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        
+        // 自動尋找對應連結並加入 active class
+        const links = navContainer.querySelectorAll('.nav-btn');
+        links.forEach(link => {
+          if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>
