@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📘 教學計劃 SOW</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root { --primary-color: #7c3aed; --bg-color: #f8fafc; --border-color: #cbd5e1; }
+    body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
+    .container { max-width: 1150px; margin: 0 auto; background: #ffffff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; }
+    .nav-btn { padding: 8px 14px; font-size: 0.88rem; border-radius: 6px; text-decoration: none; background: #e2e8f0; color: #475569; font-weight: bold; }
+    .nav-btn.active.sow-tab { background: var(--primary-color); color: #fff; }
+
+    .header-box { display: flex; justify-content: space-between; align-items: center; background: #f3e8ff; padding: 12px 16px; border-radius: 8px; border: 1px solid #d8b4fe; margin-bottom: 16px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .sow-card { background: #fff; border: 1px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-btn">📊 校曆與週檢視</a>
+      <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
+      <a href="math.html" class="nav-btn">📐 數學日誌</a>
+      <a href="sow.html" class="nav-btn active sow-tab">📘 教學計劃 SOW</a>
+      <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
+    </div>
+
+    <div class="header-box">
+      <strong style="color: #6b21a8;">📘 科組教學計劃 (Scheme of Work)</strong>
+      <div id="sowProgressText" style="font-weight: bold; color: #7c3aed;">進度計算中...</div>
+    </div>
+
+    <div id="sowGrid" class="card-grid"></div>
+  </div>
+
+  <script>
+    const SOW_CSV_URL = ''; 
+
+    window.onload = function() {
+      if (SOW_CSV_URL) {
+        fetchCSV();
+      } else {
+        document.getElementById('sowProgressText').innerText = '💡 請設定 CSV 網址';
+      }
+    };
+
+    function fetchCSV() {
+      Papa.parse(SOW_CSV_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          renderSOW(results.data);
+        }
+      });
+    }
+
+    function renderSOW(data) {
+      const grid = document.getElementById('sowGrid');
+      grid.innerHTML = '';
+      let doneCount = 0;
+
+      data.forEach(item => {
+        if (item.Status === 'Completed' || item.Status === '已完成') doneCount++;
+
+        const card = document.createElement('div');
+        card.className = 'sow-card';
+        card.innerHTML = `
+          <div style="font-size:0.8rem; color:#64748b;">週次: ${item.Week || '無'}</div>
+          <div style="font-weight:bold; margin: 4px 0; color:#6b21a8;">${item.Unit || '單元未定'}</div>
+          <div style="font-size:0.85rem; color:#475569;">狀態: ${item.Status || '未完成'}</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      const total = data.length;
+      const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+      document.getElementById('sowProgressText').innerText = `完成度: ${percentage}% (${doneCount}/${total})`;
+    }
+  </script>
+</body>
+</html>

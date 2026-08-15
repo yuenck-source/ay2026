@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📐 數學日誌</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root { --primary-color: #0d9488; --bg-color: #f8fafc; --border-color: #cbd5e1; }
+    body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
+    .container { max-width: 1150px; margin: 0 auto; background: #ffffff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; }
+    .nav-btn { padding: 8px 14px; font-size: 0.88rem; border-radius: 6px; text-decoration: none; background: #e2e8f0; color: #475569; font-weight: bold; }
+    .nav-btn.active.math-tab { background: var(--primary-color); color: #fff; }
+
+    .header-box { display: flex; justify-content: space-between; align-items: center; background: #f0fdf4; padding: 12px 16px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 16px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .math-card { background: #fff; border: 1px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-btn">📊 校曆與週檢視</a>
+      <a href="timetable.html" class="nav-btn">📅 課堂時間表</a>
+      <a href="math.html" class="nav-btn active math-tab">📐 數學日誌</a>
+      <a href="sow.html" class="nav-btn">📘 教學計劃 SOW</a>
+      <a href="ft.html" class="nav-btn">🏫 班主任事務</a>
+    </div>
+
+    <div class="header-box">
+      <strong style="color: #0f766e;">📐 數學科教學進度與提示</strong>
+      <span id="status" style="font-size: 0.85rem; color: #64748b;">Ready</span>
+    </div>
+
+    <div id="mathGrid" class="card-grid"></div>
+  </div>
+
+  <script>
+    // 若有 CSV 連結可在這裡替換
+    const MATH_CSV_URL = ''; 
+
+    window.onload = function() {
+      if (MATH_CSV_URL) {
+        fetchCSV();
+      } else {
+        document.getElementById('status').innerText = '💡 請配置 Google Sheet CSV 網址以自動讀取資料';
+      }
+    };
+
+    function fetchCSV() {
+      Papa.parse(MATH_CSV_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          renderCards(results.data);
+        }
+      });
+    }
+
+    function renderCards(data) {
+      const grid = document.getElementById('mathGrid');
+      grid.innerHTML = '';
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'math-card';
+        card.innerHTML = `
+          <div style="font-size:0.8rem; color:#64748b;">📅 ${item.Date || '無日期'}</div>
+          <div style="font-weight:bold; margin: 4px 0; color:#0f766e;">${item.Topic || '未定課題'}</div>
+          <div style="font-size:0.85rem; color:#334155;">💬 ${item.Note || '無備註'}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
