@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📝 Daily Rapid Log</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="config.js"></script>
   <style>
     :root {
       --primary: #6366f1;
@@ -30,7 +31,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
-    /* 動態導覽列容器 */
     .nav-tabs {
       display: flex;
       gap: 6px;
@@ -52,7 +52,6 @@
     }
     .nav-btn.active { background: var(--primary); color: #ffffff; }
 
-    /* 日期控制列 */
     .date-bar {
       display: flex;
       align-items: center;
@@ -60,16 +59,8 @@
       gap: 6px;
       margin-bottom: 12px;
     }
-    .date-title {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: var(--primary);
-    }
-    .date-ctrl {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
+    .date-title { font-size: 1.1rem; font-weight: bold; color: var(--primary); }
+    .date-ctrl { display: flex; gap: 4px; align-items: center; }
     .btn-sm {
       padding: 6px 10px;
       font-size: 0.82rem;
@@ -80,14 +71,13 @@
       font-weight: 600;
     }
     .btn-primary { background: var(--primary); color: #fff; border: none; }
-    input[type="date"] {
+    input[type="date"], select {
       padding: 5px 8px;
       border: 1px solid var(--border);
       border-radius: 6px;
       font-size: 0.85rem;
     }
 
-    /* 快捷切換濾鏡 */
     .filter-box {
       font-size: 0.82rem;
       color: #64748b;
@@ -97,7 +87,6 @@
       gap: 6px;
     }
 
-    /* 輸入區塊 */
     .add-card {
       background: #f8fafc;
       border: 1px solid var(--border);
@@ -108,30 +97,9 @@
       flex-direction: column;
       gap: 8px;
     }
-    .input-row-1 {
-      display: flex;
-      gap: 6px;
-    }
-    .type-select, .emoji-select {
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      font-size: 0.85rem;
-      background: #fff;
-    }
-    .input-row-2 {
-      display: flex;
-      gap: 6px;
-    }
-    .content-input {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      font-size: 0.88rem;
-    }
+    .input-row-1, .input-row-2 { display: flex; gap: 6px; }
+    .content-input { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.88rem; }
 
-    /* 事項清單列表 */
     .log-list { display: flex; flex-direction: column; gap: 8px; }
     .log-item {
       background: #fff;
@@ -145,19 +113,16 @@
     .log-item.done { background: #f1f5f9; opacity: 0.75; }
     .log-item.done .log-text { text-decoration: line-through; color: #94a3b8; }
     .log-left { display: flex; align-items: center; gap: 8px; flex: 1; }
-    .badge {
-      font-size: 0.72rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: bold;
-    }
+    .log-actions { display: flex; gap: 4px; align-items: center; }
+    
+    .badge { font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
     .badge-task { background: #e0e7ff; color: #4338ca; }
     .badge-event { background: #fef3c7; color: #b45309; }
     .badge-note { background: #f1f5f9; color: #475569; }
     .log-text { font-size: 0.9rem; font-weight: 500; }
 
-    .status-btn {
-      padding: 5px 10px;
+    .status-btn, .edit-btn {
+      padding: 5px 8px;
       font-size: 0.78rem;
       border-radius: 6px;
       border: none;
@@ -167,15 +132,24 @@
     }
     .status-btn.todo { background: #fee2e2; color: #dc2626; }
     .status-btn.done { background: #dcfce7; color: #15803d; }
+    .edit-btn { background: #f1f5f9; color: #475569; }
+
+    /* Modal 彈窗樣式 */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal-content {
+      background: #fff; padding: 18px; border-radius: 12px; width: 90%; max-width: 400px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- 1. 動態導覽列容器 -->
     <div id="navbar" class="nav-tabs"></div>
 
-    <!-- 2. 精簡日期控制列 -->
     <div class="date-bar">
       <div class="date-title">📝 Rapid Log</div>
       <div class="date-ctrl">
@@ -188,18 +162,17 @@
 
     <div class="filter-box">
       <input type="checkbox" id="showDoneToggle" checked onchange="renderLogs()">
-      <label for="showDoneToggle">顯示已完成項目</label>
+      <label for="showDoneToggle">顯示已完成事項</label>
     </div>
 
-    <!-- 3. 新增事項區塊 (可選 Emoji + 分類) -->
     <form class="add-card" onsubmit="handleAddLog(event)">
       <div class="input-row-1">
-        <select id="logType" class="type-select">
+        <select id="logType">
           <option value="Task">• 任務</option>
           <option value="Event">○ 事件</option>
           <option value="Note">- 便條</option>
         </select>
-        <select id="logEmoji" class="emoji-select">
+        <select id="logEmoji">
           <option value="">無 Emoji</option>
           <option value="⚡">⚡ 快速</option>
           <option value="📌">📌 重要</option>
@@ -215,18 +188,43 @@
       </div>
     </form>
 
-    <!-- 4. 事項列表 -->
+    <div id="loading" style="font-size:0.85rem; color:#6366f1; margin-bottom:10px; font-weight:bold;">⏳ 正在載入 Daily Log...</div>
     <div id="logList" class="log-list"></div>
   </div>
 
+  <!-- 編輯 Modal 彈窗 -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin:0; font-size:1.05rem;">✏️ 編輯事項</h3>
+      <label style="font-size:0.82rem; font-weight:bold;">日期：</label>
+      <input type="date" id="editDate">
+      
+      <label style="font-size:0.82rem; font-weight:bold;">種類：</label>
+      <select id="editType">
+        <option value="Task">任務 Task</option>
+        <option value="Event">事件 Event</option>
+        <option value="Note">便條 Note</option>
+      </select>
+
+      <label style="font-size:0.82rem; font-weight:bold;">內容：</label>
+      <input type="text" id="editContent" class="content-input">
+
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+        <button class="btn-sm" onclick="closeEditModal()">取消</button>
+        <button class="btn-sm btn-primary" onclick="saveEdit()">儲存更新</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const GOOGLE_SHEET_ID = '1q3NLPoGG8qr33knDt6REdLM8-GVrarzSercPLrjKSbo';
-    const LOGS_GID = '0'; // 請依據試算表設定對應的 GID
+    const GOOGLE_SHEET_ID = CONFIG.DAILY_SHEET_ID;
+    const LOGS_GID = CONFIG.GIDS.DAILY_LOG;
+    const API_URL = CONFIG.API_URLS.DAILY;
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${LOGS_GID}&t=${new Date().getTime()}`;
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec';
 
     let currentDate = new Date().toISOString().split('T')[0];
     let allLogs = [];
+    let currentEditIndex = -1;
 
     window.onload = () => {
       loadNavbar();
@@ -234,7 +232,6 @@
       loadData();
     };
 
-    /* 動態載入導覽列並標示當前頁面 */
     function loadNavbar() {
       fetch('nav.html')
         .then(res => res.text())
@@ -247,7 +244,7 @@
               if (link.getAttribute('href') === currentPath) link.classList.add('active');
             });
           }
-        }).catch(err => console.log('載入導覽列失敗:', err));
+        }).catch(err => console.log('導覽列載入失敗:', err));
     }
 
     function loadData() {
@@ -255,6 +252,7 @@
         download: true, header: true, skipEmptyLines: true,
         complete: (res) => {
           allLogs = res.data || [];
+          document.getElementById('loading').style.display = 'none';
           renderLogs();
         }
       });
@@ -265,21 +263,19 @@
       const showDone = document.getElementById('showDoneToggle').checked;
       listContainer.innerHTML = '';
 
-      const dayLogs = allLogs.filter(item => {
-        const itemDate = item.Date || item.date;
-        return itemDate === currentDate;
-      });
+      const dayLogs = allLogs.filter(item => (item.Date || item.date) === currentDate);
 
       if (dayLogs.length === 0) {
-        listContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px; font-size:0.85rem;">今天沒有任何紀錄</div>';
+        listContainer.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px; font-size:0.85rem;">今天尚無記錄</div>';
         return;
       }
 
-      dayLogs.forEach((item, index) => {
-        const type = item.Type || 'Task';
-        const content = item.Content || item.Text || '';
-        const status = item.Status || 'Pending';
-        const isDone = status === 'Done';
+      dayLogs.forEach((item) => {
+        const realIndex = allLogs.indexOf(item);
+        const type = item.Type || item.type || 'Task';
+        const content = item.Content || item.content || item.Text || '';
+        const status = item.Status || item.status || 'Pending';
+        const isDone = status === 'Done' || status === '已完成';
 
         if (!showDone && isDone) return;
 
@@ -287,14 +283,13 @@
         card.className = `log-item ${isDone ? 'done' : ''}`;
 
         let typeBadge = `<span class="badge badge-task">任務</span>`;
-        if (type === 'Event') typeBadge = `<span class="badge badge-event">事件</span>`;
-        if (type === 'Note') typeBadge = `<span class="badge badge-note">便條</span>`;
+        if (type === 'Event' || type === '事件') typeBadge = `<span class="badge badge-event">事件</span>`;
+        if (type === 'Note' || type === '便條') typeBadge = `<span class="badge badge-note">便條</span>`;
 
-        // 便條不顯示完成/待辦按鈕
         let actionBtnHtml = '';
-        if (type !== 'Note') {
+        if (type !== 'Note' && type !== '便條') {
           actionBtnHtml = `
-            <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleStatus('${item.ID || index}', '${status}')">
+            <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleStatus('${item.ID || ''}', '${status}', ${realIndex})">
               ${isDone ? '✓ 完成' : '⏳ 待辦'}
             </button>
           `;
@@ -305,13 +300,69 @@
             ${typeBadge}
             <span class="log-text">${content}</span>
           </div>
-          ${actionBtnHtml}
+          <div class="log-actions">
+            <button class="edit-btn" onclick="openEditModal(${realIndex})">✏️</button>
+            ${actionBtnHtml}
+          </div>
         `;
         listContainer.appendChild(card);
       });
     }
 
-    /* 新增事項（自動結合 Emoji） */
+    /* 開啟與關閉編輯 Modal */
+    function openEditModal(index) {
+      currentEditIndex = index;
+      const target = allLogs[index];
+      document.getElementById('editDate').value = target.Date || target.date || currentDate;
+      document.getElementById('editType').value = target.Type || target.type || 'Task';
+      document.getElementById('editContent').value = target.Content || target.content || '';
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+      currentEditIndex = -1;
+    }
+
+    /* 儲存修改 */
+    function saveEdit() {
+      if (currentEditIndex === -1) return;
+
+      const newDate = document.getElementById('editDate').value;
+      const newType = document.getElementById('editType').value;
+      const newContent = document.getElementById('editContent').value.trim();
+
+      // 1. 本地更新
+      allLogs[currentEditIndex].Date = newDate;
+      allLogs[currentEditIndex].Type = newType;
+      allLogs[currentEditIndex].Content = newContent;
+
+      closeEditModal();
+      renderLogs();
+
+      // 2. 背景更新至 Google Sheet
+      const rowIndex = currentEditIndex + 2;
+      const updateUrl = `${API_URL}?action=updateLog&row=${rowIndex}&date=${encodeURIComponent(newDate)}&type=${encodeURIComponent(newType)}&content=${encodeURIComponent(newContent)}`;
+      
+      fetch(updateUrl, { mode: 'no-cors' });
+    }
+
+    function toggleStatus(id, currentStatus, realIndex) {
+      const isDone = currentStatus === 'Done' || currentStatus === '已完成';
+      const newStatus = isDone ? 'Pending' : 'Done';
+
+      if (allLogs[realIndex]) {
+        allLogs[realIndex].Status = newStatus;
+        allLogs[realIndex].status = newStatus;
+      }
+
+      renderLogs();
+
+      const rowIndex = realIndex + 2;
+      const updateUrl = `${API_URL}?action=toggleLog&id=${encodeURIComponent(id)}&status=${encodeURIComponent(newStatus)}&row=${rowIndex}`;
+      fetch(updateUrl, { mode: 'no-cors' });
+    }
+
     function handleAddLog(e) {
       e.preventDefault();
       const type = document.getElementById('logType').value;
@@ -328,16 +379,6 @@
       fetch(`${API_URL}?action=addLog&date=${currentDate}&type=${type}&content=${encodeURIComponent(fullContent)}&id=${newId}`, { mode: 'no-cors' });
     }
 
-    function toggleStatus(id, currentStatus) {
-      const newStatus = currentStatus === 'Done' ? 'Pending' : 'Done';
-      const target = allLogs.find(l => (l.ID || l.id) === id);
-      if (target) target.Status = newStatus;
-      renderLogs();
-
-      fetch(`${API_URL}?action=toggleLog&id=${id}&status=${newStatus}`, { mode: 'no-cors' });
-    }
-
-    /* 日期操作 */
     function changeDate(days) {
       const d = new Date(currentDate);
       d.setDate(d.getDate() + days);
