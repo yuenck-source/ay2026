@@ -78,6 +78,8 @@
         <button class="pill-btn" onclick="selectCategory('信仰')">✝️ 信仰</button>
         <button class="pill-btn" onclick="selectCategory('攝影')">📷 攝影</button>
         <button class="pill-btn" onclick="selectCategory('工作')">💼 工作</button>
+        <button class="pill-btn" onclick="selectCategory('健康')">💪🏻 健康</button>
+        <button class="pill-btn" onclick="selectCategory('旅行')">🧳 旅行</button>
       </div>
       <form class="input-group" onsubmit="handleAddIdea(event)">
         <input type="text" id="ideaInput" placeholder="例：採購教材 #數學 #SOW 或貼上網址..." required>
@@ -109,6 +111,10 @@
           <option value="信仰">✝️ 信仰</option>
           <option value="攝影">📷 攝影</option>
           <option value="工作">💼 工作</option>
+	  <option value="健康">💪🏻 健康</option>
+	  <option value="飲食">🍽️ 飲食</option>
+	  <option value="旅行">🧳 旅行</option>
+
         </select>
       </div>
       <div class="form-group">
@@ -255,7 +261,7 @@
       const grid = document.getElementById('ideasGrid');
       grid.innerHTML = '';
 
-      const categories = ['🏠 家庭', '👤 個人', '✝️ 信仰', '📷 攝影', '💼 工作'];
+      const categories = ['🏠 家庭', '👤 個人', '✝️ 信仰', '📷 攝影', '💼 工作', '💪🏻 健康', '🍽️ 飲食', '🧳 旅行'];
 
       categories.forEach(catWithEmoji => {
         const rawCat = catWithEmoji.replace(/^[^\s]+\s/, '');
