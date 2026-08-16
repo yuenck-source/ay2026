@@ -123,7 +123,6 @@
       gap: 6px;
     }
 
-    /* 可折疊 Hashtag 專用外框 */
     .hashtag-container-box {
       background: #f8fafc;
       border: 1px solid var(--border-color);
@@ -142,7 +141,7 @@
       user-select: none;
     }
     .hashtag-bar {
-      display: none; /* 預設收合 */
+      display: none;
       gap: 6px;
       flex-wrap: wrap;
       margin-top: 8px;
@@ -483,7 +482,6 @@
       <label for="showCompleted">顯示已完成事項</label>
     </div>
 
-    <!-- 🏷️ Hashtag 收藏與收合面板 -->
     <div id="hashtagWrapperBox" class="hashtag-container-box" style="display:none;">
       <div class="hashtag-header" onclick="toggleHashtagBar()">
         <span>🏷️ 標籤篩選庫 (Hashtag) <span id="activeTagIndicator" style="color:var(--primary-color); font-weight:normal;"></span></span>
@@ -494,7 +492,6 @@
       </div>
     </div>
 
-    <!-- 📥 輸入任務保持在上方 -->
     <form class="input-card" onsubmit="handleLogSubmit(event)">
       <div class="select-group">
         <select id="logType">
@@ -531,13 +528,11 @@
       </div>
     </form>
 
-    <!-- 當日工作卡片 -->
     <div class="today-box">
       <div class="today-title">📌 當日工作與筆記</div>
       <div id="dailyList" class="log-list"></div>
     </div>
 
-    <!-- Overdue 區塊 -->
     <div class="overdue-box">
       <div class="overdue-title" onclick="toggleSection('overdueContent', 'overdueArrow')">
         <span>⚠️ 待處理及逾期工作 (Overdue)</span>
@@ -548,7 +543,6 @@
       </div>
     </div>
 
-    <!-- Future 區塊 -->
     <div class="future-box">
       <div class="future-title" onclick="toggleSection('futureContent', 'futureArrow')">
         <span>📅 將來預定事項 (Future)</span>
@@ -559,7 +553,6 @@
       </div>
     </div>
 
-    <!-- Backlog 區塊 -->
     <div class="backlog-box">
       <div class="backlog-title" onclick="toggleSection('backlogContent', 'backlogArrow')">
         <span>📥 備忘庫 (Backlog - 暫無日期)</span>
@@ -571,7 +564,6 @@
     </div>
   </div>
 
-  <!-- Modal 編輯視窗 -->
   <div id="editModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-title">✏️ 編輯事項</div>
@@ -715,7 +707,6 @@
       });
     }
 
-    /* 切換 Hashtag 庫收合狀態 */
     function toggleHashtagBar() {
       const bar = document.getElementById('hashtagBar');
       const arrow = document.getElementById('hashtagArrow');
@@ -749,7 +740,6 @@
 
       wrapperBox.style.display = 'block';
 
-      // 標示目前篩選狀態
       if (selectedTag === 'all') {
         indicator.textContent = '';
       } else {
@@ -958,6 +948,7 @@
       document.getElementById('editModal').style.display = 'none';
     }
 
+    // 1. 儲存編輯 (已加入 key 參數)
     function saveModalEdit() {
       const id = document.getElementById('modalTargetId').value;
       const oldContent = document.getElementById('modalOldContent').value;
@@ -987,6 +978,7 @@
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'editLog',
+          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
           id: id,
           oldContent: oldContent,
           date: newDate,
@@ -1001,6 +993,7 @@
       }
     }
 
+    // 2. 刪除事項 (已加入 key 參數)
     function deleteFromModal() {
       const id = document.getElementById('modalTargetId').value;
       if (!id) return;
@@ -1022,6 +1015,7 @@
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'deleteLog',
+          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
           id: id,
           content: target.content
         });
@@ -1031,6 +1025,7 @@
       }
     }
 
+    // 3. 切換狀態 (已加入 key 參數)
     function toggleStatus(id, currentStatus, date, content) {
       const isDone = isItemDone(currentStatus);
       const newStatus = isDone ? 'Pending' : '完成';
@@ -1044,6 +1039,7 @@
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'toggleLog',
+          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
           id: id,
           date: date,
           content: decodeURIComponent(content),
@@ -1053,6 +1049,7 @@
       }
     }
 
+    // 4. 新增事項 (已加入 key 參數)
     function handleLogSubmit(e) {
       e.preventDefault();
       const type = document.getElementById('logType').value;
@@ -1086,6 +1083,7 @@
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'addLog',
+          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
           id: newId,
           date: targetDate,
           type: type,
