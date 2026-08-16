@@ -25,13 +25,24 @@
     .input-group input { flex: 1; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; }
     .add-btn { background: var(--primary-color); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
+    /* Hashtag 搜尋過濾條 */
+    .filter-bar { display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.82rem; }
+    .clear-filter-btn { background: #e2e8f0; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+
     .ideas-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
     .category-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
     .category-title { font-size: 0.9rem; font-weight: bold; color: var(--primary-color); border-bottom: 1px dashed var(--border-color); padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
     .idea-list { display: flex; flex-direction: column; gap: 6px; }
     .idea-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 8px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; line-height: 1.35; }
-    .idea-main { flex: 1; min-width: 0; padding-right: 6px; }
+    .idea-main { flex: 1; min-width: 0; padding-right: 6px; word-break: break-word; }
     .idea-remarks { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+    .idea-link { color: #0284c7; text-decoration: none; font-weight: 500; }
+    .idea-link:hover { text-decoration: underline; }
+    
+    /* Hashtag 膠囊樣式 */
+    .hashtag-pill { display: inline-block; background: #ccfbf1; color: #0f766e; padding: 1px 6px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; margin: 0 2px; }
+    .hashtag-pill:hover { background: #0d9488; color: #ffffff; }
+
     .action-btns { display: flex; gap: 4px; flex-shrink: 0; }
     .btn-action { background: #fff; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.78rem; padding: 2px 6px; }
     #statusMessage { font-size: 0.8rem; font-weight: bold; color: var(--primary-color); margin-bottom: 8px; }
@@ -49,6 +60,9 @@
     .btn-cancel { background: #f1f5f9; color: #475569; }
     .btn-save { background: var(--primary-color); color: #ffffff; }
     .btn-delete { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
+    .btn-fetch { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; margin-left: 6px; }
+    .tag-quick-add { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+    .tag-chip { font-size: 0.72rem; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -57,7 +71,7 @@
     <div id="navbar" class="nav-tabs"></div>
 
     <div class="input-card">
-      <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 6px; color: #0d9488;">💡 快速輸入點子</div>
+      <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 6px; color: #0d9488;">💡 快速輸入點子（可用 #標籤 子分類）</div>
       <div class="quick-pills" id="categoryPills">
         <button class="pill-btn active" onclick="selectCategory('家庭')">🏠 家庭</button>
         <button class="pill-btn" onclick="selectCategory('個人')">👤 個人</button>
@@ -66,9 +80,15 @@
         <button class="pill-btn" onclick="selectCategory('工作')">💼 工作</button>
       </div>
       <form class="input-group" onsubmit="handleAddIdea(event)">
-        <input type="text" id="ideaInput" placeholder="輸入靈感或想法..." required>
+        <input type="text" id="ideaInput" placeholder="例：採購教材 #數學 #SOW 或貼上網址..." required>
         <button type="submit" class="add-btn">新增</button>
       </form>
+    </div>
+
+    <!-- 標籤過濾狀態列 -->
+    <div id="filterBar" class="filter-bar" style="display: none;">
+      <span>🔍 目前正在篩選標籤：<b id="activeFilterTag" style="color: var(--primary-color);"></b></span>
+      <button class="clear-filter-btn" onclick="clearTagFilter()">❌ 清除篩選</button>
     </div>
 
     <div id="statusMessage">⏳ 載入資料中...</div>
@@ -92,12 +112,23 @@
         </select>
       </div>
       <div class="form-group">
-        <label>內容想法：</label>
+        <label>
+          內容想法 / 網址：
+          <button type="button" class="btn-fetch" onclick="autoFetchTitle()">🔍 自動抓取網址標題</button>
+        </label>
         <input type="text" id="modalContent" required>
       </div>
       <div class="form-group">
-        <label>補充細節/備註：</label>
-        <textarea id="modalRemarks" rows="2" placeholder="詳細內容或補充說明..."></textarea>
+        <label>補充細節 / 備註：</label>
+        <textarea id="modalRemarks" rows="2" placeholder="可輸入說明或 #Hashtag..."></textarea>
+        <!-- 常用標籤快速點擊插入 -->
+        <div class="tag-quick-add">
+          <span style="font-size: 0.72rem; color: #64748b;">常用標籤：</span>
+          <span class="tag-chip" onclick="appendTag('#緊急')">#緊急</span>
+          <span class="tag-chip" onclick="appendTag('#教學')">#教學</span>
+          <span class="tag-chip" onclick="appendTag('#待採購')">#待採購</span>
+          <span class="tag-chip" onclick="appendTag('#靈感')">#靈感</span>
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -113,6 +144,7 @@
   <script>
     let currentCategory = '家庭';
     let ideasData = [];
+    let currentTagFilter = null; // 記錄當前過濾的 Hashtag
 
     window.onload = () => {
       loadNavbar();
@@ -180,6 +212,38 @@
       });
     }
 
+    // 將文字中的 URL 轉成連結，並將 #Hashtag 轉成藍綠色膠囊按鈕
+    function formatContentAndTags(text) {
+      if (!text) return '';
+      
+      // 1. 轉 URL
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      let formatted = text.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="idea-link">🔗 ${url}</a>`;
+      });
+
+      // 2. 轉 #Hashtag
+      const tagRegex = /(#[^\s#]+)/g;
+      formatted = formatted.replace(tagRegex, (tag) => {
+        return `<span class="hashtag-pill" onclick="filterByTag('${tag}')">${tag}</span>`;
+      });
+
+      return formatted;
+    }
+
+    function filterByTag(tag) {
+      currentTagFilter = tag;
+      document.getElementById('activeFilterTag').textContent = tag;
+      document.getElementById('filterBar').style.display = 'flex';
+      renderIdeas();
+    }
+
+    function clearTagFilter() {
+      currentTagFilter = null;
+      document.getElementById('filterBar').style.display = 'none';
+      renderIdeas();
+    }
+
     function selectCategory(cat) {
       currentCategory = cat;
       document.querySelectorAll('.pill-btn').forEach(btn => {
@@ -195,7 +259,16 @@
 
       categories.forEach(catWithEmoji => {
         const rawCat = catWithEmoji.replace(/^[^\s]+\s/, '');
-        const items = ideasData.filter(i => i.category === rawCat || i.category === catWithEmoji);
+        
+        // 篩選：同時過濾「大類別」與「是否有被選中的 Hashtag」
+        let items = ideasData.filter(i => i.category === rawCat || i.category === catWithEmoji);
+
+        if (currentTagFilter) {
+          items = items.filter(i => 
+            (i.content && i.content.includes(currentTagFilter)) || 
+            (i.remarks && i.remarks.includes(currentTagFilter))
+          );
+        }
 
         const card = document.createElement('div');
         card.className = 'category-card';
@@ -203,8 +276,8 @@
         let listHtml = items.map(item => `
           <div class="idea-item">
             <div class="idea-main">
-              <div>${item.content}</div>
-              ${item.remarks ? `<div class="idea-remarks">💬 ${item.remarks}</div>` : ''}
+              <div>${formatContentAndTags(item.content)}</div>
+              ${item.remarks ? `<div class="idea-remarks">💬 ${formatContentAndTags(item.remarks)}</div>` : ''}
             </div>
             <div class="action-btns">
               <button class="btn-action" onclick="openModal('${item.id}')">✏️</button>
@@ -213,7 +286,7 @@
         `).join('');
 
         if (items.length === 0) {
-          listHtml = `<div style="color: #94a3b8; font-size: 0.8rem; padding: 4px 0;">尚無想法</div>`;
+          listHtml = `<div style="color: #94a3b8; font-size: 0.8rem; padding: 4px 0;">${currentTagFilter ? '無符合標籤卡片' : '尚無想法'}</div>`;
         }
 
         card.innerHTML = `
@@ -227,20 +300,28 @@
       });
     }
 
-    function handleAddIdea(e) {
+    async function handleAddIdea(e) {
       e.preventDefault();
       const input = document.getElementById('ideaInput');
-      const text = input.value.trim();
+      let text = input.value.trim();
       if (!text) return;
 
       const pureCategory = currentCategory.replace(/^[^\s]+\s/, '').trim();
       const newId = 'I_' + new Date().getTime();
+      let remarksText = '';
+
+      if (text.startsWith('http://') || text.startsWith('https://')) {
+        showStatus('⏳ 正在擷取網頁標題...');
+        const fetchedTitle = await fetchWebTitle(text);
+        remarksText = text;
+        text = fetchedTitle || text;
+      }
 
       const newIdea = {
         id: newId,
         category: pureCategory,
         content: text,
-        remarks: ''
+        remarks: remarksText
       };
 
       ideasData.unshift(newIdea);
@@ -253,7 +334,8 @@
           action: 'addIdea',
           id: newId,
           category: pureCategory,
-          content: text
+          content: text,
+          remarks: remarksText
         });
 
         fetch(`${CONFIG.API_URLS.IDEAS}?${params.toString()}`, { method: 'GET', mode: 'no-cors' })
@@ -261,6 +343,49 @@
             showStatus('✅ 已成功寫入！', '#0d9488');
             setTimeout(() => showStatus(''), 2000);
           });
+      }
+    }
+
+    async function fetchWebTitle(url) {
+      try {
+        const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`);
+        const json = await res.json();
+        if (json.status === 'success' && json.data && json.data.title) {
+          return json.data.title;
+        }
+      } catch (e) {
+        console.error('標題擷取失敗:', e);
+      }
+      return null;
+    }
+
+    async function autoFetchTitle() {
+      const contentInput = document.getElementById('modalContent');
+      const remarksInput = document.getElementById('modalRemarks');
+      const urlCandidate = contentInput.value.trim() || remarksInput.value.trim();
+
+      const matchedUrl = urlCandidate.match(/(https?:\/\/[^\s]+)/);
+      if (!matchedUrl) {
+        alert('請先在內容或備註欄輸入包含 https:// 的網址');
+        return;
+      }
+
+      showStatus('⏳ 抓取標題中...');
+      const title = await fetchWebTitle(matchedUrl[0]);
+      if (title) {
+        contentInput.value = title;
+        if (!remarksInput.value) remarksInput.value = matchedUrl[0];
+        showStatus('✅ 標題擷取成功！', '#0d9488');
+      } else {
+        showStatus('❌ 無法抓取該網址標題', '#ef4444');
+      }
+      setTimeout(() => showStatus(''), 2000);
+    }
+
+    function appendTag(tag) {
+      const remarksInput = document.getElementById('modalRemarks');
+      if (!remarksInput.value.includes(tag)) {
+        remarksInput.value = (remarksInput.value + ' ' + tag).trim();
       }
     }
 
