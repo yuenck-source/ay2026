@@ -16,7 +16,7 @@ const CONFIG = {
   },
 
   API_URLS: {
-    DAILY: 'https://script.google.com/macros/s/AKfycbwC8QF6mvz-gSi_aZ3viB2u4z3PeyNGiB4P9dmhuik-GXmw2ardbJSWS_WJGIPqQIdf6g/exec',
+    DAILY: 'https://script.google.com/macros/s/AKfycby7--etiRb80LznLs1boPcx8pjEVjmiZbLMIM0UC3JGgP8FCpLNc7tkhrCbCciFWDgnqQ/exec',
     HABIT: 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec'
   }
 };

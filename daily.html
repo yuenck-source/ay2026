@@ -144,6 +144,14 @@
       background: #fff;
       font-size: 0.85rem;
     }
+    .input-options {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      color: #475569;
+    }
     .input-group {
       display: flex;
       gap: 6px;
@@ -294,6 +302,25 @@
       user-select: none;
     }
 
+    /* Backlog 卡片樣式 */
+    .backlog-box {
+      background: #faf5ff;
+      border: 1px solid #e9d5ff;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 12px;
+    }
+    .backlog-title {
+      color: #6b21a8;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
     .collapsible-content {
       margin-top: 8px;
       display: none;
@@ -306,7 +333,6 @@
       .container { padding: 8px; }
     }
 
-    /* Modal 彈出視窗 */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -375,7 +401,6 @@
     <div id="navbar" class="nav-tabs"></div>
 
     <div class="header-bar">
-      <!-- 3. 標題改為 ⚡ 速記清單 -->
       <div class="title-group">
         <span>⚡ 速記清單</span>
       </div>
@@ -396,13 +421,11 @@
 
     <form class="input-card" onsubmit="handleLogSubmit(event)">
       <div class="select-group">
-        <!-- 1. 筆記改為 筆記 (Note) -->
         <select id="logType">
           <option value="Task">• 任務 (Task)</option>
           <option value="Event">o 事件 (Event)</option>
           <option value="筆記">- 筆記 (Note)</option>
         </select>
-        <!-- 4. 無 Emoji 改為 選取 Emoji -->
         <select id="logEmoji">
           <option value="">選取 Emoji</option>
           <option value="📌">📌 釘選</option>
@@ -420,6 +443,12 @@
           <option value="🔥">🔥 重要</option>
         </select>
       </div>
+
+      <div class="input-options">
+        <input type="checkbox" id="isBacklog">
+        <label for="isBacklog">無日期 (存入 Backlog 備忘庫)</label>
+      </div>
+
       <div class="input-group">
         <input type="text" id="logContent" placeholder="記下事項或筆記..." required>
         <button type="submit" class="add-btn">新增</button>
@@ -453,6 +482,17 @@
         <div id="futureList" class="log-list"></div>
       </div>
     </div>
+
+    <!-- 新增：預設收合 Backlog 區塊 -->
+    <div class="backlog-box">
+      <div class="backlog-title" onclick="toggleSection('backlogContent', 'backlogArrow')">
+        <span>📥 備忘庫 (Backlog - 暫無日期)</span>
+        <span id="backlogArrow">▶</span>
+      </div>
+      <div id="backlogContent" class="collapsible-content">
+        <div id="backlogList" class="log-list"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal 編輯視窗 -->
@@ -463,7 +503,7 @@
       <input type="hidden" id="modalOldContent">
       
       <div class="form-group">
-        <label>日期：</label>
+        <label>日期 (留空即轉為 Backlog)：</label>
         <input type="date" id="modalDate">
       </div>
       <div class="form-group">
@@ -572,7 +612,7 @@
         const v = Object.values(r);
         return {
           id: r.ID || r.id || v[0] || `L_${i}`,
-          date: r.Date || r.date || v[1] || currentDateStr,
+          date: r.Date || r.date || v[1] || '', // 無日期則為空
           type: r.Type || r.type || v[2] || 'Task',
           content: r.Content || r.content || v[3] || '',
           status: r.Status || r.status || v[4] || 'Pending',
@@ -607,6 +647,7 @@
       renderDailyLogs();
       renderOverdue();
       renderFuture();
+      renderBacklog();
     }
 
     function isItemDone(status) {
@@ -651,7 +692,7 @@
       container.innerHTML = '';
       const todayStr = getTodayString();
 
-      const overdueItems = allLogs.filter(item => !isItemDone(item.status) && item.date < todayStr);
+      const overdueItems = allLogs.filter(item => item.date && item.date < todayStr && !isItemDone(item.status));
 
       if (overdueItems.length === 0) {
         container.innerHTML = '<div style="color:#059669; font-size:0.85rem;">✅ 目前沒有逾期的待辦事項</div>';
@@ -663,7 +704,6 @@
       });
     }
 
-    // 2. 將來預定事項：加入已完成事項（依「顯示已完成事項」核取方框與日期排序）
     function renderFuture() {
       const container = document.getElementById('futureList');
       container.innerHTML = '';
@@ -671,7 +711,7 @@
 
       const showCompleted = document.getElementById('showCompleted').checked;
       const futureItems = allLogs.filter(item => {
-        if (item.date <= todayStr) return false;
+        if (!item.date || item.date <= todayStr) return false;
         if (!showCompleted && isItemDone(item.status)) return false;
         return true;
       }).sort((a, b) => a.date.localeCompare(b.date));
@@ -683,6 +723,28 @@
 
       futureItems.forEach(item => {
         container.appendChild(createLogElement(item, true));
+      });
+    }
+
+    // 繪製 Backlog (無日期項目)
+    function renderBacklog() {
+      const container = document.getElementById('backlogList');
+      container.innerHTML = '';
+
+      const showCompleted = document.getElementById('showCompleted').checked;
+      const backlogItems = allLogs.filter(item => {
+        if (item.date && item.date.trim() !== '') return false;
+        if (!showCompleted && isItemDone(item.status)) return false;
+        return true;
+      });
+
+      if (backlogItems.length === 0) {
+        container.innerHTML = '<div style="color:#7e22ce; font-size:0.85rem;">📥 備忘庫空空如也</div>';
+        return;
+      }
+
+      backlogItems.forEach(item => {
+        container.appendChild(createLogElement(item, false));
       });
     }
 
@@ -699,7 +761,7 @@
         <div class="log-left">
           <span class="badge ${badgeClass}">${item.type}</span>
           <span class="content-text">
-            ${item.content} ${showDateTag ? `<small style="color:#64748b; font-size:0.75rem;"><br>(${item.date})</small>` : ''}
+            ${item.content} ${showDateTag && item.date ? `<small style="color:#64748b; font-size:0.75rem;"><br>(${item.date})</small>` : ''}
             ${item.remarks ? `<span class="remarks-text">💬 ${item.remarks}</span>` : ''}
           </span>
         </div>
@@ -720,7 +782,7 @@
       document.getElementById('modalTargetId').value = target.id;
       document.getElementById('modalOldContent').value = target.content;
       
-      document.getElementById('modalDate').value = target.date;
+      document.getElementById('modalDate').value = target.date || '';
       document.getElementById('modalType').value = target.type;
       document.getElementById('modalContent').value = target.content;
       document.getElementById('modalRemarks').value = target.remarks || '';
@@ -828,16 +890,18 @@
       e.preventDefault();
       const type = document.getElementById('logType').value;
       const emoji = document.getElementById('logEmoji').value;
+      const isBacklog = document.getElementById('isBacklog').checked;
       let rawContent = document.getElementById('logContent').value.trim();
 
       if (!rawContent) return;
 
       const finalContent = emoji ? `${emoji} ${rawContent}` : rawContent;
+      const targetDate = isBacklog ? "" : currentDateStr; // 勾選 Backlog 則日期設為空
       const newId = 'L' + new Date().getTime();
 
       allLogs.push({
         id: newId,
-        date: currentDateStr,
+        date: targetDate,
         type: type,
         content: finalContent,
         status: 'Pending',
@@ -845,6 +909,7 @@
       });
 
       document.getElementById('logContent').value = '';
+      document.getElementById('isBacklog').checked = false; // 重置勾選
       renderAll();
 
       const apiUrl = CONFIG.API_URLS.DAILY;
@@ -852,7 +917,7 @@
         const params = new URLSearchParams({
           action: 'addLog',
           id: newId,
-          date: currentDateStr,
+          date: targetDate,
           type: type,
           content: finalContent,
           status: 'Pending',
