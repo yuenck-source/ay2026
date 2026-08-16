@@ -111,7 +111,7 @@
 
     .today-card.duty { border-left-color: var(--duty-color); background-color: #fff7ed; }
 
-    /* 速記 (Daily Log) 區塊 - 對齊 daily.html 風格 */
+    /* 速記 (Daily Log) 區塊 */
     .daily-box {
       background-color: #f0fdf4;
       border: 1px solid #86efac;
@@ -125,10 +125,8 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px dashed #a7f3d0;
-      padding-bottom: 6px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      gap: 6px;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .daily-title {
@@ -140,90 +138,92 @@
       gap: 6px;
     }
 
+    /* 右上角導覽控制項 */
     .daily-ctrl {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      margin-left: auto;
     }
 
     .btn-date-nav {
       padding: 2px 8px;
       font-size: 0.75rem;
-      border: 1px solid var(--border-color);
+      border: 1px solid #a7f3d0;
       background: #ffffff;
-      color: #1e293b;
+      color: #166534;
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
     }
-    .btn-date-nav:hover { background: #f1f5f9; }
+    .btn-date-nav:hover { background: #dcfce7; }
 
     .daily-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .daily-item {
+    /* 參考圖片風格卡片 */
+    .daily-card {
       background: #ffffff;
-      border: 1px solid var(--border-color);
-      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
+      padding: 10px 12px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .daily-card-head {
+      display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .daily-item.done {
-      opacity: 0.55;
-    }
-
-    .daily-main {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .daily-text {
-      font-size: 0.85rem;
-      line-height: 1.35;
+    .daily-card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
       color: #0f172a;
-      word-break: break-word;
+      line-height: 1.3;
     }
 
-    /* 統一類別標籤 Badge */
+    .daily-card-remark {
+      font-size: 0.82rem;
+      color: #475569;
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      line-height: 1.4;
+      flex-wrap: wrap;
+    }
+
+    /* 類別 Badge 樣式 */
     .badge {
       font-size: 0.7rem;
-      padding: 1px 5px;
+      padding: 2px 6px;
       border-radius: 4px;
       font-weight: bold;
       white-space: nowrap;
       display: inline-block;
+      align-self: flex-start;
     }
     .badge.task, .badge.Task { background: #e0e7ff; color: #3730a3; }
     .badge.event, .badge.Event { background: #fef3c7; color: #92400e; }
     .badge.note, .badge.Note, .badge.筆記 { background: #f1f5f9; color: #475569; }
 
-    /* 純圖示待辦按鈕 */
-    .btn-icon-only {
-      width: 30px;
-      height: 28px;
-      padding: 0;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      border: 1px solid var(--border-color);
-      background: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+    /* #標籤 樣式 (模仿圖片藍底藍字) */
+    .hashtag {
+      background-color: #eff6ff;
+      color: #2563eb;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-left: 2px;
     }
-    .btn-icon-only.done { background: #dcfce7; border-color: #86efac; color: #15803d; }
-    .btn-icon-only.todo { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
 
     /* 月曆控制項 */
     .calendar-controls {
@@ -381,21 +381,18 @@
       </div>
     </div>
 
-    <!-- ⚡ 速記 (原 Daily Log 區塊) -->
+    <!-- 📌 當日工作與筆記 (原速記區塊) -->
     <div class="daily-box">
       <div class="daily-header">
-        <div class="daily-title">
-          ⚡ 速記
-          <div class="daily-ctrl">
-            <button class="btn-date-nav" onclick="changeDailyDate(-1)">◀</button>
-            <span id="dailyDateDisplay" style="font-size: 0.85rem; color: #166534; font-weight: bold; margin: 0 4px;"></span>
-            <button class="btn-date-nav" onclick="changeDailyDate(1)">▶</button>
-          </div>
+        <div class="daily-title">📌 當日工作與筆記</div>
+        <div class="daily-ctrl">
+          <span id="dailyDateDisplay" style="font-size: 0.85rem; color: #166534; font-weight: bold; margin-right: 2px;"></span>
+          <button class="btn-date-nav" onclick="changeDailyDate(-1)">◀</button>
+          <button class="btn-date-nav" onclick="changeDailyDate(1)">▶</button>
         </div>
-        <a href="daily.html" style="font-size: 0.82rem; color: #166534; font-weight: bold; text-decoration: none;">查看全部 ➔</a>
       </div>
       <div id="todayDailyList" class="daily-list">
-        <div style="color: #64748b; font-size: 0.85rem;">⏳ 載入速記資料中...</div>
+        <div style="color: #64748b; font-size: 0.85rem;">⏳ 載入資料中...</div>
       </div>
     </div>
 
@@ -428,7 +425,6 @@
     // 安全取得 CONFIG 設定
     const GOOGLE_SHEET_ID = (typeof CONFIG !== 'undefined' && CONFIG.DAILY_SHEET_ID) ? CONFIG.DAILY_SHEET_ID : '';
     const DAILY_GID = (typeof CONFIG !== 'undefined' && CONFIG.GIDS && CONFIG.GIDS.DAILY_LOG) ? CONFIG.GIDS.DAILY_LOG : '0';
-    const API_URL = (typeof CONFIG !== 'undefined' && CONFIG.API_URLS) ? CONFIG.API_URLS.DAILY : '';
 
     const TIMETABLE_CSV_URL = GOOGLE_SHEET_ID ? `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable&t=${new Date().getTime()}` : '';
     const DAILY_CSV_URL = GOOGLE_SHEET_ID ? `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${DAILY_GID}&t=${new Date().getTime()}` : '';
@@ -521,7 +517,7 @@
       return cleaned;
     }
 
-    /* 讀取速記資料 (完全相容 daily.html 解析邏輯) */
+    /* 讀取速記資料 */
     function loadDailyLog() {
       if (!DAILY_CSV_URL) {
         document.getElementById('todayDailyList').innerHTML = '<div style="color:#ef4444; font-size:0.85rem;">❌ 未設定 GIDS.DAILY_LOG</div>';
@@ -551,12 +547,18 @@
         },
         error: (err) => {
           console.error("載入速記失敗:", err);
-          document.getElementById('todayDailyList').innerHTML = `<div style="color:#ef4444; font-size:0.85rem;">❌ 速記載入失敗，請檢查權限</div>`;
+          document.getElementById('todayDailyList').innerHTML = `<div style="color:#ef4444; font-size:0.85rem;">❌ 載入失敗，請檢查權限</div>`;
         }
       });
     }
 
-    /* 渲染選定日期的速記內容 */
+    /* 自動將文字中的 #hashtag 轉換為膠囊標籤 */
+    function formatHashtags(text) {
+      if (!text) return '';
+      return text.replace(/#([\w\u4e00-\u9fa5]+)/g, '<span class="hashtag">#$1</span>');
+    }
+
+    /* 渲染選定日期的速記內容 (自動過濾已完成) */
     function renderDailyLog() {
       const container = document.getElementById('todayDailyList');
       const dateDisplay = document.getElementById('dailyDateDisplay');
@@ -568,17 +570,19 @@
 
       const targetDate = normalizeDateStr(selectedDailyDate);
       
-      // 精確比對日期
-      const logs = dailyRows.filter(r => r.parsedDate !== '' && r.parsedDate === targetDate);
+      // 比對日期，並排除已完成 (Done/完成/已完成) 項目
+      const logs = dailyRows.filter(r => {
+        const status = r.parsedStatus;
+        const isDone = (status === 'Done' || status === '完成' || status === '已完成');
+        return r.parsedDate === targetDate && !isDone;
+      });
 
       if (logs.length === 0) {
-        container.innerHTML = `<div style="color:#64748b; font-size:0.85rem; padding: 4px 0;">當日無任何速記事項。</div>`;
+        container.innerHTML = `<div style="color:#64748b; font-size:0.85rem; padding: 6px 0;">當日無未完成事項。</div>`;
         return;
       }
 
       logs.forEach(item => {
-        const status = item.parsedStatus;
-        const isDone = (status === 'Done' || status === '完成' || status === '已完成');
         const type = item.parsedType;
         const content = item.parsedContent;
         const remarks = item.parsedRemarks;
@@ -588,19 +592,15 @@
         if (type === '筆記' || type === 'Note') badgeClass = 'note';
 
         const div = document.createElement('div');
-        div.className = `daily-item ${isDone ? 'done' : ''}`;
+        div.className = 'daily-card';
         
+        // 組合標籤與內容
+        const formattedRemark = formatHashtags(remarks ? remarks.replace(/\n/g, '<br>') : '');
+
         div.innerHTML = `
-          <div class="daily-main">
-            <span class="badge ${badgeClass}">${type}</span>
-            <div style="display:flex; flex-direction:column;">
-              <span class="daily-text">${content}</span>
-              ${remarks ? `<span style="font-size:0.75rem; color:#64748b; margin-top:2px;">💬 ${remarks.replace(/\n/g, '<br>')}</span>` : ''}
-            </div>
-          </div>
-          <button class="btn-icon-only ${isDone ? 'done' : 'todo'}" onclick="toggleDailyStatus('${item.id}', '${status}', '${selectedDailyDate}', '${encodeURIComponent(content)}')" title="${isDone ? '標記為未完成' : '標記為已完成'}">
-            ${isDone ? '✓' : '⏳'}
-          </button>
+          <span class="badge ${badgeClass}">${type}</span>
+          <div class="daily-card-title">${content}</div>
+          ${remarks ? `<div class="daily-card-remark">💬 ${formattedRemark}</div>` : ''}
         `;
         container.appendChild(div);
       });
@@ -616,27 +616,6 @@
       const day = String(d.getDate()).padStart(2, '0');
       selectedDailyDate = `${y}-${m}-${day}`;
       renderDailyLog();
-    }
-
-    function toggleDailyStatus(id, currentStatus, date, content) {
-      const isDone = (currentStatus === 'Done' || currentStatus === '完成' || currentStatus === '已完成');
-      const newStatus = isDone ? 'Pending' : '完成';
-      
-      const target = dailyRows.find(r => r.id === id);
-      if (target) {
-        target.parsedStatus = newStatus;
-        renderDailyLog();
-      }
-      if (API_URL) {
-        const params = new URLSearchParams({
-          action: 'toggleLog',
-          id: id,
-          date: date,
-          content: decodeURIComponent(content),
-          status: newStatus
-        });
-        fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
-      }
     }
 
     function processCalendarData(rows) {
