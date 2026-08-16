@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>⚡ Rapid Log - Daily</title>
+  <title>⚡ 速記清單 - Daily</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="config.js"></script>
   <style>
@@ -13,12 +13,10 @@
       --border-color: #cbd5e1;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
-      overflow-x: hidden; /* 徹底杜絕左右滾動 */
+      overflow-x: hidden;
       width: 100%;
       margin: 0;
       padding: 0;
@@ -156,7 +154,7 @@
       border: 1px solid var(--border-color);
       border-radius: 6px;
       font-size: 0.9rem;
-      min-width: 0; /* 防止 input 撐爆 */
+      min-width: 0;
     }
     .add-btn {
       background: var(--primary-color);
@@ -171,7 +169,6 @@
 
     .log-list { display: flex; flex-direction: column; gap: 8px; }
     
-    /* 精準調校卡片佈局，避免任何內容溢出 */
     .log-item {
       background: #fff;
       border: 1px solid var(--border-color);
@@ -190,11 +187,17 @@
       align-items: center; 
       gap: 6px; 
       flex: 1; 
-      min-width: 0; /* 讓文字過長時能自動換行或縮減 */
+      min-width: 0;
     }
     .log-left span.content-text {
       word-break: break-word;
       font-size: 0.9rem;
+    }
+    .remarks-text {
+      font-size: 0.78rem;
+      color: #64748b;
+      display: block;
+      margin-top: 2px;
     }
 
     .badge {
@@ -207,9 +210,8 @@
     }
     .badge.task, .badge.Task { background: #e0e7ff; color: #3730a3; }
     .badge.event, .badge.Event { background: #fef3c7; color: #92400e; }
-    .badge.note, .badge.Note { background: #f1f5f9; color: #475569; }
+    .badge.note, .badge.Note, .badge.筆記 { background: #f1f5f9; color: #475569; }
 
-    /* 按鈕區域緊湊佈局 */
     .action-btns { 
       display: flex; 
       gap: 4px; 
@@ -229,12 +231,7 @@
       align-items: center;
       justify-content: center;
     }
-    .btn-danger {
-      color: #ef4444;
-      border-color: #fca5a5;
-    }
 
-    /* 重新設計狀態按鈕：手機版緊湊顯示 */
     .status-btn {
       padding: 5px 8px;
       border-radius: 6px;
@@ -247,7 +244,6 @@
     .status-btn.done { background: #dcfce7; color: #15803d; }
     .status-btn.todo { background: #fee2e2; color: #b91c1c; }
 
-    /* 當日工作框：淺綠色 */
     .today-box {
       background: #f0fdf4;
       border: 1px solid #86efac;
@@ -262,7 +258,6 @@
       margin-bottom: 8px;
     }
 
-    /* 逾期框：淺紅色 */
     .overdue-box {
       background: #fef2f2;
       border: 1px solid #fca5a5;
@@ -281,7 +276,6 @@
       user-select: none;
     }
 
-    /* 將來事項框：淺藍色 */
     .future-box {
       background: #f0f9ff;
       border: 1px solid #bae6fd;
@@ -302,17 +296,17 @@
 
     .collapsible-content {
       margin-top: 8px;
+      display: none;
     }
 
-    /* 手機版適應細節：小螢幕文字簡化以節省空間 */
     @media (max-width: 600px) {
       .btn-text { display: none; }
-      .status-text { display: none; } /* 手機上只顯示 Icon */
+      .status-text { display: none; }
       .status-btn { padding: 5px 6px; }
       .container { padding: 8px; }
     }
 
-    /* Modal 樣式 */
+    /* Modal 彈出視窗 */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -345,7 +339,7 @@
       color: #334155;
       margin-bottom: 4px;
     }
-    .form-group input, .form-group select {
+    .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       padding: 8px;
       border: 1px solid var(--border-color);
@@ -354,9 +348,13 @@
     }
     .modal-actions {
       display: flex;
-      justify-content: flex-end;
-      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
       margin-top: 16px;
+    }
+    .modal-right-btns {
+      display: flex;
+      gap: 8px;
     }
     .modal-btn {
       padding: 8px 14px;
@@ -368,6 +366,7 @@
     }
     .btn-cancel { background: #f1f5f9; color: #475569; }
     .btn-save { background: var(--primary-color); color: #ffffff; }
+    .btn-delete { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
   </style>
 </head>
 <body>
@@ -376,8 +375,9 @@
     <div id="navbar" class="nav-tabs"></div>
 
     <div class="header-bar">
+      <!-- 3. 標題改為 ⚡ 速記清單 -->
       <div class="title-group">
-        <span>⚡ Rapid Log</span>
+        <span>⚡ 速記清單</span>
       </div>
       <div class="date-controls">
         <button class="icon-btn" onclick="changeDate(-1)">◀</button>
@@ -396,13 +396,15 @@
 
     <form class="input-card" onsubmit="handleLogSubmit(event)">
       <div class="select-group">
+        <!-- 1. 筆記改為 筆記 (Note) -->
         <select id="logType">
           <option value="Task">• 任務 (Task)</option>
           <option value="Event">o 事件 (Event)</option>
-          <option value="筆記">- 筆記</option>
+          <option value="筆記">- 筆記 (Note)</option>
         </select>
+        <!-- 4. 無 Emoji 改為 選取 Emoji -->
         <select id="logEmoji">
-          <option value="">無 Emoji</option>
+          <option value="">選取 Emoji</option>
           <option value="📌">📌 釘選</option>
           <option value="📍">📍 地點</option>
           <option value="💡">💡 想法</option>
@@ -424,28 +426,28 @@
       </div>
     </form>
 
-    <!-- 當日工作卡片（淺綠色框） -->
+    <!-- 當日工作卡片 -->
     <div class="today-box">
       <div class="today-title">📌 當日工作與筆記</div>
       <div id="dailyList" class="log-list"></div>
     </div>
 
-    <!-- 可收合 Overdue 區塊 -->
+    <!-- 預設收合 Overdue 區塊 -->
     <div class="overdue-box">
       <div class="overdue-title" onclick="toggleSection('overdueContent', 'overdueArrow')">
         <span>⚠️ 待處理及逾期工作 (Overdue)</span>
-        <span id="overdueArrow">▼</span>
+        <span id="overdueArrow">▶</span>
       </div>
       <div id="overdueContent" class="collapsible-content">
         <div id="overdueList" class="log-list"></div>
       </div>
     </div>
 
-    <!-- 可收合 Future 區塊 -->
+    <!-- 預設收合 Future 區塊 -->
     <div class="future-box">
       <div class="future-title" onclick="toggleSection('futureContent', 'futureArrow')">
         <span>📅 將來預定事項 (Future)</span>
-        <span id="futureArrow">▼</span>
+        <span id="futureArrow">▶</span>
       </div>
       <div id="futureContent" class="collapsible-content">
         <div id="futureList" class="log-list"></div>
@@ -453,7 +455,7 @@
     </div>
   </div>
 
-  <!-- Modal -->
+  <!-- Modal 編輯視窗 -->
   <div id="editModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-title">✏️ 編輯事項</div>
@@ -469,17 +471,24 @@
         <select id="modalType">
           <option value="Task">Task (任務)</option>
           <option value="Event">Event (事件)</option>
-          <option value="筆記">筆記</option>
+          <option value="筆記">筆記 (Note)</option>
         </select>
       </div>
       <div class="form-group">
         <label>內容：</label>
         <input type="text" id="modalContent">
       </div>
+      <div class="form-group">
+        <label>備註 (Remarks)：</label>
+        <textarea id="modalRemarks" rows="2" placeholder="備註內容..."></textarea>
+      </div>
 
       <div class="modal-actions">
-        <button class="modal-btn btn-cancel" onclick="closeModal()">取消</button>
-        <button class="modal-btn btn-save" onclick="saveModalEdit()">儲存更新</button>
+        <button class="modal-btn btn-delete" onclick="deleteFromModal()">🗑️ 刪除</button>
+        <div class="modal-right-btns">
+          <button class="modal-btn btn-cancel" onclick="closeModal()">取消</button>
+          <button class="modal-btn btn-save" onclick="saveModalEdit()">儲存更新</button>
+        </div>
       </div>
     </div>
   </div>
@@ -566,7 +575,8 @@
           date: r.Date || r.date || v[1] || currentDateStr,
           type: r.Type || r.type || v[2] || 'Task',
           content: r.Content || r.content || v[3] || '',
-          status: r.Status || r.status || v[4] || 'Pending'
+          status: r.Status || r.status || v[4] || 'Pending',
+          remarks: r.Remarks || r.remarks || v[5] || '' 
         };
       });
     }
@@ -606,7 +616,7 @@
     function toggleSection(contentId, arrowId) {
       const content = document.getElementById(contentId);
       const arrow = document.getElementById(arrowId);
-      if (content.style.display === 'none') {
+      if (content.style.display === 'none' || content.style.display === '') {
         content.style.display = 'block';
         arrow.textContent = '▼';
       } else {
@@ -653,6 +663,7 @@
       });
     }
 
+    // 2. 將來預定事項：加入已完成事項（依「顯示已完成事項」核取方框與日期排序）
     function renderFuture() {
       const container = document.getElementById('futureList');
       container.innerHTML = '';
@@ -663,7 +674,7 @@
         if (item.date <= todayStr) return false;
         if (!showCompleted && isItemDone(item.status)) return false;
         return true;
-      });
+      }).sort((a, b) => a.date.localeCompare(b.date));
 
       if (futureItems.length === 0) {
         container.innerHTML = '<div style="color:#0284c7; font-size:0.85rem;">📅 目前沒有將來預定事項</div>';
@@ -687,11 +698,13 @@
       div.innerHTML = `
         <div class="log-left">
           <span class="badge ${badgeClass}">${item.type}</span>
-          <span class="content-text">${item.content} ${showDateTag ? `<small style="color:#64748b; font-size:0.75rem;"><br>(${item.date})</small>` : ''}</span>
+          <span class="content-text">
+            ${item.content} ${showDateTag ? `<small style="color:#64748b; font-size:0.75rem;"><br>(${item.date})</small>` : ''}
+            ${item.remarks ? `<span class="remarks-text">💬 ${item.remarks}</span>` : ''}
+          </span>
         </div>
         <div class="action-btns">
           <button class="btn-sm" onclick="openModal('${item.id}')" title="編輯">✏️<span class="btn-text"> 編輯</span></button>
-          <button class="btn-sm btn-danger" onclick="deleteLog('${item.id}')" title="刪除">🗑️<span class="btn-text"> 刪除</span></button>
           <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleStatus('${item.id}', '${item.status}', '${item.date}', '${encodeURIComponent(item.content)}')">
             ${isDone ? '✓' : '⏳'}<span class="status-text"> ${isDone ? '完成' : '待辦'}</span>
           </button>
@@ -710,6 +723,7 @@
       document.getElementById('modalDate').value = target.date;
       document.getElementById('modalType').value = target.type;
       document.getElementById('modalContent').value = target.content;
+      document.getElementById('modalRemarks').value = target.remarks || '';
 
       document.getElementById('editModal').style.display = 'flex';
     }
@@ -725,14 +739,16 @@
       const newDate = document.getElementById('modalDate').value;
       const newType = document.getElementById('modalType').value;
       const newContent = document.getElementById('modalContent').value.trim();
+      const newRemarks = document.getElementById('modalRemarks').value.trim();
 
       if (!newContent) return;
 
-      const target = allLogs.find(l => l.id === id);
+      const target = allLogs.find(l => l.id === id || l.content === oldContent);
       if (target) {
         target.date = newDate;
         target.type = newType;
         target.content = newContent;
+        target.remarks = newRemarks;
       }
 
       closeModal();
@@ -747,7 +763,8 @@
           oldContent: oldContent,
           date: newDate,
           type: newType,
-          content: newContent
+          content: newContent,
+          remarks: newRemarks
         });
 
         fetch(`${apiUrl}?${params.toString()}`, { mode: 'no-cors' })
@@ -756,7 +773,10 @@
       }
     }
 
-    function deleteLog(id) {
+    function deleteFromModal() {
+      const id = document.getElementById('modalTargetId').value;
+      if (!id) return;
+
       if (!confirm('確定要刪除這筆事項嗎？')) return;
 
       const targetIndex = allLogs.findIndex(l => l.id === id);
@@ -764,6 +784,8 @@
 
       const target = allLogs[targetIndex];
       allLogs.splice(targetIndex, 1);
+
+      closeModal();
       renderAll();
 
       showStatus('⏳ 正在從 Google Sheet 刪除...');
@@ -818,7 +840,8 @@
         date: currentDateStr,
         type: type,
         content: finalContent,
-        status: 'Pending'
+        status: 'Pending',
+        remarks: ''
       });
 
       document.getElementById('logContent').value = '';
@@ -832,7 +855,8 @@
           date: currentDateStr,
           type: type,
           content: finalContent,
-          status: 'Pending'
+          status: 'Pending',
+          remarks: ''
         });
         fetch(`${apiUrl}?${params.toString()}`, { mode: 'no-cors' });
       }
