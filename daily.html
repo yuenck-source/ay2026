@@ -123,16 +123,33 @@
       gap: 6px;
     }
 
-    /* Hashtag 篩選 Bar */
-    .hashtag-bar {
+    /* 可折疊 Hashtag 專用外框 */
+    .hashtag-container-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+    }
+    .hashtag-header {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #475569;
+      cursor: pointer;
+      user-select: none;
+    }
+    .hashtag-bar {
+      display: none; /* 預設收合 */
       gap: 6px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
-      padding: 6px 8px;
-      background: #f1f5f9;
-      border-radius: 6px;
-      align-items: center;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border-color);
+      max-height: 120px;
+      overflow-y: auto;
     }
 
     .tag-btn {
@@ -466,12 +483,18 @@
       <label for="showCompleted">顯示已完成事項</label>
     </div>
 
-    <!-- 🏷️ Hashtag 快速篩選列 -->
-    <div id="hashtagBar" class="hashtag-bar" style="display:none;">
-      <span style="font-size:0.75rem; font-weight:bold; color:#475569;"># 標籤：</span>
-      <div id="tagContainer" style="display:flex; gap:4px; flex-wrap:wrap;"></div>
+    <!-- 🏷️ Hashtag 收藏與收合面板 -->
+    <div id="hashtagWrapperBox" class="hashtag-container-box" style="display:none;">
+      <div class="hashtag-header" onclick="toggleHashtagBar()">
+        <span>🏷️ 標籤篩選庫 (Hashtag) <span id="activeTagIndicator" style="color:var(--primary-color); font-weight:normal;"></span></span>
+        <span id="hashtagArrow">▶</span>
+      </div>
+      <div id="hashtagBar" class="hashtag-bar">
+        <div id="tagContainer" style="display:flex; gap:4px; flex-wrap:wrap; width:100%;"></div>
+      </div>
     </div>
 
+    <!-- 📥 輸入任務保持在上方 -->
     <form class="input-card" onsubmit="handleLogSubmit(event)">
       <div class="select-group">
         <select id="logType">
@@ -503,7 +526,7 @@
       </div>
 
       <div class="input-group">
-        <input type="text" id="logContent" placeholder="記下事項或筆記...支援 #Hashtag (例: #備課 準備教材)" required>
+        <input type="text" id="logContent" placeholder="記下事項或筆記... (支援 #標籤)" required>
         <button type="submit" class="add-btn">新增</button>
       </div>
     </form>
@@ -634,7 +657,6 @@
         .catch(err => console.log('導覽列載入失敗', err));
     }
 
-    /* 自動解析標籤與轉化內文 HTML */
     function extractHashtags(text) {
       if (!text) return [];
       const matches = text.match(/#([\u4e00-\u9fa5\w_]+)/g);
@@ -693,10 +715,23 @@
       });
     }
 
-    /* 渲染並更新 Hashtag 列 */
+    /* 切換 Hashtag 庫收合狀態 */
+    function toggleHashtagBar() {
+      const bar = document.getElementById('hashtagBar');
+      const arrow = document.getElementById('hashtagArrow');
+      if (bar.style.display === 'none' || bar.style.display === '') {
+        bar.style.display = 'flex';
+        arrow.textContent = '▼';
+      } else {
+        bar.style.display = 'none';
+        arrow.textContent = '▶';
+      }
+    }
+
     function renderHashtagBar() {
       const tagContainer = document.getElementById('tagContainer');
-      const hashtagBar = document.getElementById('hashtagBar');
+      const wrapperBox = document.getElementById('hashtagWrapperBox');
+      const indicator = document.getElementById('activeTagIndicator');
       if (!tagContainer) return;
 
       const tagMap = {};
@@ -708,11 +743,19 @@
 
       const uniqueTags = Object.keys(tagMap);
       if (uniqueTags.length === 0) {
-        hashtagBar.style.display = 'none';
+        wrapperBox.style.display = 'none';
         return;
       }
 
-      hashtagBar.style.display = 'flex';
+      wrapperBox.style.display = 'block';
+
+      // 標示目前篩選狀態
+      if (selectedTag === 'all') {
+        indicator.textContent = '';
+      } else {
+        indicator.textContent = `(目前: #${selectedTag})`;
+      }
+
       let html = `<button class="tag-btn ${selectedTag === 'all' ? 'active' : ''}" onclick="filterByTag('all')">全部</button>`;
       uniqueTags.forEach(t => {
         html += `<button class="tag-btn ${selectedTag === t ? 'active' : ''}" onclick="filterByTag('${t}')">#${t} (${tagMap[t]})</button>`;
