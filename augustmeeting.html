@@ -182,12 +182,11 @@
         </div>
       </div>
 
-	<!-- 修改後 -->
-	<div class="filter-group">
-	  <button class="btn active" id="btn-kw" onclick="setFilter('kw')">⭐ 特定對象 (<span id="cnt-kw">0</span>)</button>
-	  <button class="btn" id="btn-all" onclick="setFilter('all')">📋 全部 (<span id="cnt-all">0</span>)</button>
-	  <button class="btn" id="btn-other" onclick="setFilter('other')">🔹 其他 (<span id="cnt-other">0</span>)</button>
-	</div>
+      <div class="filter-group">
+        <button class="btn active" id="btn-kw" onclick="setFilter('kw')">⭐ 特定對象 (<span id="cnt-kw">0</span>)</button>
+        <button class="btn" id="btn-all" onclick="setFilter('all')">📋 全部 (<span id="cnt-all">0</span>)</button>
+        <button class="btn" id="btn-other" onclick="setFilter('other')">🔹 其他 (<span id="cnt-other">0</span>)</button>
+      </div>
       <div id="status" class="status">⏳ 正在載入 CSV 檔案...</div>
     </div>
 
@@ -283,28 +282,33 @@
 
         if (!m && d) m = 8;
 
+        // 計算/取得星期幾 (Weekday)
+        let weekdayStr = '';
+        if (d && m) {
+          const weekDaysMap = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+          const dateObj = new Date(y, m - 1, d);
+          weekdayStr = weekDaysMap[dateObj.getDay()];
+        }
+
         rawData.push({
           date, startTime, endTime, venue, meeting, chair, attendees, remark, hasKeyword, 
-          year: y, month: m, dayNum: d
+          year: y, month: m, dayNum: d, weekday: weekdayStr
         });
       }
 
       document.getElementById('status').textContent = `⚡ 已成功載入 ${rawData.length} 筆會議紀錄`;
 
-	// 在 parseData(rows) 函式的最下方，render(); 的前面加入以下代碼：
+      // 計算各分類數量
+      const countKw = rawData.filter(item => item.hasKeyword).length;
+      const countAll = rawData.length;
+      const countOther = rawData.filter(item => !item.hasKeyword).length;
 
-	// 計算各分類數量
-	const countKw = rawData.filter(item => item.hasKeyword).length;
-	const countAll = rawData.length;
-	const countOther = rawData.filter(item => !item.hasKeyword).length;
+      // 更新按鈕上的數字顯示
+      document.getElementById('cnt-kw').textContent = countKw;
+      document.getElementById('cnt-all').textContent = countAll;
+      document.getElementById('cnt-other').textContent = countOther;
 
-	// 更新按鈕上的數字顯示
-	document.getElementById('cnt-kw').textContent = countKw;
-	document.getElementById('cnt-all').textContent = countAll;
-	document.getElementById('cnt-other').textContent = countOther;
-
-	render();
-
+      render();
     }
 
     function setFilter(type) {
@@ -376,8 +380,12 @@
         sec.className = 'day-section';
         
         let cardsHtml = groups[dateStr].map(item => createCardHtml(item)).join('');
+        
+        const firstItem = groups[dateStr][0];
+        const dayOfWeekText = firstItem && firstItem.weekday ? ` (${firstItem.weekday})` : '';
+
         sec.innerHTML = `
-          <div class="day-header">📅 ${dateStr}</div>
+          <div class="day-header">📅 ${dateStr}${dayOfWeekText}</div>
           <div class="day-body">${cardsHtml}</div>
         `;
         container.appendChild(sec);
@@ -437,22 +445,22 @@
     }
 
     function createCardHtml(item) {
-  const timeStr = item.startTime ? `${item.startTime}${item.endTime ? ' - ' + item.endTime : ''}` : '時間未指定';
-  return `
-    <div class="card ${item.hasKeyword ? 'kw-match' : ''}">
-      <div class="card-head" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-        <div class="badge-time">⏰ ${timeStr}</div>
-        <div class="card-title" style="margin-top: 2px;">${item.meeting}</div>
-      </div>
-      <div class="card-detail">
-        ${item.venue ? `<div>📍 <strong>地點：</strong>${item.venue}</div>` : ''}
-        ${item.chair ? `<div>👤 <strong>主持：</strong>${item.chair}</div>` : ''}
-        ${item.attendees ? `<div>👥 <strong>出席：</strong>${item.attendees}</div>` : ''}
-        ${item.remark ? `<div style="color:#e11d48;">⚠️ <strong>特別安排：</strong>${item.remark}</div>` : ''}
-      </div>
-    </div>
-  `;
-}
+      const timeStr = item.startTime ? `${item.startTime}${item.endTime ? ' - ' + item.endTime : ''}` : '時間未指定';
+      return `
+        <div class="card ${item.hasKeyword ? 'kw-match' : ''}">
+          <div class="card-head" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+            <div class="badge-time">⏰ ${timeStr}</div>
+            <div class="card-title" style="margin-top: 2px;">${item.meeting}</div>
+          </div>
+          <div class="card-detail">
+            ${item.venue ? `<div>📍 <strong>地點：</strong>${item.venue}</div>` : ''}
+            ${item.chair ? `<div>👤 <strong>主持：</strong>${item.chair}</div>` : ''}
+            ${item.attendees ? `<div>👥 <strong>出席：</strong>${item.attendees}</div>` : ''}
+            ${item.remark ? `<div style="color:#e11d48;">⚠️ <strong>特別安排：</strong>${item.remark}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
   </script>
 </body>
 </html>
