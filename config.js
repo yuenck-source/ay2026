@@ -7,18 +7,21 @@ const CONFIG = {
   MAIN_SHEET_ID: '1q3NLPoGG8qr33knDt6REdLM8-GVrarzSercPLrjKSbo',
   DAILY_SHEET_ID: '1KAVUnTWYN0BhrZsUWwCI8AP9aDHfNYAe_TQ7Ab1Ulmk',
   SECRET_KEY: "wfjlps.edu.hk_0716",
-  IDEAS_SHEET_ID: '1Zgyq8EG-sbkVbQmi-YKYB0q2xOhfsEqL6MNtlqZ8f-0',  
+  IDEAS_SHEET_ID: '1Zgyq8EG-sbkVbQmi-YKYB0q2xOhfsEqL6MNtlqZ8f-0', 
+  FT_SHEET_ID: "1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms",
 
   GIDS: {
     DAILY_LOG: '1885435306',
     IDEAS: '0',                    
     HABITS: '837132755',
-    HABIT_LOGS: '1991677412'
+    HABIT_LOGS: '1991677412',
+    FT: "1351247680"
   },
 
   API_URLS: {
     DAILY: 'https://script.google.com/macros/s/AKfycbxQ3pvI0K5q4pUeZ458FufaKj6QsPbUKYmGY7GNUJKjTP5khGAlBjAzj6eQtTKT0Bl7lA/exec',
     IDEAS: 'https://script.google.com/macros/s/AKfycbzQcRU-AsQb8oY5Wb5n8XOtZGIWkp8FXxCJLd_NrUqrBNqQmHl8ZdPvd2ABVa9KaJmk/exec',
-    HABIT: 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec'
+    HABIT: 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec', // 👈 補上這裡的逗號
+    FT: 'https://script.google.com/macros/s/AKfycbwnpWBweDBZoEvHukGHitf0yq3ycBLfF_YpYTCsPhgz-H5snw9rfgEdgGIv7sbMETyVYA/exec'
   }
 };
