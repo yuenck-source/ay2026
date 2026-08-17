@@ -224,7 +224,6 @@
 
     .hidden { display: none !important; }
 
-    /* 手機優化：更緊湊的排版與字體 */
     @media (max-width: 600px) {
       body { padding: 4px; }
       .header { padding: 8px; margin-bottom: 8px; }
@@ -237,7 +236,6 @@
 </head>
 <body>
 
-  <!-- 🔒 1. Google 登入驗證遮罩 Modal -->
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
       <div class="auth-title">📅 會議日程管理</div>
@@ -253,7 +251,6 @@
     </div>
   </div>
 
-  <!-- 📱 2. 主畫面內容 -->
   <div class="container" id="mainContainer">
     <div class="header">
       <div class="top-bar">
@@ -280,10 +277,8 @@
       </div>
     </div>
 
-    <!-- 清單檢視區塊 -->
     <div id="listView"></div>
 
-    <!-- 月曆檢視區塊 -->
     <div id="calView" class="hidden">
       <div class="cal-controls">
         <button class="cal-nav-btn" onclick="changeMonth(-1)">◀ 上月</button>
@@ -361,6 +356,11 @@
       const savedEmail = sessionStorage.getItem('user_google_email');
 
       if (userStr && savedEmail) {
+        // 取消 Google 自動彈窗
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          window.google.accounts.id.cancel();
+        }
+
         const user = JSON.parse(userStr);
         document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
         document.getElementById('authOverlay').style.display = 'none';
@@ -452,7 +452,6 @@
         });
       }
 
-      // 按時序排序 (Date 優先，其次依 startTime 排序)
       rawData.sort((a, b) => {
         if (!a.dateObj && !b.dateObj) return 0;
         if (!a.dateObj) return 1;
@@ -505,14 +504,11 @@
     }
 
     function getFilteredData() {
-      // 取得今天的日期物件 (清除時分秒以便精確比對日期的過去與未來)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       return rawData.filter(item => {
-        // 過濾掉過去的會議 (若有日期物件且早於今天，則隱藏)
         if (item.dateObj && item.dateObj < today) return false;
-
         if (currentFilter === 'kw') return item.hasKeyword;
         if (currentFilter === 'other') return !item.hasKeyword;
         return true;

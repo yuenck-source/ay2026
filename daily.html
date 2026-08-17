@@ -707,11 +707,9 @@
         return;
       }
 
-      // 檢查 Session 登入狀態
       checkLoginStatus();
     };
 
-    // 解析 Google JWT Token
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -725,26 +723,23 @@
       }
     }
 
-    // Google 登入完成回呼 (Callback)
     function handleCredentialResponse(response) {
       const payload = parseJwt(response.credential);
       
       if (payload && payload.email) {
         const userEmail = payload.email.toLowerCase().trim();
 
-        // 檢查白名單 ALLOWED_EMAILS (來自 allowed-emails.js)
         if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
           const cleanList = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
           if (!cleanList.includes(userEmail)) {
             document.getElementById('loginErr').innerText = `⚠️ 存取被拒：\n${userEmail}\n未獲授權使用此系統。`;
-            return; // 🛑 確實攔截未授權帳號
+            return;
           }
         } else {
           document.getElementById('loginErr').innerText = `⚠️ 系統錯誤：無法讀取白名單清單。`;
           return;
         }
 
-        // 登入成功，儲存資訊至 Session
         sessionStorage.setItem('google_user', JSON.stringify({
           name: payload.name,
           email: userEmail,
@@ -756,16 +751,20 @@
       }
     }
 
-    // 檢查登入與切換畫面
     function checkLoginStatus() {
       const userStr = sessionStorage.getItem('google_user');
       
       if (userStr) {
+        // 取消 Google 自動彈窗
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          window.google.accounts.id.cancel();
+        }
+
         const user = JSON.parse(userStr);
         document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
         document.getElementById('authOverlay').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'block';
-        loadLogsData(); // 驗證通過後才載入 Google Sheet 內容
+        loadLogsData();
       } else {
         document.getElementById('authOverlay').style.display = 'flex';
         document.getElementById('mainContainer').style.display = 'none';
