@@ -9,6 +9,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <!-- 載入全站統一設定 -->
   <script src="config.js"></script>
+  <!-- 載入允許登入的 Email 白名單 -->
+  <script src="allowed-emails.js"></script>
+  <!-- 引入 Google 官方 Identity SDK[cite: 1] -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     :root {
@@ -31,6 +35,29 @@
       margin: 0;
       padding: 8px;
     }
+
+    /* 🔒 Google 登入遮罩畫面 */
+    #loginOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(248, 250, 252, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      gap: 16px;
+    }
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    #mainContent { display: none; }
 
     .container {
       max-width: 1150px;
@@ -164,7 +191,6 @@
       gap: 8px;
     }
 
-    /* 參考圖片風格卡片 */
     .daily-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -174,12 +200,6 @@
       flex-direction: column;
       gap: 6px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    }
-
-    .daily-card-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
     .daily-card-title {
@@ -199,7 +219,6 @@
       flex-wrap: wrap;
     }
 
-    /* 類別 Badge 樣式 */
     .badge {
       font-size: 0.7rem;
       padding: 2px 6px;
@@ -213,7 +232,6 @@
     .badge.event, .badge.Event { background: #fef3c7; color: #92400e; }
     .badge.note, .badge.Note, .badge.筆記 { background: #f1f5f9; color: #475569; }
 
-    /* #標籤 樣式 (模仿圖片藍底藍字) */
     .hashtag {
       background-color: #eff6ff;
       color: #2563eb;
@@ -253,7 +271,6 @@
       background-color: #fff;
     }
 
-    /* 圖例 Legend */
     .legend-container {
       display: flex;
       align-items: center;
@@ -273,7 +290,6 @@
     .badge-holiday { background: #ffe4e6; color: #e11d48; border: 1px solid #fecdd3; }
     .badge-activity { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
 
-    /* 桌面端：網格樣式 Grid */
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -318,7 +334,6 @@
     .event-holiday { background-color: #ffe4e6; color: #9f1239; border-left: 3px solid #f43f5e; font-weight: bold; }
     .event-activity { background-color: #fef3c7; color: #92400e; border-left: 3px solid #f59e0b; font-weight: bold; }
 
-    /* 手機端：清單樣式 List */
     .calendar-list {
       display: none;
       flex-direction: column;
@@ -366,7 +381,25 @@
 </head>
 <body>
 
-  <div class="container">
+  <!-- 🔒 1. Google 登入驗證畫面 -->
+  <div id="loginOverlay">
+    <div class="login-card">
+      <h2>📊 校曆與 Dashboard</h2>
+      <p style="color: #8e8e93; font-size: 0.9rem; margin-bottom: 20px;">請先透過 Google 帳號驗證身分</p>
+      
+      <!-- 靜態 data-client_id 綁定，確保初始化穩定 -->
+      <div id="g_id_onload" 
+           data-client_id="972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com" 
+           data-callback="handleCredentialResponse">
+      </div>
+      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline"></div>
+
+      <div id="loginErr" style="color: #ff3b30; font-size: 0.85rem; margin-top: 12px; white-space: pre-line;"></div>
+    </div>
+  </div>
+
+  <!-- 📱 2. 主內容區塊 (預設隱藏，通過驗證後顯示) -->
+  <div id="mainContent" class="container">
     <!-- 導覽選單 (載入 nav.html) -->
     <div id="navbar" class="nav-tabs"></div>
 
@@ -381,7 +414,7 @@
       </div>
     </div>
 
-    <!-- 📌 當日工作與筆記 (原速記區塊) -->
+    <!-- 📌 當日工作與筆記 -->
     <div class="daily-box">
       <div class="daily-header">
         <div class="daily-title">📌 當日工作與筆記</div>
@@ -420,34 +453,68 @@
   </div>
 
   <script>
-    const CSV_URL = 'Sch Calendar-Grid view.csv';
-    
-    // 安全取得 CONFIG 設定
-    const GOOGLE_SHEET_ID = (typeof CONFIG !== 'undefined' && CONFIG.DAILY_SHEET_ID) ? CONFIG.DAILY_SHEET_ID : '';
-    const DAILY_GID = (typeof CONFIG !== 'undefined' && CONFIG.GIDS && CONFIG.GIDS.DAILY_LOG) ? CONFIG.GIDS.DAILY_LOG : '0';
-
-    const TIMETABLE_CSV_URL = GOOGLE_SHEET_ID ? `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable&t=${new Date().getTime()}` : '';
-    const DAILY_CSV_URL = GOOGLE_SHEET_ID ? `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${DAILY_GID}&t=${new Date().getTime()}` : '';
-
-    let calendarData = {};
-    let timetableRows = [];
-    let dailyRows = [];
-    let availableMonths = [];
-    let currentYearMonth = '';
-    
-    // 初始化當前日期為 YYYY-MM-DD
-    function getTodayString() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+    // JWT 解析函式[cite: 1]
+    function parseJwt(token) {
+      try {
+        var base64Url = token.split('.')[1];
+        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+      } catch (e) { return null; }
     }
 
-    const todayStr = getTodayString();
-    let selectedDailyDate = todayStr;
+    // Google 登入驗證回呼
+    function handleCredentialResponse(response) {
+      const payload = parseJwt(response.credential);
+      if (!payload || !payload.email) {
+        document.getElementById('loginErr').innerText = "❌ 驗證失敗：無法讀取登入資訊";
+        return;
+      }
+      const userEmail = payload.email.toLowerCase().trim();
+      
+      // 比對 allowed-emails.js 中的 ALLOWED_EMAILS 陣列
+      if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
+        const cleanList = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
+        if (!cleanList.includes(userEmail)) {
+          document.getElementById('loginErr').innerText = `⚠️ 存取被拒：\n${userEmail}\n未獲授權使用此系統。`;
+          return; // 確實攔截未授權帳號
+        }
+      } else {
+        document.getElementById('loginErr').innerText = `⚠️ 系統錯誤：無法讀取白名單清單。`;
+        return;
+      }
 
+      // 登入成功，儲存至 Session
+      sessionStorage.setItem("user_google_email", userEmail);
+      sessionStorage.setItem("google_user", JSON.stringify({
+        name: payload.name,
+        email: userEmail,
+        picture: payload.picture
+      }));
+      
+      initializeApp();
+    }
+
+    // 檢查是否曾經登入過 (自動登入)
     window.addEventListener('DOMContentLoaded', () => {
+      const savedEmail = sessionStorage.getItem("user_google_email");
+      
+      if (savedEmail && typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
+        const cleanList = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
+        if (cleanList.includes(savedEmail.toLowerCase().trim())) {
+          initializeApp();
+          return;
+        }
+      }
+      // 未登入或不在白名單則保持顯示登入遮罩
+      document.getElementById('loginOverlay').style.display = 'flex';
+      document.getElementById('mainContent').style.display = 'none';
+    });
+
+    // 通過驗證後初始化應用程式
+    function initializeApp() {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+
       loadNavbar();
       
       // 讀取校曆 CSV
@@ -465,7 +532,33 @@
           loadDailyLog();
         }
       });
-    });
+    }
+
+    const CSV_URL = 'Sch Calendar-Grid view.csv';
+    
+    // 安全取得 CONFIG 設定
+    const GOOGLE_SHEET_ID = (typeof CONFIG !== 'undefined' && CONFIG.DAILY_SHEET_ID) ? CONFIG.DAILY_SHEET_ID : '';
+    const DAILY_GID = (typeof CONFIG !== 'undefined' && CONFIG.GIDS && CONFIG.GIDS.DAILY_LOG) ? CONFIG.GIDS.DAILY_LOG : '0';
+
+    const TIMETABLE_CSV_URL = GOOGLE_SHEET_ID ? `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=timetable&t=${new Date().getTime()}` : '';
+    const DAILY_CSV_URL = GOOGLE_SHEET_ID ? `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${DAILY_GID}&t=${new Date().getTime()}` : '';
+
+    let calendarData = {};
+    let timetableRows = [];
+    let dailyRows = [];
+    let availableMonths = [];
+    let currentYearMonth = '';
+    
+    function getTodayString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    const todayStr = getTodayString();
+    let selectedDailyDate = todayStr;
 
     function loadNavbar() {
       fetch('nav.html')
@@ -502,7 +595,6 @@
       });
     }
 
-    /* 日期標準化函式 */
     function normalizeDateStr(dateStr) {
       if (!dateStr) return '';
       let cleaned = dateStr.toString().trim().replace(/\//g, '-').replace(/\./g, '-');
@@ -517,7 +609,6 @@
       return cleaned;
     }
 
-    /* 讀取速記資料 */
     function loadDailyLog() {
       if (!DAILY_CSV_URL) {
         document.getElementById('todayDailyList').innerHTML = '<div style="color:#ef4444; font-size:0.85rem;">❌ 未設定 GIDS.DAILY_LOG</div>';
@@ -552,13 +643,11 @@
       });
     }
 
-    /* 自動將文字中的 #hashtag 轉換為膠囊標籤 */
     function formatHashtags(text) {
       if (!text) return '';
       return text.replace(/#([\w\u4e00-\u9fa5]+)/g, '<span class="hashtag">#$1</span>');
     }
 
-    /* 渲染選定日期的速記內容 (自動過濾已完成) */
     function renderDailyLog() {
       const container = document.getElementById('todayDailyList');
       const dateDisplay = document.getElementById('dailyDateDisplay');
@@ -570,7 +659,6 @@
 
       const targetDate = normalizeDateStr(selectedDailyDate);
       
-      // 比對日期，並排除已完成 (Done/完成/已完成) 項目
       const logs = dailyRows.filter(r => {
         const status = r.parsedStatus;
         const isDone = (status === 'Done' || status === '完成' || status === '已完成');
@@ -594,7 +682,6 @@
         const div = document.createElement('div');
         div.className = 'daily-card';
         
-        // 組合標籤與內容
         const formattedRemark = formatHashtags(remarks ? remarks.replace(/\n/g, '<br>') : '');
 
         div.innerHTML = `
