@@ -56,9 +56,11 @@
     .header-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; gap: 8px; font-size: 0.8rem; color: #475569; }
     .logout-btn { background: #f1f5f9; border: 1px solid var(--border-color); padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
 
-    /* 統計卡片 */
+    /* 統計卡片 (加入可點擊互動效果) */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .stat-card { padding: 12px 16px; border-radius: 12px; border-left: 5px solid; }
+    .stat-card { padding: 12px 16px; border-radius: 12px; border-left: 5px solid; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; user-select: none; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .stat-card:active { transform: translateY(0); }
     .stat-card.total { background: #fff3ed; border-color: #ea580c; }
     .stat-card.todo { background: #fef2f2; border-color: #ef4444; }
     .stat-card.done { background: #f0fdf4; border-color: #22c55e; }
@@ -160,18 +162,18 @@
       </div>
     </div>
 
-    <!-- 統計面板 -->
+    <!-- 統計面板 (點擊即可自動篩選) -->
     <div class="stats-grid">
-      <div class="stat-card total">
-        <div class="stat-title" style="color: #9a3412;">總跟進事項</div>
+      <div class="stat-card total" onclick="filterByStat('ALL')" title="點擊顯示全部">
+        <div class="stat-title" style="color: #9a3412;">總跟進事項 (點擊查看全部)</div>
         <div id="ftStatTotal" class="stat-number" style="color: #c2410c;">0</div>
       </div>
-      <div class="stat-card todo">
-        <div class="stat-title" style="color: #991b1b;">⏳ 未完成 / 待跟進</div>
+      <div class="stat-card todo" onclick="filterByStat('未完成')" title="點擊篩選未完成">
+        <div class="stat-title" style="color: #991b1b;">⏳ 未完成 / 待跟進 (點擊篩選)</div>
         <div id="ftStatTodo" class="stat-number" style="color: #dc2626;">0</div>
       </div>
-      <div class="stat-card done">
-        <div class="stat-title" style="color: #166534;">✅ 已完成</div>
+      <div class="stat-card done" onclick="filterByStat('已完成')" title="點擊篩選已完成">
+        <div class="stat-title" style="color: #166534;">✅ 已完成 (點擊篩選)</div>
         <div id="ftStatDone" class="stat-number" style="color: #15803d;">0</div>
       </div>
     </div>
@@ -434,6 +436,15 @@
           console.error(err);
         }
       });
+    }
+
+    /* 點擊統計卡片自動切換篩選 */
+    function filterByStat(statusValue) {
+      const selectElem = document.getElementById('ftStatusSelect');
+      if (selectElem) {
+        selectElem.value = statusValue;
+        renderFTLogs();
+      }
     }
 
     function renderFTLogs() {
