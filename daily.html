@@ -82,7 +82,7 @@
       padding: 10px;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      display: none; /* 登入前先隱藏主要介面 */
+      display: none;
     }
 
     .nav-tabs {
@@ -308,16 +308,34 @@
       justify-content: space-between;
       gap: 8px;
       width: 100%;
+      cursor: grab;
+      user-select: none;
+      transition: background-color 0.2s, box-shadow 0.2s;
+    }
+    .log-item:active { cursor: grabbing; }
+    .log-item.dragging {
+      opacity: 0.4;
+      background: #f1f5f9;
+      border: 2px dashed var(--primary-color);
     }
     .log-item.done { opacity: 0.55; }
     
+    .drag-handle {
+      display: flex;
+      align-items: center;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      padding-right: 4px;
+      cursor: grab;
+    }
+
     .log-main { 
       display: flex; 
       flex-direction: column; 
       gap: 4px; 
       flex: 1; 
       min-width: 0;
-      cursor: pointer; /* 提示可點擊預覽 */
+      cursor: pointer;
     }
     .log-main:hover .content-text {
       color: var(--primary-color);
@@ -500,7 +518,6 @@
       border-radius: 6px;
       font-size: 0.85rem;
     }
-    /* 預留更多空間展示備註內容 (高度提升) */
     .form-group textarea.large-textarea {
       min-height: 120px;
       resize: vertical;
@@ -636,7 +653,7 @@
 
     <div class="today-box">
       <div class="today-title">📌 當日工作與筆記</div>
-      <div id="dailyList" class="log-list"></div>
+      <div id="dailyList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
     </div>
 
     <div class="overdue-box">
@@ -645,7 +662,7 @@
         <span id="overdueArrow">▶</span>
       </div>
       <div id="overdueContent" class="collapsible-content">
-        <div id="overdueList" class="log-list"></div>
+        <div id="overdueList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
       </div>
     </div>
 
@@ -655,7 +672,7 @@
         <span id="futureArrow">▶</span>
       </div>
       <div id="futureContent" class="collapsible-content">
-        <div id="futureList" class="log-list"></div>
+        <div id="futureList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
       </div>
     </div>
 
@@ -665,12 +682,12 @@
         <span id="backlogArrow">▶</span>
       </div>
       <div id="backlogContent" class="collapsible-content">
-        <div id="backlogList" class="log-list"></div>
+        <div id="backlogList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
       </div>
     </div>
   </div>
 
-  <!-- 🔍 預覽畫面 Modal (唯讀，支援多行備註展示) -->
+  <!-- 🔍 預覽畫面 Modal -->
   <div id="previewModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-title">👁️ 事項檢視</div>
@@ -700,7 +717,7 @@
     </div>
   </div>
 
-  <!-- ✏️ 編輯畫面 Modal (加大備註欄位空間) -->
+  <!-- ✏️ 編輯畫面 Modal -->
   <div id="editModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-title">✏️ 編輯事項</div>
@@ -724,7 +741,7 @@
         <input type="text" id="modalContent">
       </div>
       <div class="form-group">
-        <label>備註 (Remarks) [預留多行空間]：</label>
+        <label>備註 (Remarks)：</label>
         <textarea id="modalRemarks" class="large-textarea" placeholder="在此輸入多行備註內容..."></textarea>
       </div>
 
@@ -1067,7 +1084,7 @@
         if (!showCompleted && isItemDone(item.status)) return false;
         if (!passesTagFilter(item)) return false;
         return true;
-      }).sort((a, b) => a.date.localeCompare(b.date));
+      });
 
       if (futureItems.length === 0) {
         container.innerHTML = '<div style="color:#0284c7; font-size:0.82rem;">📅 目前沒有將來預定事項</div>';
@@ -1105,6 +1122,43 @@
       const isDone = isItemDone(item.status);
       const div = document.createElement('div');
       div.className = `log-item ${isDone ? 'done' : ''}`;
+      div.draggable = true;
+      div.dataset.id = item.id;
+
+      div.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', item.id);
+        div.classList.add('dragging');
+      });
+
+      div.addEventListener('dragend', () => {
+        div.classList.remove('dragging');
+      });
+
+      // 觸控手機端拖曳支援
+      let touchStartY = 0;
+      div.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+        div.classList.add('dragging');
+      }, {passive: true});
+
+      div.addEventListener('touchmove', (e) => {
+        const touchY = e.touches[0].clientY;
+        const listContainer = div.parentNode;
+        const afterElement = getDragAfterElement(listContainer, touchY);
+        const draggingItem = listContainer.querySelector('.dragging');
+        if (draggingItem) {
+          if (afterElement == null) {
+            listContainer.appendChild(draggingItem);
+          } else {
+            listContainer.insertBefore(draggingItem, afterElement);
+          }
+        }
+      }, {passive: true});
+
+      div.addEventListener('touchend', () => {
+        div.classList.remove('dragging');
+        saveNewOrderFromDOM(div.parentNode);
+      });
 
       let badgeClass = 'task';
       if (item.type === '事件' || item.type === 'Event') badgeClass = 'event';
@@ -1114,6 +1168,7 @@
       const formattedRemarks = formatContentWithTags(item.remarks);
 
       div.innerHTML = `
+        <div class="drag-handle" title="按住拖曳排序">☰</div>
         <div class="log-main" onclick="openPreviewModal('${item.id}')" title="點擊檢視詳情">
           <div class="log-header-line">
             <span class="badge ${badgeClass}">${item.type}</span>
@@ -1132,7 +1187,71 @@
       return div;
     }
 
-    /* 🔍 開啟預覽 Modal */
+    function allowDrop(e) {
+      e.preventDefault();
+      const container = e.currentTarget;
+      const draggingItem = document.querySelector('.dragging');
+      if (!draggingItem) return;
+
+      const afterElement = getDragAfterElement(container, e.clientY);
+      if (afterElement == null) {
+        container.appendChild(draggingItem);
+      } else {
+        container.insertBefore(draggingItem, afterElement);
+      }
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.log-item:not(.dragging)')];
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function dropRecord(e) {
+      e.preventDefault();
+      const container = e.currentTarget;
+      saveNewOrderFromDOM(container);
+    }
+
+    function saveNewOrderFromDOM(container) {
+      const cardElements = container.querySelectorAll('.log-item');
+      const newOrderedIds = [...cardElements].map(el => el.dataset.id);
+
+      // 重新排序全域 allLogs
+      const idMap = new Map(allLogs.map(l => [l.id, l]));
+      const reordered = [];
+      newOrderedIds.forEach(id => {
+        if (idMap.has(id)) {
+          reordered.push(idMap.get(id));
+          idMap.delete(id);
+        }
+      });
+      // 把其他未顯示的項目放回
+      idMap.forEach(item => reordered.push(item));
+      allLogs = reordered;
+
+      // 自動發送 API 同步排序至 Google Sheet
+      showStatus('⏳ 正在同步排序至 Google Sheet...');
+      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
+      if (apiUrl) {
+        const params = new URLSearchParams({
+          action: 'reorderLogs',
+          key: CONFIG.SECRET_KEY || '',
+          ids: newOrderedIds.join(',')
+        });
+        fetch(`${apiUrl}?${params.toString()}`, { mode: 'no-cors' })
+          .then(() => showStatus(''))
+          .catch(() => showStatus('❌ 排序同步失敗', '#ef4444'));
+      }
+    }
+
     function openPreviewModal(id) {
       const target = allLogs.find(l => l.id === id);
       if (!target) return;
@@ -1286,7 +1405,7 @@
       const targetDate = isBacklog ? "" : currentDateStr;
       const newId = 'L' + new Date().getTime();
 
-      allLogs.push({
+      allLogs.unshift({
         id: newId,
         date: targetDate,
         type: type,
