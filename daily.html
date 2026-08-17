@@ -69,9 +69,6 @@
       display: flex;
       justify-content: center;
       min-height: 40px;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
     }
 
     .container {
@@ -520,10 +517,10 @@
   </style>
 </head>
 <body>
-    <div id="g_id_onload" 
+<div id="g_id_onload" 
          data-client_id="972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com" 
          data-callback="handleCredentialResponse">
-    </div>
+</div>
   <!-- Google 登入驗證視窗 -->
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
@@ -534,7 +531,6 @@
              data-callback="handleCredentialResponse">
         </div>
         <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
-        <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
       </div>
     </div>
   </div>
@@ -714,11 +710,11 @@
         showStatus('❌ config.js 缺少 GOOGLE_CLIENT_ID', '#ef4444');
       }
 
-      // 檢查登入狀態
+      // 檢查 Session 登入狀態
       checkLoginStatus();
     };
 
-    // 解析 Google JWT Token[cite: 1]
+    // 解析 Google JWT Token
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -732,46 +728,35 @@
       }
     }
 
-    // Google 登入完成回呼 (Callback)[cite: 1]
+    // Google 登入完成回呼 (Callback)
     function handleCredentialResponse(response) {
       const payload = parseJwt(response.credential);
       
-      if (!payload || !payload.email) {
-        document.getElementById('loginErr').innerText = "❌ 驗證失敗：無法讀取登入資訊";
-        return;
-      }
-
-      const userEmail = payload.email.toLowerCase().trim();
-
-      // 檢查白名單 ALLOWED_EMAILS (自動轉小寫與去除空白比對)
-      if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
-        const cleanList = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
-        if (!cleanList.includes(userEmail)) {
-          document.getElementById('loginErr').innerText = `⚠️ 存取被拒：\n${userEmail}\n未獲授權使用此系統。`;
-          return;
+      if (payload && payload.email) {
+        // 檢查白名單 ALLOWED_EMAILS (如果存在 allowed-emails.js)
+        if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
+          if (!ALLOWED_EMAILS.includes(payload.email)) {
+            alert(`⚠️ 存取被拒：帳號 (${payload.email}) 未獲授權使用此系統。`);
+            return;
+          }
         }
-      }
 
-      // 登入成功，使用 localStorage 儲存狀態以保持跨頁共用
-      localStorage.setItem('user_google_email', userEmail);
-      localStorage.setItem('google_user', JSON.stringify({
-        name: payload.name,
-        email: userEmail,
-        picture: payload.picture
-      }));
-      localStorage.setItem('google_token', response.credential);
-      
-      checkLoginStatus();
+        // 登入成功，儲存資訊
+        sessionStorage.setItem('google_user', JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          picture: payload.picture
+        }));
+        sessionStorage.setItem('google_token', response.credential);
+        
+        checkLoginStatus();
+      }
     }
 
     // 檢查登入與切換畫面
     function checkLoginStatus() {
-      const userStr = localStorage.getItem('google_user') || sessionStorage.getItem('google_user');
-      const savedEmail = localStorage.getItem('user_google_email') || sessionStorage.getItem('user_google_email');
-      
-      const cleanList = (typeof ALLOWED_EMAILS !== 'undefined' ? ALLOWED_EMAILS : []).map(e => e.toLowerCase().trim());
-
-      if (userStr && savedEmail && cleanList.includes(savedEmail.toLowerCase().trim())) {
+      const userStr = sessionStorage.getItem('google_user');
+      if (userStr) {
         const user = JSON.parse(userStr);
         document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
         document.getElementById('authOverlay').style.display = 'none';
@@ -784,10 +769,8 @@
     }
 
     function logout() {
-      localStorage.removeItem('google_user');
-      localStorage.removeItem('google_token');
-      localStorage.removeItem('user_google_email');
-      sessionStorage.clear();
+      sessionStorage.removeItem('google_user');
+      sessionStorage.removeItem('google_token');
       location.reload();
     }
 
