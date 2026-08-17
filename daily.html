@@ -4,8 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>⚡ 速記清單 - Daily</title>
+  <!-- Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- 載入設定檔與白名單 -->
   <script src="config.js"></script>
+  <script src="allowed-emails.js"></script>
   <style>
     :root {
       --primary-color: #6366f1;
@@ -29,6 +33,47 @@
       padding: 8px;
     }
 
+    /* Google 登入驗證遮罩 Modal */
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .auth-card {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+      padding: 28px 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .auth-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .auth-desc {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+    .google-btn-wrapper {
+      display: flex;
+      justify-content: center;
+      min-height: 40px;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
     .container {
       width: 100%;
       max-width: 950px;
@@ -37,6 +82,7 @@
       padding: 10px;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: none; /* 登入前先隱藏主要介面 */
     }
 
     .nav-tabs {
@@ -75,6 +121,21 @@
       color: var(--primary-color);
       font-size: 1.1rem;
       font-weight: bold;
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #475569;
+    }
+    .logout-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      padding: 3px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
     }
     .date-controls {
       display: flex;
@@ -459,13 +520,35 @@
   </style>
 </head>
 <body>
+    <div id="g_id_onload" 
+         data-client_id="972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com" 
+         data-callback="handleCredentialResponse">
+    </div>
+  <!-- Google 登入驗證視窗 -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-title">⚡ 速記清單</div>
+      <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
+      <div class="google-btn-wrapper">
+        <div id="g_id_onload"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
+        <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
+      </div>
+    </div>
+  </div>
 
-  <div class="container">
+  <div class="container" id="mainContainer">
     <div id="navbar" class="nav-tabs"></div>
 
     <div class="header-bar">
       <div class="title-group">
         <span>⚡ 速記清單</span>
+      </div>
+      <div class="user-profile">
+        <span id="userInfo"></span>
+        <button class="logout-btn" onclick="logout()">登出</button>
       </div>
       <div class="date-controls">
         <button class="icon-btn" onclick="changeDate(-1)">◀</button>
@@ -624,8 +707,89 @@
         return;
       }
 
-      loadLogsData();
+      // 自動從 CONFIG 帶入 Client ID 到 Google SDK 元素
+      if (CONFIG.GOOGLE_CLIENT_ID) {
+        document.getElementById('g_id_onload').setAttribute('data-client_id', CONFIG.GOOGLE_CLIENT_ID);
+      } else {
+        showStatus('❌ config.js 缺少 GOOGLE_CLIENT_ID', '#ef4444');
+      }
+
+      // 檢查登入狀態
+      checkLoginStatus();
     };
+
+    // 解析 Google JWT Token[cite: 1]
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch(e) {
+        return null;
+      }
+    }
+
+    // Google 登入完成回呼 (Callback)[cite: 1]
+    function handleCredentialResponse(response) {
+      const payload = parseJwt(response.credential);
+      
+      if (!payload || !payload.email) {
+        document.getElementById('loginErr').innerText = "❌ 驗證失敗：無法讀取登入資訊";
+        return;
+      }
+
+      const userEmail = payload.email.toLowerCase().trim();
+
+      // 檢查白名單 ALLOWED_EMAILS (自動轉小寫與去除空白比對)
+      if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
+        const cleanList = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
+        if (!cleanList.includes(userEmail)) {
+          document.getElementById('loginErr').innerText = `⚠️ 存取被拒：\n${userEmail}\n未獲授權使用此系統。`;
+          return;
+        }
+      }
+
+      // 登入成功，使用 localStorage 儲存狀態以保持跨頁共用
+      localStorage.setItem('user_google_email', userEmail);
+      localStorage.setItem('google_user', JSON.stringify({
+        name: payload.name,
+        email: userEmail,
+        picture: payload.picture
+      }));
+      localStorage.setItem('google_token', response.credential);
+      
+      checkLoginStatus();
+    }
+
+    // 檢查登入與切換畫面
+    function checkLoginStatus() {
+      const userStr = localStorage.getItem('google_user') || sessionStorage.getItem('google_user');
+      const savedEmail = localStorage.getItem('user_google_email') || sessionStorage.getItem('user_google_email');
+      
+      const cleanList = (typeof ALLOWED_EMAILS !== 'undefined' ? ALLOWED_EMAILS : []).map(e => e.toLowerCase().trim());
+
+      if (userStr && savedEmail && cleanList.includes(savedEmail.toLowerCase().trim())) {
+        const user = JSON.parse(userStr);
+        document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'block';
+        loadLogsData();
+      } else {
+        document.getElementById('authOverlay').style.display = 'flex';
+        document.getElementById('mainContainer').style.display = 'none';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('google_user');
+      localStorage.removeItem('google_token');
+      localStorage.removeItem('user_google_email');
+      sessionStorage.clear();
+      location.reload();
+    }
 
     function showStatus(text, color = '#6366f1') {
       const msg = document.getElementById('statusMessage');
@@ -662,7 +826,7 @@
 
     function loadLogsData() {
       const sheetId = CONFIG.DAILY_SHEET_ID;
-      const gid = CONFIG.GIDS.DAILY_LOG;
+      const gid = CONFIG.GIDS ? CONFIG.GIDS.DAILY_LOG : '0';
 
       if (!sheetId) {
         showStatus('❌ config.js 中缺少 DAILY_SHEET_ID', '#ef4444');
@@ -948,7 +1112,6 @@
       document.getElementById('editModal').style.display = 'none';
     }
 
-    // 1. 儲存編輯 (已加入 key 參數)
     function saveModalEdit() {
       const id = document.getElementById('modalTargetId').value;
       const oldContent = document.getElementById('modalOldContent').value;
@@ -974,11 +1137,11 @@
       renderAll();
 
       showStatus('⏳ 正在同步更新至 Google Sheet...');
-      const apiUrl = CONFIG.API_URLS.DAILY;
+      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'editLog',
-          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
+          key: CONFIG.SECRET_KEY || '',
           id: id,
           oldContent: oldContent,
           date: newDate,
@@ -993,7 +1156,6 @@
       }
     }
 
-    // 2. 刪除事項 (已加入 key 參數)
     function deleteFromModal() {
       const id = document.getElementById('modalTargetId').value;
       if (!id) return;
@@ -1011,11 +1173,11 @@
       renderAll();
 
       showStatus('⏳ 正在從 Google Sheet 刪除...');
-      const apiUrl = CONFIG.API_URLS.DAILY;
+      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'deleteLog',
-          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
+          key: CONFIG.SECRET_KEY || '',
           id: id,
           content: target.content
         });
@@ -1025,7 +1187,6 @@
       }
     }
 
-    // 3. 切換狀態 (已加入 key 參數)
     function toggleStatus(id, currentStatus, date, content) {
       const isDone = isItemDone(currentStatus);
       const newStatus = isDone ? 'Pending' : '完成';
@@ -1035,11 +1196,11 @@
 
       renderAll();
 
-      const apiUrl = CONFIG.API_URLS.DAILY;
+      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'toggleLog',
-          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
+          key: CONFIG.SECRET_KEY || '',
           id: id,
           date: date,
           content: decodeURIComponent(content),
@@ -1049,7 +1210,6 @@
       }
     }
 
-    // 4. 新增事項 (已加入 key 參數)
     function handleLogSubmit(e) {
       e.preventDefault();
       const type = document.getElementById('logType').value;
@@ -1079,11 +1239,11 @@
       renderHashtagBar();
       renderAll();
 
-      const apiUrl = CONFIG.API_URLS.DAILY;
+      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
       if (apiUrl) {
         const params = new URLSearchParams({
           action: 'addLog',
-          key: CONFIG.SECRET_KEY || '', // 👈 帶入 Secret Key
+          key: CONFIG.SECRET_KEY || '',
           id: newId,
           date: targetDate,
           type: type,

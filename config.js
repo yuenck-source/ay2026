@@ -1,17 +1,17 @@
-// config.js - 全站集中設定檔
-
 const CONFIG = {
+  // 🔑 必須保留這兩個，否則 Google 登入會失效[cite: 1]
+  GOOGLE_CLIENT_ID: "972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com",
+  GAS_URL: "https://script.google.com/macros/s/AKfycbxkwB3tjRWDQV0ZBV87e2ExqBduxpSEibkbfkX01WASG-JOY3ycBB6vKUt9Mvm6NTQ/exec",
 
+  // 📊 您額外新增的 Sheet 與 GIDs 設定
   MAIN_SHEET_ID: '1q3NLPoGG8qr33knDt6REdLM8-GVrarzSercPLrjKSbo',
   DAILY_SHEET_ID: '1KAVUnTWYN0BhrZsUWwCI8AP9aDHfNYAe_TQ7Ab1Ulmk',
   SECRET_KEY: "wfjlps.edu.hk_0716",
-
-  // 請確認這一行已存在且正確填入 Sheet ID
-  IDEAS_SHEET_ID: '1Zgyq8EG-sbkVbQmi-YKYB0q2xOhfsEqL6MNtlqZ8f-0', 
+  IDEAS_SHEET_ID: '1Zgyq8EG-sbkVbQmi-YKYB0q2xOhfsEqL6MNtlqZ8f-0',  
 
   GIDS: {
     DAILY_LOG: '1885435306',
-    IDEAS: '0',                     // 獨立 Sheet 的第一個分頁 GID 通常為 0
+    IDEAS: '0',                    
     HABITS: '837132755',
     HABIT_LOGS: '1991677412'
   },
