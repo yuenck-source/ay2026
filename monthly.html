@@ -97,6 +97,16 @@
       background: #f8fafc;
     }
 
+/* ★ 本月專屬顏色標示 */
+    .month-board.current-month {
+      border: 2px solid #f59e0b; /* 橘黃色粗邊框 */
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2); /* 微微發光的陰影 */
+    }
+    .month-board.current-month .month-header {
+      background: #f59e0b; /* 橘黃色標題背景 */
+      color: #ffffff;
+    }
+
     .mini-log-card {
       background: #fff;
       border: 1px solid var(--border-color);
@@ -390,22 +400,32 @@ function initGoogleSignIn() {
       let startYear = now.getFullYear();
       let startMonth = now.getMonth() - 1; 
 
+      // 🎯 取得真實的「現在年份」與「現在月份」，用來做比對
+      const realCurrentYear = now.getFullYear();
+      const realCurrentMonth = now.getMonth() + 1; 
+
       for (let i = 0; i < 12; i++) {
         const d = new Date(startYear, startMonth + i, 1);
         const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const monthNumber = d.getMonth() + 1;
+        const m = String(monthNumber).padStart(2, '0');
         
         const monthKey = `${y}-${m}`;
-        const monthLabel = `${y}年 ${d.getMonth() + 1}月`;
+        const monthLabel = `${y}年 ${monthNumber}月`;
+
+        // 🎯 判斷迴圈目前產生的這個月份，是不是就是「本月」
+        const isCurrentMonth = (y === realCurrentYear && monthNumber === realCurrentMonth);
 
         const monthItems = filteredLogs.filter(r => r.date.startsWith(monthKey)).sort((a, b) => a.date.localeCompare(b.date));
 
         const board = document.createElement('div');
-        board.className = 'month-board';
+        // 如果是本月，就幫這個框框加上 'current-month' 的 CSS class
+        board.className = `month-board ${isCurrentMonth ? 'current-month' : ''}`;
         
+        // 標題也做變化：本月加上星星與 (本月) 字樣
         let headerHtml = `
           <div class="month-header">
-            <span>🗓️ ${monthLabel}</span>
+            <span>${isCurrentMonth ? '⭐' : '🗓️'} ${monthLabel} ${isCurrentMonth ? '(本月)' : ''}</span>
             <span class="item-count">${monthItems.length} 項</span>
           </div>
         `;
