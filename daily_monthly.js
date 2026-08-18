@@ -8,18 +8,49 @@ let GID = '';
 let SHEET_ID = '';
 
 // 1. Google 登入 SDK 初始化
+// 強化版 Google 登入初始化 (含錯誤提示)
 function initGoogleSignIn() {
-  if (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_CLIENT_ID) {
+  const container = document.getElementById("googleSignInContainer");
+  const errContainer = document.getElementById("loginErr");
+
+  // 1. 檢查是否以 file:// 協定開啟
+  if (window.location.protocol === 'file:') {
+    if (errContainer) errContainer.innerText = "⚠️ 請勿直接開啟 HTML 檔案！\nGoogle 登入需在 http://localhost 或 https:// 環境下執行。";
+    return;
+  }
+
+  // 2. 檢查 CONFIG 與 Client ID
+  if (typeof CONFIG === 'undefined' || !CONFIG.GOOGLE_CLIENT_ID) {
+    if (errContainer) errContainer.innerText = "⚠️ 請先在 config.js 設定 GOOGLE_CLIENT_ID";
+    return;
+  }
+
+  // 3. 渲染 Google 登入按鈕
+  if (window.google && google.accounts && google.accounts.id) {
     google.accounts.id.initialize({
       client_id: CONFIG.GOOGLE_CLIENT_ID,
       callback: handleCredentialResponse
     });
     google.accounts.id.renderButton(
-      document.getElementById("googleSignInContainer"),
+      container,
       { theme: "outline", size: "large", type: "standard", shape: "rectangular" }
     );
   }
 }
+
+// 確保頁面載入完成後雙重檢查初始化
+window.onload = () => {
+  loadNavbar();
+  if (typeof CONFIG !== 'undefined') {
+    SHEET_ID = CONFIG.MONTHLY_SHEET_ID || CONFIG.FT_SHEET_ID || '';
+    GID = (CONFIG.GIDS && CONFIG.GIDS.MONTHLY) ? CONFIG.GIDS.MONTHLY : ((CONFIG.GIDS && CONFIG.GIDS.FT) ? CONFIG.GIDS.FT : '782306667');
+    API_URL = CONFIG.API_URLS?.MONTHLY || CONFIG.API_URLS?.FT || CONFIG.GAS_URL || '';
+  }
+  
+  // 嘗試初始化登入按鈕
+  initGoogleSignIn();
+  checkLoginStatus();
+};
 
 // 2. 頁面載入：檢查已存在的 Session
 window.onload = () => {
