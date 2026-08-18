@@ -4,95 +4,304 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📅 Monthly Future Log</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="config.js"></script>
+  <script src="allowed-emails.js"></script>
   <style>
     :root { --primary-color: #0d9488; --bg-color: #f8fafc; --border-color: #cbd5e1; }
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
-    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     
-    /* 導覽列樣式 (相容 nav.html) */
+    /* 🔒 Google 登入驗證遮罩 Modal */
+    .auth-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .auth-card {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 360px;
+      padding: 28px 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .auth-title { font-size: 1.25rem; font-weight: bold; color: #0f172a; margin-bottom: 8px; }
+    .auth-desc { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
+    .google-btn-wrapper { display: flex; justify-content: center; flex-direction: column; align-items: center; gap: 12px; }
+
+    .container { max-width: 1300px; margin: 0 auto; background: #fff; padding: 16px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: none; }
+    
     .nav-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; white-space: nowrap; }
     .nav-tabs::-webkit-scrollbar { display: none; }
     .nav-btn { padding: 8px 14px; font-size: 0.88rem; border-radius: 6px; text-decoration: none; background: #e2e8f0; color: #475569; font-weight: bold; }
     .nav-btn.active { background: var(--primary-color); color: #fff; }
+
+    .header-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; gap: 8px; font-size: 0.8rem; color: #475569; }
+    .logout-btn { background: #f1f5f9; border: 1px solid var(--border-color); padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; }
     
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-    .log-card { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+    .hashtag-pill { display: inline-block; background: #ccfbf1; color: #0f766e; padding: 1px 6px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; margin: 0 2px; }
+    .hashtag-pill:hover { background: #0d9488; color: #ffffff; }
+
+    /* 📅 12 個月清單排版 (Month Boards) */
+    .month-board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .month-board {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      overflow: hidden;
+    }
+    .month-header {
+      background: var(--primary-color);
+      color: #ffffff;
+      padding: 10px 14px;
+      font-weight: bold;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .month-header .item-count {
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .month-body {
+      padding: 10px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8fafc;
+    }
+
+    .mini-log-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary-color);
+      border-radius: 6px;
+      padding: 10px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      flex-shrink: 0;
+    }
+    .mini-log-card:hover { border-color: var(--primary-color); }
+    .mini-log-card.done { border-left-color: #22c55e; opacity: 0.75; }
     
     .status-btn { padding: 4px 10px; font-size: 0.78rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
     .status-btn.todo { background: #fee2e2; color: #dc2626; }
     .status-btn.done { background: #dcfce7; color: #16a34a; }
     
-    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; }
-    .modal-box { background:#fff; width:90%; max-width:480px; border-radius:12px; padding:20px; }
+    /* Modal 視窗 */
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:9999; justify-content:center; align-items:center; padding: 12px; }
+    .modal-box { background:#fff; width:100%; max-width:480px; border-radius:12px; padding:20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-weight: bold; font-size: 0.8rem; color: #334155; margin-bottom: 3px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; }
+    .form-group textarea.large-textarea { min-height: 100px; resize: vertical; }
+
+    /* ★ 修改：加高備註區塊 (min-height: 130px) */
+    .preview-remarks-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      min-height: 130px; 
+      font-size: 0.85rem;
+      color: #0f172a;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 動態載入 nav.html 導覽列 -->
+
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-title">📅 Monthly Future Log</div>
+      <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
+      <div class="google-btn-wrapper">
+        <div id="g_id_onload" 
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
+        <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="mainContainer">
     <div id="navbar" class="nav-tabs"></div>
+
+    <div class="header-bar">
+      <div class="user-profile">
+        <span id="userInfo"></span>
+        <button class="logout-btn" onclick="logout()">登出</button>
+      </div>
+    </div>
+
+    <h3 style="margin-top:0; color:var(--primary-color);">🗓️ Monthly Future Log (年度月份總覽)</h3>
 
     <div class="controls">
       <div style="display:flex; align-items:center; gap:10px;">
-        <h3 style="margin:0; color:var(--primary-color);">🗓️ Monthly Future Log (月誌)</h3>
-        <button onclick="openModal()" style="background:var(--primary-color); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ 新增月誌事項</button>
+        <span style="font-weight:bold; font-size:0.9rem; color:#334155;">檢視範圍：上個月至未來11個月</span>
+        <button onclick="openModal()" style="background:var(--primary-color); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ 新增事項</button>
       </div>
-      <input type="month" id="monthFilter" onchange="renderLogs()" style="padding:6px; border-radius:6px; border:1px solid var(--border-color);">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <span id="tagFilterIndicator" style="font-size:0.8rem; color:#0d9488; display:none;">標籤過濾：<b id="activeTagText"></b></span>
+        <button onclick="clearFilter()" style="padding:4px 8px; font-size:0.75rem; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;">清除過濾</button>
+      </div>
     </div>
 
     <div id="loading">⏳ 正在載入 Monthly Log...</div>
-    <div id="logGrid" class="card-grid"></div>
+    
+    <div id="monthBoardContainer" class="month-board-grid"></div>
   </div>
 
-  <!-- Modal -->
+  <div id="previewModal" class="modal-overlay">
+    <div class="modal-box">
+      <h3 style="margin-top:0; color:var(--primary-color);">👁️ 事項檢視</h3>
+      <input type="hidden" id="previewRowIndex">
+      <div class="form-group"><label>日期/月份：</label><div id="previewDate" style="padding:6px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem;"></div></div>
+      <div class="form-group"><label>類別：</label><div id="previewCategory" style="padding:6px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem;"></div></div>
+      <div class="form-group"><label>事項名稱：</label><div id="previewTask" style="padding:6px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem; font-weight:bold;"></div></div>
+      <div class="form-group"><label>備註 / 詳情：</label><div id="previewRemarks" class="preview-remarks-box"></div></div>
+      
+      <div style="display:flex; justify-content:space-between; margin-top:16px;">
+        <button type="button" onclick="deleteItem()" style="padding:6px 12px; border-radius:6px; border:1px solid #fca5a5; background:#fee2e2; color:#ef4444; font-weight:bold; cursor:pointer;">🗑️ 刪除</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" onclick="closePreviewModal()" style="padding:6px 12px; border-radius:6px; border:1px solid var(--border-color); background:#f1f5f9; cursor:pointer;">關閉</button>
+          <button type="button" onclick="openEditMode()" style="padding:6px 16px; border-radius:6px; border:none; background:var(--primary-color); color:#fff; font-weight:bold; cursor:pointer;">✏️ 修改</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="modal" class="modal-overlay">
     <div class="modal-box">
-      <h3 style="margin-top:0; color:var(--primary-color);">📝 新增 Monthly 事項</h3>
+      <h3 id="modalTitle" style="margin-top:0; color:var(--primary-color);">📝 新增 Monthly 事項</h3>
       <form id="addForm" onsubmit="handleSubmit(event)">
-        <div style="margin-bottom:10px;">
-          <label style="font-size:0.8rem; font-weight:bold;">日期/月份</label>
-          <input type="date" id="newDate" required style="width:100%; padding:8px; box-sizing:border-box;">
+        <input type="hidden" id="editRowIndex">
+        
+        <div class="form-group">
+          <label>📅 填寫日期或月份</label>
+          <input type="date" id="newDate" required>
         </div>
-        <div style="margin-bottom:10px;">
-          <label style="font-size:0.8rem; font-weight:bold;">類別 (Category)</label>
-          <input type="text" id="newCategory" placeholder="例: 校務 / 教學" required style="width:100%; padding:8px; box-sizing:border-box;">
+        <div class="form-group">
+          <label>🏷️ 類別 (Category)</label>
+          <input type="text" id="newCategory" placeholder="例: 行政 / 教學" required>
         </div>
-        <div style="margin-bottom:10px;">
-          <label style="font-size:0.8rem; font-weight:bold;">類型 (Signifier)</label>
-          <select id="newSignifier" style="width:100%; padding:8px; box-sizing:border-box;">
+        <div class="form-group">
+          <label>📌 類型 (Signifier)</label>
+          <select id="newSignifier">
             <option value="• Task">• 任務 (Task)</option>
             <option value="◦ Event">◦ 事件 (Event)</option>
             <option value="- Note">- 便條 (Note)</option>
           </select>
         </div>
-        <div style="margin-bottom:10px;">
-          <label style="font-size:0.8rem; font-weight:bold;">事項名稱 (Task/Event)</label>
-          <input type="text" id="newTask" required style="width:100%; padding:8px; box-sizing:border-box;">
+        <div class="form-group">
+          <label>📋 事項名稱 (支援 #標籤 分類)</label>
+          <input type="text" id="newTask" placeholder="例: 繳交週記報告 #重要" required>
+        </div>
+        <div class="form-group">
+          <label>💬 備註 / 詳情 (支援多行)</label>
+          <textarea id="newRemarks" class="large-textarea" placeholder="輸入補充細節或更多 #標籤..."></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
-          <button type="button" onclick="closeModal()">取消</button>
-          <button type="submit" id="submitBtn" style="background:var(--primary-color); color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold;">儲存</button>
+          <button type="button" onclick="closeModal()" style="padding:8px 14px; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;">取消</button>
+          <button type="submit" id="submitBtn" style="background:var(--primary-color); color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">儲存</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    const GOOGLE_SHEET_ID = '1ultOcsf8s4bFj7CrqyD_DlN4hOZ8ekK7ip4czQQl5Ms';
-    const GID = '782306667';
-    const CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwnpWBweDBZoEvHukGHitf0yq3ycBLfF_YpYTCsPhgz-H5snw9rfgEdgGIv7sbMETyVYA/exec';
-
     let logs = [];
+    let activeTagFilter = null;
+    let API_URL = '';
+    let GID = '';
+    let SHEET_ID = '';
 
     window.onload = () => {
       loadNavbar();
-      document.getElementById('monthFilter').value = new Date().toISOString().slice(0, 7);
-      loadData();
+      if (typeof CONFIG !== 'undefined') {
+        SHEET_ID = CONFIG.MONTHLY_SHEET_ID || CONFIG.FT_SHEET_ID || '';
+        GID = (CONFIG.GIDS && CONFIG.GIDS.MONTHLY) ? CONFIG.GIDS.MONTHLY : ((CONFIG.GIDS && CONFIG.GIDS.FT) ? CONFIG.GIDS.FT : '782306667');
+        API_URL = (CONFIG.API_URLS && CONFIG.API_URLS.MONTHLY) ? CONFIG.API_URLS.MONTHLY : (CONFIG.API_URLS?.FT || '');
+
+        if (CONFIG.GOOGLE_CLIENT_ID) {
+          document.getElementById('g_id_onload').setAttribute('data-client_id', CONFIG.GOOGLE_CLIENT_ID);
+        }
+      }
+      checkLoginStatus();
     };
 
-    // 載入公共 nav.html
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+      } catch(e) { return null; }
+    }
+
+    function handleCredentialResponse(response) {
+      const payload = parseJwt(response.credential);
+      if (!payload || !payload.email) return;
+      const userEmail = payload.email.toLowerCase().trim();
+      if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
+        if (!ALLOWED_EMAILS.map(e => e.toLowerCase().trim()).includes(userEmail)) {
+          document.getElementById('loginErr').innerText = `⚠️ 存取被拒：未獲授權。`;
+          return;
+        }
+      }
+      sessionStorage.setItem('google_user', JSON.stringify({ name: payload.name, email: userEmail, picture: payload.picture }));
+      sessionStorage.setItem('google_token', response.credential);
+      checkLoginStatus();
+    }
+
+    function checkLoginStatus() {
+      const userStr = sessionStorage.getItem('google_user');
+      if (userStr) {
+        if (window.google?.accounts?.id) window.google.accounts.id.cancel();
+        const user = JSON.parse(userStr);
+        document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'block';
+        loadData();
+      } else {
+        document.getElementById('authOverlay').style.display = 'flex';
+        document.getElementById('mainContainer').style.display = 'none';
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('google_user');
+      sessionStorage.removeItem('google_token');
+      location.reload();
+    }
+
     function loadNavbar() {
       fetch('nav.html')
         .then(res => res.text())
@@ -109,83 +318,261 @@
     }
 
     function loadData() {
-      Papa.parse(CSV_URL, {
+      if (!SHEET_ID) {
+        document.getElementById('loading').textContent = '❌ config.js 中缺少 Sheet ID 設定';
+        return;
+      }
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
+
+      Papa.parse(csvUrl, {
         download: true, header: true, skipEmptyLines: true,
         complete: (results) => {
-          logs = results.data.map((item, index) => ({ ...item, _rowIndex: index + 2 }));
-          renderLogs();
+          logs = results.data.map((item, index) => {
+            const v = Object.values(item);
+            return {
+              date: item['Date/Month'] || item.Date || v[0] || '',
+              category: item.Category || v[1] || '',
+              signifier: item.Signifier || v[2] || '• Task',
+              task: item['Task/Event'] || v[3] || '',
+              status: item.Status || v[5] || '未完成',
+              remarks: item.Remarks || v[6] || '',
+              _rowIndex: index + 2
+            };
+          });
+          
           document.getElementById('loading').style.display = 'none';
+          renderMonthBoards();
+        },
+        error: (err) => {
+          document.getElementById('loading').textContent = '❌ 載入 Monthly 資料失敗，請確認 GID 或公開權限。';
+          console.error(err);
         }
       });
     }
 
-    function renderLogs() {
-      const grid = document.getElementById('logGrid');
-      const selectedMonth = document.getElementById('monthFilter').value;
-      grid.innerHTML = '';
+    function formatTextWithTags(text) {
+      if (!text) return '';
+      const tagRegex = /(#[^\s#]+)/g;
+      return text.replace(tagRegex, (tag) => `<span class="hashtag-pill" onclick="event.stopPropagation(); filterByTag('${tag}')">${tag}</span>`);
+    }
 
-      const filtered = logs.filter(r => (r['Date/Month'] || r.Date || '').startsWith(selectedMonth));
+    function filterByTag(tag) {
+      activeTagFilter = tag;
+      document.getElementById('activeTagText').textContent = tag;
+      document.getElementById('tagFilterIndicator').style.display = 'inline';
+      renderMonthBoards();
+    }
 
-      if(filtered.length === 0) {
-        grid.innerHTML = '<div style="color:#64748b;">本月暫無記錄。</div>';
-        return;
+    function clearFilter() {
+      activeTagFilter = null;
+      document.getElementById('tagFilterIndicator').style.display = 'none';
+      renderMonthBoards();
+    }
+
+    function renderMonthBoards() {
+      const container = document.getElementById('monthBoardContainer');
+      container.innerHTML = '';
+
+      let filteredLogs = logs;
+      if (activeTagFilter) {
+        filteredLogs = filteredLogs.filter(r => (r.task && r.task.includes(activeTagFilter)) || (r.remarks && r.remarks.includes(activeTagFilter)));
       }
 
-      filtered.forEach(item => {
-        const isDone = (item.Status === '已完成');
-        const card = document.createElement('div');
-        card.className = 'log-card';
-        card.style.borderLeft = isDone ? '4px solid #22c55e' : '4px solid #0d9488';
+      const now = new Date();
+      let startYear = now.getFullYear();
+      let startMonth = now.getMonth() - 1; 
+
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(startYear, startMonth + i, 1);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
         
-        card.innerHTML = `
-          <div>
-            <div style="font-size:0.8rem; color:#64748b; display:flex; justify-content:space-between;">
-              <span>📅 ${item['Date/Month'] || ''}</span>
-              <span style="background:#ccfbf1; color:#115e59; padding:2px 6px; border-radius:4px;">${item.Category || ''}</span>
-            </div>
-            <div style="font-weight:bold; font-size:0.95rem; margin-top:6px;">${item.Signifier || '•'} ${item['Task/Event'] || ''}</div>
-          </div>
-          <div style="display:flex; justify-content:flex-end; border-top:1px dashed #cbd5e1; padding-top:6px;">
-            <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="toggleStatus(${item._rowIndex}, '${item.Status}')">
-              ${isDone ? '✅ 已完成' : '⏳ 待辦'}
-            </button>
+        const monthKey = `${y}-${m}`;
+        const monthLabel = `${y}年 ${d.getMonth() + 1}月`;
+
+        const monthItems = filteredLogs.filter(r => r.date.startsWith(monthKey)).sort((a, b) => a.date.localeCompare(b.date));
+
+        const board = document.createElement('div');
+        board.className = 'month-board';
+        
+        let headerHtml = `
+          <div class="month-header">
+            <span>🗓️ ${monthLabel}</span>
+            <span class="item-count">${monthItems.length} 項</span>
           </div>
         `;
-        grid.appendChild(card);
-      });
+
+        let bodyHtml = `<div class="month-body">`;
+        
+        if (monthItems.length === 0) {
+          bodyHtml += `<div style="text-align:center; color:#94a3b8; font-size:0.85rem; margin-top:20px;">無事項記錄</div>`;
+        } else {
+          monthItems.forEach(item => {
+            const isDone = (item.status === '已完成' || item.status === 'Done');
+            
+            bodyHtml += `
+              <div class="mini-log-card ${isDone ? 'done' : ''}" onclick="openPreviewModal(${item._rowIndex})">
+                <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-bottom:6px;">
+                  <span>${item.date}</span>
+                  <span style="color:#0d9488; font-weight:bold;">${item.category}</span>
+                </div>
+                <div style="font-size:0.9rem; font-weight:bold; margin-bottom:8px; line-height: 1.3;">
+                  ${item.signifier || '•'} ${formatTextWithTags(item.task)}
+                </div>
+                <div style="display:flex; justify-content:flex-end; border-top: 1px dashed var(--border-color); padding-top:6px;">
+                  <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="event.stopPropagation(); toggleStatus(${item._rowIndex}, '${item.status}')">
+                    ${isDone ? '✅ 已完成' : '⏳ 待辦'}
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+        }
+        bodyHtml += `</div>`;
+        
+        board.innerHTML = headerHtml + bodyHtml;
+        container.appendChild(board);
+      }
+    }
+
+    function openPreviewModal(rowIndex) {
+      const item = logs.find(r => r._rowIndex === rowIndex);
+      if(!item) return;
+
+      document.getElementById('previewRowIndex').value = item._rowIndex;
+      document.getElementById('previewDate').textContent = item.date;
+      document.getElementById('previewCategory').textContent = item.category;
+      document.getElementById('previewTask').innerHTML = formatTextWithTags(item.task);
+      document.getElementById('previewRemarks').innerHTML = item.remarks ? formatTextWithTags(item.remarks.replace(/\n/g, '<br>')) : '<span style="color:#94a3b8">無備註</span>';
+      
+      document.getElementById('previewModal').style.display = 'flex';
+    }
+    
+    function closePreviewModal() { document.getElementById('previewModal').style.display = 'none'; }
+
+    // ★ 新增：刪除項目
+    function deleteItem() {
+      const rowIndex = parseInt(document.getElementById('previewRowIndex').value);
+      if (!confirm("確定要刪除這筆事項嗎？")) return;
+
+      // 更新前端畫面
+      logs = logs.filter(r => r._rowIndex !== rowIndex);
+      renderMonthBoards();
+      closePreviewModal();
+
+      // 通知後端更新
+      if (API_URL) {
+        fetch(`${API_URL}?gid=${GID}&action=delete&rowIndex=${rowIndex}&key=${CONFIG.SECRET_KEY || ''}`, { mode: 'no-cors' });
+      }
+    }
+
+    // ★ 新增：開啟編輯模式 (共用表單)
+    function openEditMode() {
+      const rowIndex = parseInt(document.getElementById('previewRowIndex').value);
+      const item = logs.find(r => r._rowIndex === rowIndex);
+      if (!item) return;
+
+      closePreviewModal();
+
+      // 填入既有資料到表單
+      document.getElementById('modalTitle').innerHTML = '✏️ 修改 Monthly 事項';
+      document.getElementById('editRowIndex').value = item._rowIndex;
+      document.getElementById('newDate').value = item.date;
+      document.getElementById('newCategory').value = item.category;
+      document.getElementById('newSignifier').value = item.signifier;
+      document.getElementById('newTask').value = item.task;
+      document.getElementById('newRemarks').value = item.remarks;
+
+      document.getElementById('modal').style.display = 'flex';
     }
 
     function toggleStatus(rowIndex, currentStatus) {
-      const newStatus = (currentStatus === '已完成') ? '未完成' : '已完成';
+      const newStatus = (currentStatus === '已完成' || currentStatus === 'Done') ? '未完成' : '已完成';
       const target = logs.find(r => r._rowIndex === rowIndex);
-      if (target) { target.Status = newStatus; renderLogs(); }
-      fetch(`${API_URL}?gid=${GID}&action=toggleStatus&rowIndex=${rowIndex}&newStatus=${encodeURIComponent(newStatus)}`, { mode: 'no-cors' });
+      
+      if (target) { 
+        target.status = newStatus; 
+        renderMonthBoards(); 
+      }
+      
+      if (API_URL) {
+        fetch(`${API_URL}?gid=${GID}&action=toggleStatus&rowIndex=${rowIndex}&newStatus=${encodeURIComponent(newStatus)}&key=${CONFIG.SECRET_KEY || ''}`, { mode: 'no-cors' });
+      }
     }
 
-    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function openModal() {
+      // 確保是「新增」狀態
+      document.getElementById('modalTitle').innerHTML = '📝 新增 Monthly 事項';
+      document.getElementById('editRowIndex').value = '';
+      document.getElementById('addForm').reset();
+      document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
+      
+      document.getElementById('modal').style.display = 'flex';
+    }
+    
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
+    // ★ 更新：處理 新增 與 修改 的 Submit 事件
     function handleSubmit(e) {
       e.preventDefault();
+      
+      const rowIndexStr = document.getElementById('editRowIndex').value;
+      const isEdit = (rowIndexStr !== '');
+      const rowIndex = isEdit ? parseInt(rowIndexStr) : null;
+
+      const dateVal = document.getElementById('newDate').value;
+      const catVal = document.getElementById('newCategory').value.trim();
+      const sigVal = document.getElementById('newSignifier').value;
+      const taskVal = document.getElementById('newTask').value.trim();
+      const remarksVal = document.getElementById('newRemarks').value.trim();
+
       const params = new URLSearchParams({
-        gid: GID, action: 'add',
-        Date: document.getElementById('newDate').value,
-        Category: document.getElementById('newCategory').value,
-        Signifier: document.getElementById('newSignifier').value,
-        'Task/Event': document.getElementById('newTask').value,
+        gid: GID, 
+        action: isEdit ? 'edit' : 'add',
+        key: CONFIG.SECRET_KEY || '',
+        Date: dateVal,
+        Category: catVal,
+        Signifier: sigVal,
+        'Task/Event': taskVal,
+        Remarks: remarksVal,
         Status: '未完成'
       });
-      fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' }).then(() => {
-        logs.unshift({
-          'Date/Month': document.getElementById('newDate').value,
-          Category: document.getElementById('newCategory').value,
-          Signifier: document.getElementById('newSignifier').value,
-          'Task/Event': document.getElementById('newTask').value,
-          Status: '未完成',
-          _rowIndex: logs.length + 2
-        });
-        renderLogs(); closeModal(); document.getElementById('addForm').reset();
-      });
+
+      // 若為修改，需傳遞對應的行號並保留原狀態
+      if (isEdit) {
+        const existingItem = logs.find(r => r._rowIndex === rowIndex);
+        if (existingItem) params.set('Status', existingItem.status);
+        params.set('rowIndex', rowIndex);
+      }
+
+      if (API_URL) {
+        // 先在前端更新畫面 (Optimistic UI)
+        if (isEdit) {
+          const target = logs.find(r => r._rowIndex === rowIndex);
+          if (target) {
+            target.date = dateVal;
+            target.category = catVal;
+            target.signifier = sigVal;
+            target.task = taskVal;
+            target.remarks = remarksVal;
+          }
+        } else {
+          let newId = 2; // 若原先沒有資料的保底
+          if (logs.length > 0) newId = Math.max(...logs.map(l => l._rowIndex)) + 1;
+          
+          logs.push({
+            date: dateVal, category: catVal, signifier: sigVal,
+            task: taskVal, remarks: remarksVal, status: '未完成',
+            _rowIndex: newId
+          });
+        }
+        
+        renderMonthBoards();
+        closeModal();
+
+        // 拋送請求到後端更新 Sheet
+        fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
+      }
     }
   </script>
 </body>
