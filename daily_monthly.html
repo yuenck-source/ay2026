@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📅 Monthly Future Log</title>
+  <title>📅 Daily Items in Monthly View</title>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="config.js"></script>
@@ -49,20 +49,93 @@
     .header-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; gap: 8px; font-size: 0.8rem; color: #475569; }
     .logout-btn { background: #f1f5f9; border: 1px solid var(--border-color); padding: 3px 7px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
 
-    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; }
+    /* 控制列與篩選控制 */
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .filter-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .filter-select { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.85rem; outline: none; background-color: #ffffff; color: #334155; }
+
     .hashtag-pill { display: inline-block; background: #ccfbf1; color: #0f766e; padding: 1px 6px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; margin: 0 2px; }
     .hashtag-pill:hover { background: #0d9488; color: #ffffff; }
 
-    .month-board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
-    .month-board { background: #ffffff; border: 1px solid var(--border-color); border-radius: 10px; display: flex; flex-direction: column; height: 480px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden; }
-    .month-header { background: var(--primary-color); color: #ffffff; padding: 10px 14px; font-weight: bold; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .month-header .item-count { font-size: 0.8rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; }
-    .month-body { padding: 10px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+    /* Signifier 純文字底色標籤 */
+    .signifier-pill {
+      display: inline-block;
+      background-color: #f1f5f9;
+      color: #334155;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-right: 6px;
+      border: 1px solid #cbd5e1;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
 
-    .month-board.current-month { border: 2px solid #f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2); }
-    .month-board.current-month .month-header { background: #f59e0b; color: #ffffff; }
+    /* 月份看板網格 (12 個月) */
+    .month-board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .month-board {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 500px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      overflow: hidden;
+    }
+    .month-header {
+      background: var(--primary-color);
+      color: #ffffff;
+      padding: 10px 14px;
+      font-weight: bold;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .month-header .item-count {
+      font-size: 0.8rem;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .month-body {
+      padding: 10px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8fafc;
+    }
 
-    .mini-log-card { background: #fff; border: 1px solid var(--border-color); border-left: 4px solid var(--primary-color); border-radius: 6px; padding: 10px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.02); flex-shrink: 0; }
+    /* 本月專屬金黃色強調外框 */
+    .month-board.current-month {
+      border: 2px solid #f59e0b;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+    }
+    .month-board.current-month .month-header {
+      background: #f59e0b;
+      color: #ffffff;
+    }
+
+    .mini-log-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary-color);
+      border-radius: 6px;
+      padding: 10px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      flex-shrink: 0;
+    }
     .mini-log-card:hover { border-color: var(--primary-color); }
     .mini-log-card.done { border-left-color: #22c55e; opacity: 0.75; }
     
@@ -77,14 +150,25 @@
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; }
     .form-group textarea.large-textarea { min-height: 100px; resize: vertical; }
 
-    .preview-remarks-box { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; min-height: 130px; font-size: 0.85rem; color: #0f172a; white-space: pre-wrap; word-break: break-word; overflow-y: auto; }
+    .preview-remarks-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      min-height: 130px; 
+      font-size: 0.85rem;
+      color: #0f172a;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
 
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
-      <div class="auth-title">⚡ 速記清單 - 月視圖</div>
+      <div class="auth-title">⚡ 每日事項 - 月視圖總覽</div>
       <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
       <div class="google-btn-wrapper">
         <div id="googleSignInContainer"></div>
@@ -103,448 +187,11 @@
       </div>
     </div>
 
-    <h3 style="margin-top:0; color:var(--primary-color);">🗓️ Monthly Future Log (年度月份總覽)</h3>
+    <h3 style="margin-top:0; color:var(--primary-color);">🗓️ Daily Log (每日事項按月排列)</h3>
 
     <div class="controls">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <span style="font-weight:bold; font-size:0.9rem; color:#334155;">檢視範圍：上個月至未來11個月</span>
-        <button onclick="openModal()" style="background:var(--primary-color); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ 新增事項</button>
-      </div>
-      <div style="display:flex; gap:6px; align-items:center;">
-        <span id="tagFilterIndicator" style="font-size:0.8rem; color:#0d9488; display:none;">標籤過濾：<b id="activeTagText"></b></span>
-        <button onclick="clearFilter()" style="padding:4px 8px; font-size:0.75rem; border-radius:4px; border:1px solid var(--border-color); cursor:pointer;">清除過濾</button>
-      </div>
-    </div>
-
-    <div id="loading">⏳ 正在載入 Monthly Log...</div>
-    
-    <div id="monthBoardContainer" class="month-board-grid"></div>
-  </div>
-
-  <div id="previewModal" class="modal-overlay">
-    <div class="modal-box">
-      <h3 style="margin-top:0; color:var(--primary-color);">👁️ 事項檢視</h3>
-      <input type="hidden" id="previewRowIndex">
-      <div class="form-group"><label>日期/月份：</label><div id="previewDate" style="padding:6px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem;"></div></div>
-      <div class="form-group"><label>類別：</label><div id="previewCategory" style="padding:6px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem;"></div></div>
-      <div class="form-group"><label>事項名稱：</label><div id="previewTask" style="padding:6px; background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem; font-weight:bold;"></div></div>
-      <div class="form-group"><label>備註 / 詳情：</label><div id="previewRemarks" class="preview-remarks-box"></div></div>
-      
-      <div style="display:flex; justify-content:space-between; margin-top:16px;">
-        <button type="button" onclick="deleteItem()" style="padding:6px 12px; border-radius:6px; border:1px solid #fca5a5; background:#fee2e2; color:#ef4444; font-weight:bold; cursor:pointer;">🗑️ 刪除</button>
-        <div style="display:flex; gap:8px;">
-          <button type="button" onclick="closePreviewModal()" style="padding:6px 12px; border-radius:6px; border:1px solid var(--border-color); background:#f1f5f9; cursor:pointer;">關閉</button>
-          <button type="button" onclick="openEditMode()" style="padding:6px 16px; border-radius:6px; border:none; background:var(--primary-color); color:#fff; font-weight:bold; cursor:pointer;">✏️ 修改</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="modal" class="modal-overlay">
-    <div class="modal-box">
-      <h3 id="modalTitle" style="margin-top:0; color:var(--primary-color);">📝 新增 Monthly 事項</h3>
-      <form id="addForm" onsubmit="handleSubmit(event)">
-        <input type="hidden" id="editRowIndex">
+      <div class="filter-group">
+        <button onclick="openModal()" style="background:var(--primary-color); color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">➕ 新增 Daily 事項</button>
         
-        <div class="form-group">
-          <label>📅 填寫日期或月份</label>
-          <input type="date" id="newDate" required>
-        </div>
-        <div class="form-group">
-          <label>🏷️ 類別 (Category)</label>
-          <input type="text" id="newCategory" placeholder="例: 行政 / 教學" required>
-        </div>
-        <div class="form-group">
-          <label>📌 類型 (Signifier)</label>
-          <select id="newSignifier">
-            <option value="Task">Task (任務)</option>
-            <option value="Event">Event (事件)</option>
-            <option value="Note">Note (便條)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>📋 事項名稱 (支援 #標籤 分類)</label>
-          <input type="text" id="newTask" placeholder="例: 繳交週記報告 #重要" required>
-        </div>
-        <div class="form-group">
-          <label>💬 備註 / 詳情 (支援多行)</label>
-          <textarea id="newRemarks" class="large-textarea" placeholder="輸入補充細節或更多 #標籤..."></textarea>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
-          <button type="button" onclick="closeModal()" style="padding:8px 14px; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;">取消</button>
-          <button type="submit" id="submitBtn" style="background:var(--primary-color); color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer;">儲存</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-<script>
-    let logs = [];
-    let activeTagFilter = null;
-    let API_URL = '';
-    let GID = '';
-    let SHEET_ID = '';
-
-    // 初始化 Google 登入按鈕（含完全防錯與除錯提示）
-    function initGoogleSignIn() {
-      const container = document.getElementById("googleSignInContainer");
-      const errContainer = document.getElementById("loginErr");
-
-      if (window.location.protocol === 'file:') {
-        if (errContainer) errContainer.innerText = "⚠️ 請勿使用 file:// 直接開啟！\nGoogle 登入需在 http://localhost 或伺服器環境下運行。";
-        return;
-      }
-
-      if (typeof CONFIG === 'undefined' || !CONFIG.GOOGLE_CLIENT_ID) {
-        if (errContainer) errContainer.innerText = "⚠️ config.js 中缺少 GOOGLE_CLIENT_ID 設定！";
-        return;
-      }
-
-      if (window.google && google.accounts && google.accounts.id) {
-        if (container) {
-          google.accounts.id.initialize({
-            client_id: CONFIG.GOOGLE_CLIENT_ID,
-            callback: handleCredentialResponse
-          });
-          google.accounts.id.renderButton(
-            container,
-            { theme: "outline", size: "large", type: "standard", shape: "rectangular" }
-          );
-        }
-      } else {
-        // 若 SDK 尚未下載完成，500ms 後重試
-        setTimeout(initGoogleSignIn, 500);
-      }
-    }
-
-    window.onload = () => {
-      loadNavbar();
-      if (typeof CONFIG !== 'undefined') {
-        SHEET_ID = CONFIG.MONTHLY_SHEET_ID || CONFIG.FT_SHEET_ID || '';
-        GID = (CONFIG.GIDS && CONFIG.GIDS.MONTHLY) ? CONFIG.GIDS.MONTHLY : ((CONFIG.GIDS && CONFIG.GIDS.FT) ? CONFIG.GIDS.FT : '782306667');
-        API_URL = CONFIG.API_URLS?.MONTHLY || CONFIG.API_URLS?.FT || CONFIG.GAS_URL || '';
-      }
-      
-      // 在頁面 DOM 載入完全後，才渲染 Google 登入按鈕
-      initGoogleSignIn();
-      checkLoginStatus();
-    };
-
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        return JSON.parse(decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-      } catch(e) { return null; }
-    }
-
-    function handleCredentialResponse(response) {
-      const payload = parseJwt(response.credential);
-      if (!payload || !payload.email) return;
-      const userEmail = payload.email.toLowerCase().trim();
-      if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
-        if (!ALLOWED_EMAILS.map(e => e.toLowerCase().trim()).includes(userEmail)) {
-          document.getElementById('loginErr').innerText = `⚠️ 存取被拒：未獲授權。`;
-          return;
-        }
-      }
-      sessionStorage.setItem('google_user', JSON.stringify({ name: payload.name, email: userEmail, picture: payload.picture }));
-      sessionStorage.setItem('google_token', response.credential);
-      checkLoginStatus();
-    }
-
-    function checkLoginStatus() {
-      const userStr = sessionStorage.getItem('google_user');
-      if (userStr) {
-        if (window.google?.accounts?.id) window.google.accounts.id.cancel();
-        const user = JSON.parse(userStr);
-        document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
-        document.getElementById('authOverlay').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'block';
-        loadData();
-      } else {
-        document.getElementById('authOverlay').style.display = 'flex';
-        document.getElementById('mainContainer').style.display = 'none';
-      }
-    }
-
-    function logout() {
-      sessionStorage.removeItem('google_user');
-      sessionStorage.removeItem('google_token');
-      location.reload();
-    }
-
-    function loadNavbar() {
-      fetch('nav.html')
-        .then(res => res.text())
-        .then(data => {
-          const navContainer = document.getElementById('navbar');
-          if (navContainer) {
-            navContainer.innerHTML = data;
-            const currentPath = window.location.pathname.split('/').pop() || 'monthly.html';
-            navContainer.querySelectorAll('.nav-btn').forEach(link => {
-              if (link.getAttribute('href') === currentPath) link.classList.add('active');
-            });
-          }
-        });
-    }
-
-    function loadData() {
-      if (!SHEET_ID) {
-        document.getElementById('loading').textContent = '❌ config.js 中缺少 Sheet ID 設定';
-        return;
-      }
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
-
-      Papa.parse(csvUrl, {
-        download: true, header: true, skipEmptyLines: true,
-        complete: (results) => {
-          logs = results.data.map((item, index) => {
-            const v = Object.values(item);
-            let rawSignifier = item.Signifier || v[4] || 'Task';
-            let cleanSignifier = rawSignifier.replace(/^[•◦\-\s]+/, '').trim();
-            if (!cleanSignifier) cleanSignifier = 'Task';
-
-            return {
-              id: item.ID || item.id || v[0] || `ID_${Date.now()}_${index}`,
-              date: item['Date/Month'] || item.Date || v[1] || '',
-              category: item.Category || v[2] || '',
-              task: item['Task/Event'] || item.Task || v[3] || '',
-              signifier: cleanSignifier,
-              status: item.Status || v[5] || '未完成',
-              remarks: item.Remarks || v[6] || ''
-            };
-          });
-          
-          document.getElementById('loading').style.display = 'none';
-          renderMonthBoards();
-        },
-        error: (err) => {
-          document.getElementById('loading').textContent = '❌ 載入 Monthly 資料失敗，請確認 GID 或公開權限。';
-          console.error(err);
-        }
-      });
-    }
-
-    function formatTextWithTags(text) {
-      if (!text) return '';
-      const tagRegex = /(#[^\s#]+)/g;
-      return text.replace(tagRegex, (tag) => `<span class="hashtag-pill" onclick="event.stopPropagation(); filterByTag('${tag}')">${tag}</span>`);
-    }
-
-    function filterByTag(tag) {
-      activeTagFilter = tag;
-      document.getElementById('activeTagText').textContent = tag;
-      document.getElementById('tagFilterIndicator').style.display = 'inline';
-      renderMonthBoards();
-    }
-
-    function clearFilter() {
-      activeTagFilter = null;
-      document.getElementById('tagFilterIndicator').style.display = 'none';
-      renderMonthBoards();
-    }
-
-    function renderMonthBoards() {
-      const container = document.getElementById('monthBoardContainer');
-      container.innerHTML = '';
-
-      let filteredLogs = logs;
-      if (activeTagFilter) {
-        filteredLogs = filteredLogs.filter(r => (r.task && r.task.includes(activeTagFilter)) || (r.remarks && r.remarks.includes(activeTagFilter)));
-      }
-
-      const now = new Date();
-      let startYear = now.getFullYear();
-      let startMonth = now.getMonth() - 1; 
-
-      const realCurrentYear = now.getFullYear();
-      const realCurrentMonth = now.getMonth() + 1; 
-
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(startYear, startMonth + i, 1);
-        const y = d.getFullYear();
-        const monthNumber = d.getMonth() + 1;
-        const m = String(monthNumber).padStart(2, '0');
-        
-        const monthKey = `${y}-${m}`;
-        const monthLabel = `${y}年 ${monthNumber}月`;
-        const isCurrentMonth = (y === realCurrentYear && monthNumber === realCurrentMonth);
-
-        const monthItems = filteredLogs.filter(r => r.date.startsWith(monthKey)).sort((a, b) => a.date.localeCompare(b.date));
-
-        const board = document.createElement('div');
-        board.className = `month-board ${isCurrentMonth ? 'current-month' : ''}`;
-        
-        let headerHtml = `
-          <div class="month-header">
-            <span>${isCurrentMonth ? '⭐' : '🗓️'} ${monthLabel} ${isCurrentMonth ? '(本月)' : ''}</span>
-            <span class="item-count">${monthItems.length} 項</span>
-          </div>
-        `;
-
-        let bodyHtml = `<div class="month-body">`;
-        
-        if (monthItems.length === 0) {
-          bodyHtml += `<div style="text-align:center; color:#94a3b8; font-size:0.85rem; margin-top:20px;">無事項記錄</div>`;
-        } else {
-          monthItems.forEach(item => {
-            const isDone = (item.status === '已完成' || item.status === 'Done');
-            const safeId = String(item.id).replace(/'/g, "\\'");
-            
-            bodyHtml += `
-              <div class="mini-log-card ${isDone ? 'done' : ''}" onclick="openPreviewModal('${safeId}')">
-                <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-bottom:6px;">
-                  <span>${item.date}</span>
-                  <span style="color:#0d9488; font-weight:bold;">${item.category}</span>
-                </div>
-                <div style="font-size:0.9rem; font-weight:bold; margin-bottom:8px; line-height: 1.3;">
-                  ${item.signifier || 'Task'} ${formatTextWithTags(item.task)}
-                </div>
-                <div style="display:flex; justify-content:flex-end; border-top: 1px dashed var(--border-color); padding-top:6px;">
-                  <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="event.stopPropagation(); toggleStatus('${safeId}', '${item.status}')">
-                    ${isDone ? '✅ 已完成' : '⏳ 待辦'}
-                  </button>
-                </div>
-              </div>
-            `;
-          });
-        }
-        bodyHtml += `</div>`;
-        
-        board.innerHTML = headerHtml + bodyHtml;
-        container.appendChild(board);
-      }
-    }
-
-    function openPreviewModal(id) {
-      const item = logs.find(r => String(r.id) === String(id));
-      if(!item) return;
-
-      document.getElementById('previewRowIndex').value = item.id;
-      document.getElementById('previewDate').textContent = item.date;
-      document.getElementById('previewCategory').textContent = item.category;
-      document.getElementById('previewTask').innerHTML = formatTextWithTags(item.task);
-      document.getElementById('previewRemarks').innerHTML = item.remarks ? formatTextWithTags(item.remarks.replace(/\n/g, '<br>')) : '<span style="color:#94a3b8">無備註</span>';
-      
-      document.getElementById('previewModal').style.display = 'flex';
-    }
-    
-    function closePreviewModal() { document.getElementById('previewModal').style.display = 'none'; }
-
-    function deleteItem() {
-      const itemId = document.getElementById('previewRowIndex').value;
-      if (!confirm("確定要刪除這筆事項嗎？")) return;
-
-      logs = logs.filter(r => String(r.id) !== String(itemId));
-      renderMonthBoards();
-      closePreviewModal();
-
-      if (API_URL) {
-        const secret = CONFIG.SECRET_KEY || '';
-        const url = `${API_URL}?gid=${GID}&action=delete&id=${encodeURIComponent(itemId)}&key=${encodeURIComponent(secret)}&SECRET_KEY=${encodeURIComponent(secret)}`;
-        fetch(url, { mode: 'no-cors' });
-      }
-    }
-
-    function openEditMode() {
-      const itemId = document.getElementById('previewRowIndex').value;
-      const item = logs.find(r => String(r.id) === String(itemId));
-      if (!item) return;
-
-      closePreviewModal();
-
-      document.getElementById('modalTitle').innerHTML = '✏️ 修改 Monthly 事項';
-      document.getElementById('editRowIndex').value = item.id;
-      document.getElementById('newDate').value = item.date;
-      document.getElementById('newCategory').value = item.category;
-      document.getElementById('newSignifier').value = item.signifier;
-      document.getElementById('newTask').value = item.task;
-      document.getElementById('newRemarks').value = item.remarks;
-
-      document.getElementById('modal').style.display = 'flex';
-    }
-
-    function toggleStatus(id, currentStatus) {
-      const newStatus = (currentStatus === '已完成' || currentStatus === 'Done') ? '未完成' : '已完成';
-      const target = logs.find(r => String(r.id) === String(id));
-      
-      if (target) { 
-        target.status = newStatus; 
-        renderMonthBoards(); 
-      }
-      
-      if (API_URL) {
-        const secret = CONFIG.SECRET_KEY || '';
-        const url = `${API_URL}?gid=${GID}&action=toggleStatus&id=${encodeURIComponent(id)}&newStatus=${encodeURIComponent(newStatus)}&key=${encodeURIComponent(secret)}&SECRET_KEY=${encodeURIComponent(secret)}`;
-        fetch(url, { mode: 'no-cors' });
-      }
-    }
-
-    function openModal() {
-      document.getElementById('modalTitle').innerHTML = '📝 新增 Monthly 事項';
-      document.getElementById('editRowIndex').value = '';
-      document.getElementById('addForm').reset();
-      document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
-      
-      document.getElementById('modal').style.display = 'flex';
-    }
-    
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-    function handleSubmit(e) {
-      e.preventDefault();
-      
-      const existingId = document.getElementById('editRowIndex').value;
-      const isEdit = (existingId !== '');
-      const itemId = isEdit ? existingId : `ID_${Date.now()}`;
-
-      const dateVal = document.getElementById('newDate').value;
-      const catVal = document.getElementById('newCategory').value.trim();
-      const sigVal = document.getElementById('newSignifier').value;
-      const taskVal = document.getElementById('newTask').value.trim();
-      const remarksVal = document.getElementById('newRemarks').value.trim();
-
-      const params = new URLSearchParams({
-        gid: GID, 
-        action: isEdit ? 'edit' : 'add',
-        id: itemId,
-        key: CONFIG.SECRET_KEY || '',
-        SECRET_KEY: CONFIG.SECRET_KEY || '',
-        Date: dateVal,
-        Category: catVal,
-        Signifier: sigVal,
-        Task: taskVal,
-        'Task/Event': taskVal,
-        Remarks: remarksVal,
-        Status: '未完成'
-      });
-
-      if (isEdit) {
-        const target = logs.find(r => String(r.id) === String(itemId));
-        if (target) {
-          params.set('Status', target.status);
-          target.date = dateVal;
-          target.category = catVal;
-          target.signifier = sigVal;
-          target.task = taskVal;
-          target.remarks = remarksVal;
-        }
-      } else {
-        logs.push({
-          id: itemId,
-          date: dateVal, category: catVal, signifier: sigVal,
-          task: taskVal, remarks: remarksVal, status: '未完成'
-        });
-      }
-      
-      renderMonthBoards();
-      closeModal();
-
-      if (API_URL) {
-        fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
-      }
-    }
-</script>
-</body>
-</html>
+        <div>
+          <label style="font-size:0.82rem; color:#647
