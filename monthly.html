@@ -97,13 +97,13 @@
       background: #f8fafc;
     }
 
-/* ★ 本月專屬顏色標示 */
+    /* ★ 本月專屬顏色標示 */
     .month-board.current-month {
-      border: 2px solid #f59e0b; /* 橘黃色粗邊框 */
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2); /* 微微發光的陰影 */
+      border: 2px solid #f59e0b;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
     }
     .month-board.current-month .month-header {
-      background: #f59e0b; /* 橘黃色標題背景 */
+      background: #f59e0b;
       color: #ffffff;
     }
 
@@ -132,7 +132,6 @@
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; }
     .form-group textarea.large-textarea { min-height: 100px; resize: vertical; }
 
-    /* ★ 修改：加高備註區塊 (min-height: 130px) */
     .preview-remarks-box {
       background: #f8fafc;
       border: 1px solid var(--border-color);
@@ -154,7 +153,7 @@
       <div class="auth-title">📅 Monthly Future Log</div>
       <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
       <div class="google-btn-wrapper">
-	<div id="googleSignInContainer"></div>
+        <div id="googleSignInContainer"></div>
         <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
       </div>
     </div>
@@ -245,13 +244,14 @@
     </div>
   </div>
 
-  <script>
+<script>
     let logs = [];
     let activeTagFilter = null;
     let API_URL = '';
     let GID = '';
     let SHEET_ID = '';
-function initGoogleSignIn() {
+
+    function initGoogleSignIn() {
       if (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_CLIENT_ID) {
         google.accounts.id.initialize({
           client_id: CONFIG.GOOGLE_CLIENT_ID,
@@ -269,8 +269,8 @@ function initGoogleSignIn() {
       if (typeof CONFIG !== 'undefined') {
         SHEET_ID = CONFIG.MONTHLY_SHEET_ID || CONFIG.FT_SHEET_ID || '';
         GID = (CONFIG.GIDS && CONFIG.GIDS.MONTHLY) ? CONFIG.GIDS.MONTHLY : ((CONFIG.GIDS && CONFIG.GIDS.FT) ? CONFIG.GIDS.FT : '782306667');
-	API_URL = CONFIG.GAS_URL || CONFIG.API_URLS?.MONTHLY || CONFIG.API_URLS?.FT || '';
-        
+        // 修正：優先讀取 MONTHLY / FT 專屬 API 網址
+        API_URL = CONFIG.API_URLS?.MONTHLY || CONFIG.API_URLS?.FT || CONFIG.GAS_URL || '';
       }
       checkLoginStatus();
     };
@@ -335,37 +335,39 @@ function initGoogleSignIn() {
     }
 
     function loadData() {
-      if (!SHEET_ID) {
-        document.getElementById('loading').textContent = '❌ config.js 中缺少 Sheet ID 設定';
-        return;
-      }
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
+  if (!SHEET_ID) {
+    document.getElementById('loading').textContent = '❌ config.js 中缺少 Sheet ID 設定';
+    return;
+  }
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&t=${new Date().getTime()}`;
 
-      Papa.parse(csvUrl, {
-        download: true, header: true, skipEmptyLines: true,
-        complete: (results) => {
-          logs = results.data.map((item, index) => {
-            const v = Object.values(item);
-            return {
-              date: item['Date/Month'] || item.Date || v[0] || '',
-              category: item.Category || v[1] || '',
-              signifier: item.Signifier || v[2] || '• Task',
-              task: item['Task/Event'] || v[3] || '',
-              status: item.Status || v[5] || '未完成',
-              remarks: item.Remarks || v[6] || '',
-              _rowIndex: index + 2
-            };
-          });
-          
-          document.getElementById('loading').style.display = 'none';
-          renderMonthBoards();
-        },
-        error: (err) => {
-          document.getElementById('loading').textContent = '❌ 載入 Monthly 資料失敗，請確認 GID 或公開權限。';
-          console.error(err);
-        }
+  Papa.parse(csvUrl, {
+    download: true, header: true, skipEmptyLines: true,
+    complete: (results) => {
+      logs = results.data.map((item, index) => {
+        const v = Object.values(item);
+        // 修正欄位對應：
+        // v[0]: A欄 ID | v[1]: B欄 Date | v[2]: C欄 Category | v[3]: D欄 Task | v[4]: E欄 Signifier | v[5]: F欄 Status | v[6]: G欄 Remarks
+        return {
+          id: item.ID || item.id || v[0] || `ID_${Date.now()}_${index}`,
+          date: item['Date/Month'] || item.Date || v[1] || '',
+          category: item.Category || v[2] || '',
+          task: item['Task/Event'] || item.Task || v[3] || '',
+          signifier: item.Signifier || v[4] || '• Task',
+          status: item.Status || v[5] || '未完成',
+          remarks: item.Remarks || v[6] || ''
+        };
       });
+      
+      document.getElementById('loading').style.display = 'none';
+      renderMonthBoards();
+    },
+    error: (err) => {
+      document.getElementById('loading').textContent = '❌ 載入 Monthly 資料失敗，請確認 GID 或公開權限。';
+      console.error(err);
     }
+  });
+}
 
     function formatTextWithTags(text) {
       if (!text) return '';
@@ -399,7 +401,6 @@ function initGoogleSignIn() {
       let startYear = now.getFullYear();
       let startMonth = now.getMonth() - 1; 
 
-      // 🎯 取得真實的「現在年份」與「現在月份」，用來做比對
       const realCurrentYear = now.getFullYear();
       const realCurrentMonth = now.getMonth() + 1; 
 
@@ -411,17 +412,13 @@ function initGoogleSignIn() {
         
         const monthKey = `${y}-${m}`;
         const monthLabel = `${y}年 ${monthNumber}月`;
-
-        // 🎯 判斷迴圈目前產生的這個月份，是不是就是「本月」
         const isCurrentMonth = (y === realCurrentYear && monthNumber === realCurrentMonth);
 
         const monthItems = filteredLogs.filter(r => r.date.startsWith(monthKey)).sort((a, b) => a.date.localeCompare(b.date));
 
         const board = document.createElement('div');
-        // 如果是本月，就幫這個框框加上 'current-month' 的 CSS class
         board.className = `month-board ${isCurrentMonth ? 'current-month' : ''}`;
         
-        // 標題也做變化：本月加上星星與 (本月) 字樣
         let headerHtml = `
           <div class="month-header">
             <span>${isCurrentMonth ? '⭐' : '🗓️'} ${monthLabel} ${isCurrentMonth ? '(本月)' : ''}</span>
@@ -436,9 +433,11 @@ function initGoogleSignIn() {
         } else {
           monthItems.forEach(item => {
             const isDone = (item.status === '已完成' || item.status === 'Done');
+            // 將原本以 rowIndex 傳參改為傳遞安全的 item.id (字串)
+            const safeId = String(item.id).replace(/'/g, "\\'");
             
             bodyHtml += `
-              <div class="mini-log-card ${isDone ? 'done' : ''}" onclick="openPreviewModal(${item._rowIndex})">
+              <div class="mini-log-card ${isDone ? 'done' : ''}" onclick="openPreviewModal('${safeId}')">
                 <div style="font-size:0.75rem; color:#64748b; display:flex; justify-content:space-between; margin-bottom:6px;">
                   <span>${item.date}</span>
                   <span style="color:#0d9488; font-weight:bold;">${item.category}</span>
@@ -447,7 +446,7 @@ function initGoogleSignIn() {
                   ${item.signifier || '•'} ${formatTextWithTags(item.task)}
                 </div>
                 <div style="display:flex; justify-content:flex-end; border-top: 1px dashed var(--border-color); padding-top:6px;">
-                  <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="event.stopPropagation(); toggleStatus(${item._rowIndex}, '${item.status}')">
+                  <button class="status-btn ${isDone ? 'done' : 'todo'}" onclick="event.stopPropagation(); toggleStatus('${safeId}', '${item.status}')">
                     ${isDone ? '✅ 已完成' : '⏳ 待辦'}
                   </button>
                 </div>
@@ -462,11 +461,11 @@ function initGoogleSignIn() {
       }
     }
 
-    function openPreviewModal(rowIndex) {
-      const item = logs.find(r => r._rowIndex === rowIndex);
+    function openPreviewModal(id) {
+      const item = logs.find(r => String(r.id) === String(id));
       if(!item) return;
 
-      document.getElementById('previewRowIndex').value = item._rowIndex;
+      document.getElementById('previewRowIndex').value = item.id; // 此處存放 ID
       document.getElementById('previewDate').textContent = item.date;
       document.getElementById('previewCategory').textContent = item.category;
       document.getElementById('previewTask').innerHTML = formatTextWithTags(item.task);
@@ -477,33 +476,33 @@ function initGoogleSignIn() {
     
     function closePreviewModal() { document.getElementById('previewModal').style.display = 'none'; }
 
-    // ★ 新增：刪除項目
+    // 以 ID 做刪除
     function deleteItem() {
-      const rowIndex = parseInt(document.getElementById('previewRowIndex').value);
+      const itemId = document.getElementById('previewRowIndex').value;
       if (!confirm("確定要刪除這筆事項嗎？")) return;
 
-      // 更新前端畫面
-      logs = logs.filter(r => r._rowIndex !== rowIndex);
+      // 前端即時反應
+      logs = logs.filter(r => String(r.id) !== String(itemId));
       renderMonthBoards();
       closePreviewModal();
 
-      // 通知後端更新
+      // 發送包含 id 參數的請求給後端 GAS
       if (API_URL) {
-        fetch(`${API_URL}?gid=${GID}&action=delete&rowIndex=${rowIndex}&key=${CONFIG.SECRET_KEY || ''}`, { mode: 'no-cors' });
+        const secret = CONFIG.SECRET_KEY || '';
+        const url = `${API_URL}?gid=${GID}&action=delete&id=${encodeURIComponent(itemId)}&key=${encodeURIComponent(secret)}&SECRET_KEY=${encodeURIComponent(secret)}`;
+        fetch(url, { mode: 'no-cors' });
       }
     }
 
-    // ★ 新增：開啟編輯模式 (共用表單)
     function openEditMode() {
-      const rowIndex = parseInt(document.getElementById('previewRowIndex').value);
-      const item = logs.find(r => r._rowIndex === rowIndex);
+      const itemId = document.getElementById('previewRowIndex').value;
+      const item = logs.find(r => String(r.id) === String(itemId));
       if (!item) return;
 
       closePreviewModal();
 
-      // 填入既有資料到表單
       document.getElementById('modalTitle').innerHTML = '✏️ 修改 Monthly 事項';
-      document.getElementById('editRowIndex').value = item._rowIndex;
+      document.getElementById('editRowIndex').value = item.id; // 帶入 ID
       document.getElementById('newDate').value = item.date;
       document.getElementById('newCategory').value = item.category;
       document.getElementById('newSignifier').value = item.signifier;
@@ -513,9 +512,10 @@ function initGoogleSignIn() {
       document.getElementById('modal').style.display = 'flex';
     }
 
-    function toggleStatus(rowIndex, currentStatus) {
+    // 以 ID 切換狀態
+    function toggleStatus(id, currentStatus) {
       const newStatus = (currentStatus === '已完成' || currentStatus === 'Done') ? '未完成' : '已完成';
-      const target = logs.find(r => r._rowIndex === rowIndex);
+      const target = logs.find(r => String(r.id) === String(id));
       
       if (target) { 
         target.status = newStatus; 
@@ -523,12 +523,13 @@ function initGoogleSignIn() {
       }
       
       if (API_URL) {
-        fetch(`${API_URL}?gid=${GID}&action=toggleStatus&rowIndex=${rowIndex}&newStatus=${encodeURIComponent(newStatus)}&key=${CONFIG.SECRET_KEY || ''}`, { mode: 'no-cors' });
+        const secret = CONFIG.SECRET_KEY || '';
+        const url = `${API_URL}?gid=${GID}&action=toggleStatus&id=${encodeURIComponent(id)}&newStatus=${encodeURIComponent(newStatus)}&key=${encodeURIComponent(secret)}&SECRET_KEY=${encodeURIComponent(secret)}`;
+        fetch(url, { mode: 'no-cors' });
       }
     }
 
     function openModal() {
-      // 確保是「新增」狀態
       document.getElementById('modalTitle').innerHTML = '📝 新增 Monthly 事項';
       document.getElementById('editRowIndex').value = '';
       document.getElementById('addForm').reset();
@@ -539,13 +540,13 @@ function initGoogleSignIn() {
     
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-    // ★ 更新：處理 新增 與 修改 的 Submit 事件
+    // 處理新增或修改
     function handleSubmit(e) {
       e.preventDefault();
       
-      const rowIndexStr = document.getElementById('editRowIndex').value;
-      const isEdit = (rowIndexStr !== '');
-      const rowIndex = isEdit ? parseInt(rowIndexStr) : null;
+      const existingId = document.getElementById('editRowIndex').value;
+      const isEdit = (existingId !== '');
+      const itemId = isEdit ? existingId : `ID_${Date.now()}`;
 
       const dateVal = document.getElementById('newDate').value;
       const catVal = document.getElementById('newCategory').value.trim();
@@ -556,52 +557,43 @@ function initGoogleSignIn() {
       const params = new URLSearchParams({
         gid: GID, 
         action: isEdit ? 'edit' : 'add',
+        id: itemId,
         key: CONFIG.SECRET_KEY || '',
+        SECRET_KEY: CONFIG.SECRET_KEY || '',
         Date: dateVal,
         Category: catVal,
         Signifier: sigVal,
         Task: taskVal,
-	'Task/Event': taskVal,
+        'Task/Event': taskVal,
         Remarks: remarksVal,
         Status: '未完成'
       });
 
-      // 若為修改，需傳遞對應的行號並保留原狀態
       if (isEdit) {
-        const existingItem = logs.find(r => r._rowIndex === rowIndex);
-        if (existingItem) params.set('Status', existingItem.status);
-        params.set('rowIndex', rowIndex);
+        const target = logs.find(r => String(r.id) === String(itemId));
+        if (target) {
+          params.set('Status', target.status);
+          target.date = dateVal;
+          target.category = catVal;
+          target.signifier = sigVal;
+          target.task = taskVal;
+          target.remarks = remarksVal;
+        }
+      } else {
+        logs.push({
+          id: itemId,
+          date: dateVal, category: catVal, signifier: sigVal,
+          task: taskVal, remarks: remarksVal, status: '未完成'
+        });
       }
+      
+      renderMonthBoards();
+      closeModal();
 
       if (API_URL) {
-        // 先在前端更新畫面 (Optimistic UI)
-        if (isEdit) {
-          const target = logs.find(r => r._rowIndex === rowIndex);
-          if (target) {
-            target.date = dateVal;
-            target.category = catVal;
-            target.signifier = sigVal;
-            target.task = taskVal;
-            target.remarks = remarksVal;
-          }
-        } else {
-          let newId = 2; // 若原先沒有資料的保底
-          if (logs.length > 0) newId = Math.max(...logs.map(l => l._rowIndex)) + 1;
-          
-          logs.push({
-            date: dateVal, category: catVal, signifier: sigVal,
-            task: taskVal, remarks: remarksVal, status: '未完成',
-            _rowIndex: newId
-          });
-        }
-        
-        renderMonthBoards();
-        closeModal();
-
-        // 拋送請求到後端更新 Sheet
         fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
       }
     }
-  </script>
+</script>
 </body>
 </html>
