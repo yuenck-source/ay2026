@@ -144,8 +144,9 @@
       <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
       <div class="google-btn-wrapper">
         <div id="g_id_onload" 
-             data-callback="handleCredentialResponse">
-        </div>
+     data-client_id="972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com" 
+     data-callback="handleCredentialResponse">
+</div>
         <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
         <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
       </div>
@@ -251,9 +252,7 @@
         GID = (CONFIG.GIDS && CONFIG.GIDS.MONTHLY) ? CONFIG.GIDS.MONTHLY : ((CONFIG.GIDS && CONFIG.GIDS.FT) ? CONFIG.GIDS.FT : '782306667');
         API_URL = (CONFIG.API_URLS && CONFIG.API_URLS.MONTHLY) ? CONFIG.API_URLS.MONTHLY : (CONFIG.API_URLS?.FT || '');
 
-        if (CONFIG.GOOGLE_CLIENT_ID) {
-          document.getElementById('g_id_onload').setAttribute('data-client_id', CONFIG.GOOGLE_CLIENT_ID);
-        }
+        
       }
       checkLoginStatus();
     };
