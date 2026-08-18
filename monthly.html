@@ -269,8 +269,7 @@ function initGoogleSignIn() {
       if (typeof CONFIG !== 'undefined') {
         SHEET_ID = CONFIG.MONTHLY_SHEET_ID || CONFIG.FT_SHEET_ID || '';
         GID = (CONFIG.GIDS && CONFIG.GIDS.MONTHLY) ? CONFIG.GIDS.MONTHLY : ((CONFIG.GIDS && CONFIG.GIDS.FT) ? CONFIG.GIDS.FT : '782306667');
-        API_URL = (CONFIG.API_URLS && CONFIG.API_URLS.MONTHLY) ? CONFIG.API_URLS.MONTHLY : (CONFIG.API_URLS?.FT || '');
-
+	API_URL = CONFIG.GAS_URL || CONFIG.API_URLS?.MONTHLY || CONFIG.API_URLS?.FT || '';
         
       }
       checkLoginStatus();
@@ -561,7 +560,8 @@ function initGoogleSignIn() {
         Date: dateVal,
         Category: catVal,
         Signifier: sigVal,
-        'Task/Event': taskVal,
+        Task: taskVal,
+	'Task/Event': taskVal,
         Remarks: remarksVal,
         Status: '未完成'
       });
