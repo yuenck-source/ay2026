@@ -25,10 +25,10 @@ const CONFIG = {
 
   API_URLS: {
     DAILY: 'https://script.google.com/macros/s/AKfycbxQ3pvI0K5q4pUeZ458FufaKj6QsPbUKYmGY7GNUJKjTP5khGAlBjAzj6eQtTKT0Bl7lA/exec',
-    IDEAS: 'https://script.google.com/macros/s/AKfycbzQcRU-AsQb8oY5Wb5n8XOtZGIWkp8FXxCJLd_NrUqrBNqQmHl8ZdPvd2ABVa9KaJmk/exec',
+    IDEAS: 'https://script.google.com/macros/s/AKfycby2i-JNjupBPLaWuASqnUmezJRwUdQNBT2Gzsi27r1TW9kcdb-DaMwnsrYZqdv2VBhU/exec',
     HABIT: 'https://script.google.com/macros/s/AKfycbz72-QL780wO-NVLsszPusQN3WGqCCeb-vn0yZEI8I6dgGwFaawpJtbUATozrE631rE/exec',
     FT: 'https://script.google.com/macros/s/AKfycbwnpWBweDBZoEvHukGHitf0yq3ycBLfF_YpYTCsPhgz-H5snw9rfgEdgGIv7sbMETyVYA/exec',
     PROJECTS: 'https://script.google.com/macros/s/AKfycby2i-JNjupBPLaWuASqnUmezJRwUdQNBT2Gzsi27r1TW9kcdb-DaMwnsrYZqdv2VBhU/exec', // 👈 這裡已填入你指定的 Projects API 網址
-    MONTHLY: 'https://script.google.com/macros/s/AKfycbxfvu8uuthwqWOVyaUYsvUnJ9MbBLfuDZxgJ3vYT0a52XCde7VoOSPm7mccImp16KDLEg/exec'
+    MONTHLY: 'https://script.google.com/macros/s/AKfycbwpECsIDE1xbuMPmw9kcc0Z3n761biNvqyS5SnmsInXZWO0Jxy42MbBJheHz4QnbTY8OQ/exec'
   }
 };

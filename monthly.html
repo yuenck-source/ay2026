@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="config.js"></script>
   <script src="allowed-emails.js"></script>
+  <script src="https://accounts.google.com/gsi/client" onload="initGoogleSignIn()" async defer></script>
   <style>
     :root { --primary-color: #0d9488; --bg-color: #f8fafc; --border-color: #cbd5e1; }
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-color); color: #1e293b; margin: 0; padding: 12px; }
@@ -143,11 +144,7 @@
       <div class="auth-title">📅 Monthly Future Log</div>
       <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
       <div class="google-btn-wrapper">
-        <div id="g_id_onload" 
-     data-client_id="972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com" 
-     data-callback="handleCredentialResponse">
-</div>
-        <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
+	<div id="googleSignInContainer"></div>
         <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
       </div>
     </div>
@@ -244,6 +241,18 @@
     let API_URL = '';
     let GID = '';
     let SHEET_ID = '';
+function initGoogleSignIn() {
+      if (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_CLIENT_ID) {
+        google.accounts.id.initialize({
+          client_id: CONFIG.GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+        google.accounts.id.renderButton(
+          document.getElementById("googleSignInContainer"),
+          { theme: "outline", size: "large", type: "standard", shape: "rectangular" }
+        );
+      }
+    }
 
     window.onload = () => {
       loadNavbar();
