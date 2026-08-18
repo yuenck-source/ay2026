@@ -69,9 +69,6 @@
       display: flex;
       justify-content: center;
       min-height: 40px;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
     }
 
     .container {
@@ -82,7 +79,7 @@
       padding: 10px;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      display: none;
+      display: none; /* 登入前先隱藏主要介面 */
     }
 
     .nav-tabs {
@@ -308,37 +305,15 @@
       justify-content: space-between;
       gap: 8px;
       width: 100%;
-      cursor: grab;
-      user-select: none;
-      transition: background-color 0.2s, box-shadow 0.2s;
-    }
-    .log-item:active { cursor: grabbing; }
-    .log-item.dragging {
-      opacity: 0.4;
-      background: #f1f5f9;
-      border: 2px dashed var(--primary-color);
     }
     .log-item.done { opacity: 0.55; }
     
-    .drag-handle {
-      display: flex;
-      align-items: center;
-      color: #94a3b8;
-      font-size: 1.1rem;
-      padding-right: 4px;
-      cursor: grab;
-    }
-
     .log-main { 
       display: flex; 
       flex-direction: column; 
       gap: 4px; 
       flex: 1; 
       min-width: 0;
-      cursor: pointer;
-    }
-    .log-main:hover .content-text {
-      color: var(--primary-color);
     }
     
     .log-header-line {
@@ -493,7 +468,7 @@
       background: #ffffff;
       border-radius: 14px;
       width: 100%;
-      max-width: 420px;
+      max-width: 380px;
       padding: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }
@@ -518,24 +493,6 @@
       border-radius: 6px;
       font-size: 0.85rem;
     }
-    .form-group textarea.large-textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-    .preview-remarks-box {
-      background: #f8fafc;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 8px 10px;
-      min-height: 100px;
-      max-height: 200px;
-      overflow-y: auto;
-      font-size: 0.85rem;
-      color: #0f172a;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.4;
-    }
     .modal-actions {
       display: flex;
       justify-content: space-between;
@@ -557,28 +514,24 @@
     .btn-cancel { background: #f1f5f9; color: #475569; }
     .btn-save { background: var(--primary-color); color: #ffffff; }
     .btn-delete { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
-    .btn-edit-mode { background: #0284c7; color: #ffffff; }
   </style>
 </head>
 <body>
 
-  <!-- 🔒 Google 登入驗證遮罩 Modal -->
+  <!-- Google 登入驗證視窗 -->
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
       <div class="auth-title">⚡ 速記清單</div>
       <div class="auth-desc">請登入 Google 帳號以驗證身分</div>
       <div class="google-btn-wrapper">
-        <div id="g_id_onload" 
-             data-client_id="972558989435-armd41776e7ueo4d57ud3i4i9p27hdb7.apps.googleusercontent.com" 
+        <div id="g_id_onload"
              data-callback="handleCredentialResponse">
         </div>
         <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
-        <div id="loginErr" style="color: #ff3b30; font-size: 0.8rem; margin-top: 4px; white-space: pre-line;"></div>
       </div>
     </div>
   </div>
 
-  <!-- 📱 原始主要介面內容 -->
   <div class="container" id="mainContainer">
     <div id="navbar" class="nav-tabs"></div>
 
@@ -653,7 +606,7 @@
 
     <div class="today-box">
       <div class="today-title">📌 當日工作與筆記</div>
-      <div id="dailyList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
+      <div id="dailyList" class="log-list"></div>
     </div>
 
     <div class="overdue-box">
@@ -662,7 +615,7 @@
         <span id="overdueArrow">▶</span>
       </div>
       <div id="overdueContent" class="collapsible-content">
-        <div id="overdueList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
+        <div id="overdueList" class="log-list"></div>
       </div>
     </div>
 
@@ -672,7 +625,7 @@
         <span id="futureArrow">▶</span>
       </div>
       <div id="futureContent" class="collapsible-content">
-        <div id="futureList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
+        <div id="futureList" class="log-list"></div>
       </div>
     </div>
 
@@ -682,42 +635,11 @@
         <span id="backlogArrow">▶</span>
       </div>
       <div id="backlogContent" class="collapsible-content">
-        <div id="backlogList" class="log-list" ondragover="allowDrop(event)" ondrop="dropRecord(event)"></div>
+        <div id="backlogList" class="log-list"></div>
       </div>
     </div>
   </div>
 
-  <!-- 🔍 預覽畫面 Modal -->
-  <div id="previewModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-title">👁️ 事項檢視</div>
-      <input type="hidden" id="previewTargetId">
-      
-      <div class="form-group">
-        <label>日期：</label>
-        <div id="previewDate" style="padding: 6px 8px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; font-weight: bold;"></div>
-      </div>
-      <div class="form-group">
-        <label>種類：</label>
-        <div id="previewType" style="padding: 6px 8px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;"></div>
-      </div>
-      <div class="form-group">
-        <label>內容：</label>
-        <div id="previewContent" style="padding: 6px 8px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; word-break: break-word;"></div>
-      </div>
-      <div class="form-group">
-        <label>備註 (Remarks)：</label>
-        <div id="previewRemarks" class="preview-remarks-box"></div>
-      </div>
-
-      <div class="modal-actions">
-        <button class="modal-btn btn-cancel" onclick="closePreviewModal()">關閉</button>
-        <button class="modal-btn btn-edit-mode" onclick="switchToEditFromPreview()">✏️ 編輯</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ✏️ 編輯畫面 Modal -->
   <div id="editModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-title">✏️ 編輯事項</div>
@@ -742,7 +664,7 @@
       </div>
       <div class="form-group">
         <label>備註 (Remarks)：</label>
-        <textarea id="modalRemarks" class="large-textarea" placeholder="在此輸入多行備註內容..."></textarea>
+        <textarea id="modalRemarks" rows="2" placeholder="備註內容..."></textarea>
       </div>
 
       <div class="modal-actions">
@@ -778,9 +700,18 @@
         return;
       }
 
+      // 自動從 CONFIG 帶入 Client ID 到 Google SDK 元素
+      if (CONFIG.GOOGLE_CLIENT_ID) {
+        document.getElementById('g_id_onload').setAttribute('data-client_id', CONFIG.GOOGLE_CLIENT_ID);
+      } else {
+        showStatus('❌ config.js 缺少 GOOGLE_CLIENT_ID', '#ef4444');
+      }
+
+      // 檢查 Session 登入狀態
       checkLoginStatus();
     };
 
+    // 解析 Google JWT Token
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -794,26 +725,23 @@
       }
     }
 
+    // Google 登入完成回呼 (Callback)
     function handleCredentialResponse(response) {
       const payload = parseJwt(response.credential);
       
       if (payload && payload.email) {
-        const userEmail = payload.email.toLowerCase().trim();
-
+        // 檢查白名單 ALLOWED_EMAILS (如果存在 allowed-emails.js)
         if (typeof ALLOWED_EMAILS !== 'undefined' && Array.isArray(ALLOWED_EMAILS)) {
-          const cleanList = ALLOWED_EMAILS.map(e => e.toLowerCase().trim());
-          if (!cleanList.includes(userEmail)) {
-            document.getElementById('loginErr').innerText = `⚠️ 存取被拒：\n${userEmail}\n未獲授權使用此系統。`;
+          if (!ALLOWED_EMAILS.includes(payload.email)) {
+            alert(`⚠️ 存取被拒：帳號 (${payload.email}) 未獲授權使用此系統。`);
             return;
           }
-        } else {
-          document.getElementById('loginErr').innerText = `⚠️ 系統錯誤：無法讀取白名單清單。`;
-          return;
         }
 
+        // 登入成功，儲存資訊
         sessionStorage.setItem('google_user', JSON.stringify({
           name: payload.name,
-          email: userEmail,
+          email: payload.email,
           picture: payload.picture
         }));
         sessionStorage.setItem('google_token', response.credential);
@@ -822,14 +750,10 @@
       }
     }
 
+    // 檢查登入與切換畫面
     function checkLoginStatus() {
       const userStr = sessionStorage.getItem('google_user');
-      
       if (userStr) {
-        if (window.google && window.google.accounts && window.google.accounts.id) {
-          window.google.accounts.id.cancel();
-        }
-
         const user = JSON.parse(userStr);
         document.getElementById('userInfo').textContent = `👤 ${user.name || user.email}`;
         document.getElementById('authOverlay').style.display = 'none';
@@ -1084,7 +1008,7 @@
         if (!showCompleted && isItemDone(item.status)) return false;
         if (!passesTagFilter(item)) return false;
         return true;
-      });
+      }).sort((a, b) => a.date.localeCompare(b.date));
 
       if (futureItems.length === 0) {
         container.innerHTML = '<div style="color:#0284c7; font-size:0.82rem;">📅 目前沒有將來預定事項</div>';
@@ -1122,43 +1046,6 @@
       const isDone = isItemDone(item.status);
       const div = document.createElement('div');
       div.className = `log-item ${isDone ? 'done' : ''}`;
-      div.draggable = true;
-      div.dataset.id = item.id;
-
-      div.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', item.id);
-        div.classList.add('dragging');
-      });
-
-      div.addEventListener('dragend', () => {
-        div.classList.remove('dragging');
-      });
-
-      // 觸控手機端拖曳支援
-      let touchStartY = 0;
-      div.addEventListener('touchstart', (e) => {
-        touchStartY = e.touches[0].clientY;
-        div.classList.add('dragging');
-      }, {passive: true});
-
-      div.addEventListener('touchmove', (e) => {
-        const touchY = e.touches[0].clientY;
-        const listContainer = div.parentNode;
-        const afterElement = getDragAfterElement(listContainer, touchY);
-        const draggingItem = listContainer.querySelector('.dragging');
-        if (draggingItem) {
-          if (afterElement == null) {
-            listContainer.appendChild(draggingItem);
-          } else {
-            listContainer.insertBefore(draggingItem, afterElement);
-          }
-        }
-      }, {passive: true});
-
-      div.addEventListener('touchend', () => {
-        div.classList.remove('dragging');
-        saveNewOrderFromDOM(div.parentNode);
-      });
 
       let badgeClass = 'task';
       if (item.type === '事件' || item.type === 'Event') badgeClass = 'event';
@@ -1168,8 +1055,7 @@
       const formattedRemarks = formatContentWithTags(item.remarks);
 
       div.innerHTML = `
-        <div class="drag-handle" title="按住拖曳排序">☰</div>
-        <div class="log-main" onclick="openPreviewModal('${item.id}')" title="點擊檢視詳情">
+        <div class="log-main">
           <div class="log-header-line">
             <span class="badge ${badgeClass}">${item.type}</span>
             ${showDateTag && item.date ? `<span class="date-tag">(${item.date})</span>` : ''}
@@ -1179,100 +1065,12 @@
         </div>
         <div class="action-btns-stacked">
           <button class="btn-icon-only" onclick="openModal('${item.id}')" title="編輯">✏️</button>
-          <button class="btn-icon-only ${isDone ? 'done' : 'todo'}" onclick="toggleStatus('${item.id}', '${item.status}', '${item.date}', '${encodeURIComponent(item.content)}')">
-            ${isDone ? '✓' : '⏳'}
-          </button>
+          <button class="btn-icon-only ${isDone ? 'done' : 'todo'}" onclick="toggleStatus('${item.id}')">
+  ${isDone ? '✓' : '⏳'}
+</button>
         </div>
       `;
       return div;
-    }
-
-    function allowDrop(e) {
-      e.preventDefault();
-      const container = e.currentTarget;
-      const draggingItem = document.querySelector('.dragging');
-      if (!draggingItem) return;
-
-      const afterElement = getDragAfterElement(container, e.clientY);
-      if (afterElement == null) {
-        container.appendChild(draggingItem);
-      } else {
-        container.insertBefore(draggingItem, afterElement);
-      }
-    }
-
-    function getDragAfterElement(container, y) {
-      const draggableElements = [...container.querySelectorAll('.log-item:not(.dragging)')];
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function dropRecord(e) {
-      e.preventDefault();
-      const container = e.currentTarget;
-      saveNewOrderFromDOM(container);
-    }
-
-    function saveNewOrderFromDOM(container) {
-      const cardElements = container.querySelectorAll('.log-item');
-      const newOrderedIds = [...cardElements].map(el => el.dataset.id);
-
-      // 重新排序全域 allLogs
-      const idMap = new Map(allLogs.map(l => [l.id, l]));
-      const reordered = [];
-      newOrderedIds.forEach(id => {
-        if (idMap.has(id)) {
-          reordered.push(idMap.get(id));
-          idMap.delete(id);
-        }
-      });
-      // 把其他未顯示的項目放回
-      idMap.forEach(item => reordered.push(item));
-      allLogs = reordered;
-
-      // 自動發送 API 同步排序至 Google Sheet
-      showStatus('⏳ 正在同步排序至 Google Sheet...');
-      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
-      if (apiUrl) {
-        const params = new URLSearchParams({
-          action: 'reorderLogs',
-          key: CONFIG.SECRET_KEY || '',
-          ids: newOrderedIds.join(',')
-        });
-        fetch(`${apiUrl}?${params.toString()}`, { mode: 'no-cors' })
-          .then(() => showStatus(''))
-          .catch(() => showStatus('❌ 排序同步失敗', '#ef4444'));
-      }
-    }
-
-    function openPreviewModal(id) {
-      const target = allLogs.find(l => l.id === id);
-      if (!target) return;
-
-      document.getElementById('previewTargetId').value = target.id;
-      document.getElementById('previewDate').textContent = target.date || '無日期 (Backlog)';
-      document.getElementById('previewType').textContent = target.type;
-      document.getElementById('previewContent').innerHTML = formatContentWithTags(target.content);
-      document.getElementById('previewRemarks').innerHTML = formatContentWithTags(target.remarks ? target.remarks.replace(/\n/g, '<br>') : '無備註');
-
-      document.getElementById('previewModal').style.display = 'flex';
-    }
-
-    function closePreviewModal() {
-      document.getElementById('previewModal').style.display = 'none';
-    }
-
-    function switchToEditFromPreview() {
-      const id = document.getElementById('previewTargetId').value;
-      closePreviewModal();
-      openModal(id);
     }
 
     function openModal(id) {
@@ -1369,28 +1167,32 @@
       }
     }
 
-    function toggleStatus(id, currentStatus, date, content) {
-      const isDone = isItemDone(currentStatus);
-      const newStatus = isDone ? 'Pending' : '完成';
-      
-      const target = allLogs.find(l => l.id === id);
-      if (target) target.status = newStatus;
+function toggleStatus(id) {
+  // 1. 透過 id 找到該筆資料
+  const target = allLogs.find(l => l.id === id);
+  if (!target) return;
 
-      renderAll();
+  // 2. 判斷新狀態
+  const isDone = isItemDone(target.status);
+  const newStatus = isDone ? 'Pending' : '完成';
+  
+  // 3. 更新本地狀態並重繪畫面 (這會讓畫面立刻變成完成)
+  target.status = newStatus;
+  renderAll();
 
-      const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
-      if (apiUrl) {
-        const params = new URLSearchParams({
-          action: 'toggleLog',
-          key: CONFIG.SECRET_KEY || '',
-          id: id,
-          date: date,
-          content: decodeURIComponent(content),
-          status: newStatus
-        });
-        fetch(`${apiUrl}?${params.toString()}`, { mode: 'no-cors' });
-      }
-    }
+  // 4. 發送請求更新至 Google Sheet
+  const apiUrl = CONFIG.API_URLS ? CONFIG.API_URLS.DAILY : '';
+  if (apiUrl) {
+    const params = new URLSearchParams({
+      action: 'toggleLog',
+      key: CONFIG.SECRET_KEY || '',
+      id: target.id,
+      content: target.content, // 直接讀取，不需要 decodeURIComponent
+      status: newStatus
+    });
+    fetch(`${apiUrl}?${params.toString()}`, { mode: 'no-cors' });
+  }
+}
 
     function handleLogSubmit(e) {
       e.preventDefault();
@@ -1405,7 +1207,7 @@
       const targetDate = isBacklog ? "" : currentDateStr;
       const newId = 'L' + new Date().getTime();
 
-      allLogs.unshift({
+      allLogs.push({
         id: newId,
         date: targetDate,
         type: type,
